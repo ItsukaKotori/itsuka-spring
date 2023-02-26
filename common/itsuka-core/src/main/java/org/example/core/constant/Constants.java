@@ -1,4 +1,4 @@
-package org.example.constant;
+package org.example.core.constant;
 
 /**
  * 常量类

@@ -1,6 +1,6 @@
-package org.example.exception;
+package org.example.core.exception;
 
-import static org.example.constant.Constants.ERROR_CODE;
+import static org.example.core.constant.Constants.ERROR_CODE;
 
 /**
  * 自定义异常信息

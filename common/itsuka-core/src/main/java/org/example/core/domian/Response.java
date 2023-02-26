@@ -1,9 +1,9 @@
-package org.example.domian;
+package org.example.core.domian;
 
 import lombok.Data;
 
-import static org.example.constant.Constants.ERROR_CODE;
-import static org.example.constant.Constants.SUCCESS_CODE;
+import static org.example.core.constant.Constants.ERROR_CODE;
+import static org.example.core.constant.Constants.SUCCESS_CODE;
 
 /**
  * 统一返回信息

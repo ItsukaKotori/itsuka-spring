@@ -1,4 +1,6 @@
-package org.example.domian;
+package org.example.core.domian;
+
+import lombok.Data;
 
 import java.util.List;
 
@@ -8,12 +10,25 @@ import java.util.List;
  * @author Itsuka
  * @date 2023/2/26
  */
+@Data
 public class LoginUser {
+    /**
+     * 用户ID
+     */
     private Long id;
 
+    /**
+     * 用户名
+     */
     private String username;
 
+    /**
+     * 昵称
+     */
     private String nickname;
 
+    /**
+     * 权限列表
+     */
     private List<String> authorities;
 }
