@@ -1,4 +1,4 @@
-package org.example.core.constant;
+package org.itsuka.core.constant;
 
 /**
  * 常量类
@@ -16,6 +16,13 @@ public final class Constants {
      * 错误相应编码
      */
     public static final Integer ERROR_CODE = 500;
+
+    /**
+     * 错误相应编码
+     */
+    public static final Integer BAD_REQUEST_CODE = 400;
+
+    public static final String LOGIN_HEADER = "login_user";
 
     private Constants() {
 

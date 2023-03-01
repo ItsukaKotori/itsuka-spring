@@ -1,6 +1,8 @@
-package org.example.core.exception;
+package org.itsuka.core.exception;
 
-import static org.example.core.constant.Constants.ERROR_CODE;
+import lombok.Data;
+
+import static org.itsuka.core.constant.Constants.ERROR_CODE;
 
 /**
  * 自定义异常信息
@@ -8,6 +10,7 @@ import static org.example.core.constant.Constants.ERROR_CODE;
  * @author Itsuka
  * @date 2023/2/26
  */
+@Data
 public class ServiceException extends RuntimeException {
     private Integer code;
 

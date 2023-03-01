@@ -1,4 +1,4 @@
-package org.example.core.domian;
+package org.itsuka.core.domian;
 
 import lombok.Data;
 

@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=
-org.example.web.WebAutoConfiguration
+org.itsuka.web.WebAutoConfiguration

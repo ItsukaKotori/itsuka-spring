@@ -1,9 +1,12 @@
-package org.example.core.domian;
+package org.itsuka.core.domian;
 
 import lombok.Data;
+import org.itsuka.core.exception.ServiceException;
 
-import static org.example.core.constant.Constants.ERROR_CODE;
-import static org.example.core.constant.Constants.SUCCESS_CODE;
+import java.rmi.ServerException;
+
+import static org.itsuka.core.constant.Constants.ERROR_CODE;
+import static org.itsuka.core.constant.Constants.SUCCESS_CODE;
 
 /**
  * 统一返回信息
@@ -35,11 +38,15 @@ public class Response<T> {
         return new Response<T>(SUCCESS_CODE, true, null, data);
     }
 
-    public static <T> Response<T> error(String message) {
+    public static Response<?> error(String message) {
         return error(ERROR_CODE, message);
     }
 
-    public static <T> Response<T> error(Integer code, String message) {
-        return new Response<T>(code, false, message, null);
+    public static Response<?> error(Integer code, String message) {
+        return new Response<>(code, false, message, null);
+    }
+
+    public static Response<?> error(ServiceException serviceException) {
+        return error(serviceException.getMessage());
     }
 }
