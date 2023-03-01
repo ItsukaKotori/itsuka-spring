@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
      * @return
      */
     @ExceptionHandler(value = ConstraintViolationException.class)
-    public Response<?> constraintViolationExceptionHandler(ConstraintViolationException exception) {
+    public Response<?> constraintViolationException(ConstraintViolationException exception) {
         log.error("handle ConstraintViolationException", exception);
         ConstraintViolation<?> constraintViolation = exception.getConstraintViolations().iterator().next();
         return Response.error(BAD_REQUEST_CODE,
