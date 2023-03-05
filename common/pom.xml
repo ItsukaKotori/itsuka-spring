@@ -16,5 +16,6 @@
     <modules>
         <module>itsuka-core</module>
         <module>itsuka-web-spring-boot-starter</module>
+        <module>itsuka-mybatis-plus-spring-boot-starter</module>
     </modules>
 </project>
