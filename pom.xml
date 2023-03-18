@@ -15,6 +15,7 @@
         <spring.boot.version>2.7.6</spring.boot.version>
         <jakarta.validation.version>2.0.2</jakarta.validation.version>
         <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
+        <spring.doc.version>1.6.15</spring.doc.version>
     </properties>
 
     <modules>
@@ -23,6 +24,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-ui</artifactId>
+                <version>${spring.doc.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
