@@ -2,6 +2,7 @@ package org.itsuka.web;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.itsuka.core.domian.LoginUser;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.context.request.RequestAttributes;
@@ -19,19 +20,25 @@ import static org.itsuka.core.constant.Constants.LOGIN_HEADER;
  * @author Itsuka
  * @date 2023/2/26
  */
+@Slf4j
 public class WebHelper {
     /**
      * 获取用户信息
      *
      * @return 用户信息
      */
-    public Optional<LoginUser> getLoginUser() throws JsonProcessingException {
+    public Optional<LoginUser> getLoginUser() {
         Optional<String> optional = getHeader(LOGIN_HEADER);
         if (optional.isEmpty() || ObjectUtils.isEmpty(optional.get())) {
             return Optional.empty();
         }
         ObjectMapper mapper = new ObjectMapper();
-        return Optional.ofNullable(mapper.readValue(optional.get(), LoginUser.class));
+        try {
+            return Optional.ofNullable(mapper.readValue(optional.get(), LoginUser.class));
+        } catch (JsonProcessingException e) {
+            log.error("jackson read value error", e);
+        }
+        return Optional.empty();
     }
 
     /**
