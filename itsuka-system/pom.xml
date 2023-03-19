@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.itsuka</groupId>
         <artifactId>spring-cloud-demo</artifactId>
-        <version>1.0.0</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>itsuka-system</artifactId>
@@ -26,6 +26,10 @@
             <groupId>org.itsuka</groupId>
             <artifactId>itsuka-redis-spring-boot-starter</artifactId>
             <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
     </dependencies>
 
