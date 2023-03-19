@@ -1,4 +1,4 @@
-package org.itsuka.mybatis.plus;
+package org.itsuka.mybatis.plus.interceptor;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
@@ -13,7 +13,9 @@ import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.itsuka.core.domian.LoginUser;
 import org.itsuka.core.exception.ServiceException;
-import org.itsuka.web.WebHelper;
+import org.itsuka.mybatis.plus.mapper.CustomMapper;
+import org.itsuka.mybatis.plus.properties.DataPermissionProperty;
+import org.itsuka.web.utils.WebHelper;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -32,7 +34,6 @@ import java.util.Optional;
 @Slf4j
 public class DataPermissionInterceptor implements InnerInterceptor {
     private final DataPermissionProperty property;
-
     private final WebHelper webHelper;
 
     @Override

@@ -1,2 +1,2 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=
-org.itsuka.mybatis.plus.MybatisPlusAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  org.itsuka.mybatis.plus.MybatisPlusAutoConfiguration

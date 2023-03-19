@@ -1,8 +1,7 @@
-package org.itsuka.mybatis.plus;
+package org.itsuka.mybatis.plus.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * 数据权限相关属性

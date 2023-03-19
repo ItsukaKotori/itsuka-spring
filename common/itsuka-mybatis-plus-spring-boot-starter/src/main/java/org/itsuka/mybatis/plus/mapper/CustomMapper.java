@@ -1,4 +1,4 @@
-package org.itsuka.mybatis.plus;
+package org.itsuka.mybatis.plus.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
