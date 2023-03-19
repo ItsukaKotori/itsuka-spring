@@ -1,4 +1,4 @@
-package org.itsuka.web;
+package org.itsuka.web.exception.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.core.domian.Response;

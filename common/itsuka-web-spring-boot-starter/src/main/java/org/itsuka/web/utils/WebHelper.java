@@ -1,4 +1,4 @@
-package org.itsuka.web;
+package org.itsuka.web.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
