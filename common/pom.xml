@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.itsuka</groupId>
-        <artifactId>spring-cloud-demo</artifactId>
+        <artifactId>itsuka-spring</artifactId>
         <version>1.0.0</version>
     </parent>
 
