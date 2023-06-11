@@ -3,6 +3,7 @@ package com.itsuka.system.domain;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
  * 用户角色关联表
@@ -11,6 +12,7 @@ import lombok.Data;
  */
 @TableName(value ="sys_user_role")
 @Data
+@Accessors(chain = true)
 public class SysUserRole {
     /**
      * 用户ID
