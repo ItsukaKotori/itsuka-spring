@@ -16,7 +16,7 @@
         <jakarta.validation.version>2.0.2</jakarta.validation.version>
         <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
         <spring.doc.version>1.6.15</spring.doc.version>
-        <mysql.version>8.0.32</mysql.version>
+        <mysql.version>8.0.33</mysql.version>
         <mapstruct.version>1.5.3.Final</mapstruct.version>
     </properties>
 

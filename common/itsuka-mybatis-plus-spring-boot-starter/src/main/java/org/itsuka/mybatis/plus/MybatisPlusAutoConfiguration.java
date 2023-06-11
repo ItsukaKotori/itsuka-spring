@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import org.itsuka.mybatis.plus.handler.DefaultFieldHandler;
-import org.itsuka.mybatis.plus.interceptor.DataPermissionInterceptor;
-import org.itsuka.mybatis.plus.properties.DataPermissionProperty;
+import org.itsuka.mybatis.plus.helper.MybatisPlusHelper;
+import org.itsuka.mybatis.plus.permission.DataPermissionEscaper;
+import org.itsuka.mybatis.plus.permission.DataPermissionInterceptor;
+import org.itsuka.mybatis.plus.permission.DataPermissionProperty;
 import org.itsuka.web.utils.WebHelper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -28,10 +30,12 @@ public class MybatisPlusAutoConfiguration {
      * @return 拦截器
      */
     @Bean
-    public MybatisPlusInterceptor mybatisPlusInterceptor(DataPermissionProperty property, WebHelper webHelper) {
+    public MybatisPlusInterceptor mybatisPlusInterceptor(
+        DataPermissionProperty property, WebHelper webHelper, 
+        DataPermissionEscaper escaper, MybatisPlusHelper mybatisPlusHelper) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
-        interceptor.addInnerInterceptor(new DataPermissionInterceptor(property, webHelper));
+        interceptor.addInnerInterceptor(new DataPermissionInterceptor(property, webHelper, escaper, mybatisPlusHelper));
         return interceptor;
     }
 
@@ -44,5 +48,25 @@ public class MybatisPlusAutoConfiguration {
     @Bean
     public MetaObjectHandler metaObjectHandler(WebHelper helper) {
         return new DefaultFieldHandler(helper);
+    }
+
+    /**
+     * 数据权限逃离器
+     * 
+     * @return
+     */
+    @Bean
+    public DataPermissionEscaper escaper() {
+        return new DataPermissionEscaper();
+    }
+
+    /**
+     * MybatisPlusHelper
+     * 
+     * @return
+     */
+    @Bean
+    public MybatisPlusHelper mybatisPlusHelper() {
+        return new MybatisPlusHelper();
     }
 }
