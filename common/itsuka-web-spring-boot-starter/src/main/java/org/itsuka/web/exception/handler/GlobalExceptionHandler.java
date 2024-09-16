@@ -16,7 +16,7 @@ import static org.itsuka.core.constant.Constants.BAD_REQUEST_CODE;
  * 全局异常处理器
  *
  * @author Itsuka
- * @date 2023/3/1
+ * @since 2023/3/1
  */
 @RestControllerAdvice
 @Slf4j

@@ -12,7 +12,7 @@ import static org.itsuka.core.constant.Constants.SUCCESS_CODE;
  * 统一返回信息
  *
  * @author Itsuka
- * @date 2023/2/26
+ * @since 2023/2/26
  */
 @Data
 public class Response<T> {

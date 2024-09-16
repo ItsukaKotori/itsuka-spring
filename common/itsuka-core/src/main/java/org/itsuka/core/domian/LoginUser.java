@@ -8,7 +8,7 @@ import java.util.List;
  * 登录用户信息
  *
  * @author Itsuka
- * @date 2023/2/26
+ * @since 2023/2/26
  */
 @Data
 public class LoginUser {

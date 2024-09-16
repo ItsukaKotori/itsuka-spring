@@ -10,7 +10,7 @@ import java.util.List;
  * 自定义Mapper
  *
  * @author Itsuka
- * @date 2023/3/5
+ * @since 2023/3/5
  */
 public interface CustomMapper<T> extends BaseMapper<T> {
     /**

@@ -13,7 +13,7 @@ import org.springframework.context.ApplicationContextAware;
  * Spring Bean 获取工具类
  *
  * @author Itsuka
- * @date 2023/3/1
+ * @since 2023/3/1
  */
 @Slf4j
 public class SpringContextHolderUtils implements ApplicationContextAware {

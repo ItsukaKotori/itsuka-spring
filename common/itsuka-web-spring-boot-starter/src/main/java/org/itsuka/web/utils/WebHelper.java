@@ -18,7 +18,7 @@ import static org.itsuka.core.constant.Constants.LOGIN_HEADER;
  * Web工具类
  *
  * @author Itsuka
- * @date 2023/2/26
+ * @since 2023/2/26
  */
 @Slf4j
 public class WebHelper {

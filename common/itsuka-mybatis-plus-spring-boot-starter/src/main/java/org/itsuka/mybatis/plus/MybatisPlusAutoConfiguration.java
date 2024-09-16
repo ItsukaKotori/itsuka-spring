@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
  * Mybatis Plus自动配置类
  *
  * @author Itsuka
- * @date 2023/3/5
+ * @since 2023/3/5
  */
 @Configuration
 @EnableConfigurationProperties({DataPermissionProperty.class})

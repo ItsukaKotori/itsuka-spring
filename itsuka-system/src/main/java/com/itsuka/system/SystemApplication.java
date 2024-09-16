@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * @author Itsuka
- * @date 2023/3/18
+ * @since 2023/3/18
  */
 @SpringBootApplication
 public class SystemApplication {

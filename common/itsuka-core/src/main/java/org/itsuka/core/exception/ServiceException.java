@@ -8,7 +8,7 @@ import static org.itsuka.core.constant.Constants.ERROR_CODE;
  * 自定义异常信息
  *
  * @author Itsuka
- * @date 2023/2/26
+ * @since 2023/2/26
  */
 @Data
 public class ServiceException extends RuntimeException {
