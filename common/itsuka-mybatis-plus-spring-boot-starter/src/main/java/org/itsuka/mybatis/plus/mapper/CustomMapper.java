@@ -1,10 +1,22 @@
 package org.itsuka.mybatis.plus.mapper;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
+import com.baomidou.mybatisplus.core.toolkit.LambdaUtils;
+import com.baomidou.mybatisplus.core.toolkit.support.ColumnCache;
+import com.baomidou.mybatisplus.core.toolkit.support.LambdaMeta;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.reflection.property.PropertyNamer;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import static org.itsuka.mybatis.plus.Constants.COLUMN;
+import static org.itsuka.mybatis.plus.toolkit.MybatisPlusHelper.getColumnName;
 
 /**
  * 自定义Mapper
@@ -100,5 +112,26 @@ public interface CustomMapper<T> extends BaseMapper<T> {
      */
     default Integer delete(SFunction<T, ?> field, Object value) {
         return delete(new LambdaQueryWrapper<T>().eq(field, value));
+    }
+
+    /**
+     * 查询某个字段的所有值(去重)
+     *
+     * @param column 列名
+     * @param queryWrapper Wrapper
+     * @return 字段所有值
+     */
+    List<Object> selectValueRange(@Param(COLUMN) String column, @Param(Constants.WRAPPER) Wrapper<T> queryWrapper);
+
+    /**
+     * 查询某个字段的所有值(去重)
+     *
+     * @param field 字段名
+     * @param wrapper Wrapper
+     * @return 字段所有值
+     */
+    default List<Object> selectValueRange(SFunction<T, ?> field, Wrapper<T> wrapper) {
+        String columnName = getColumnName(field);
+        return selectValueRange(columnName, wrapper);
     }
 }
