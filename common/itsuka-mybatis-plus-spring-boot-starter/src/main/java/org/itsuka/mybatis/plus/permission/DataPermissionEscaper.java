@@ -21,7 +21,7 @@ public class DataPermissionEscaper {
      * @param supplier
      * @return
      */
-    public <T> T executeWithOutPermission(Supplier<T> supplier) {
+    public <T> T executeWithoutPermission(Supplier<T> supplier) {
         ESCAPE_THREAD_LOCAL.set(true);
         T result = supplier.get();
         // 重置标志位

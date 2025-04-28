@@ -1,24 +1,16 @@
 package org.itsuka.mybatis.plus.permission;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
-import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
-import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
 import com.baomidou.mybatisplus.extension.plugins.inner.InnerInterceptor;
-import com.baomidou.mybatisplus.extension.toolkit.SqlRunner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.executor.Executor;
-import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.itsuka.core.domian.LoginUser;
-import org.itsuka.core.exception.ServiceException;
-import org.itsuka.mybatis.plus.helper.MybatisPlusHelper;
-import org.itsuka.mybatis.plus.mapper.CustomMapper;
+import org.itsuka.mybatis.plus.toolkit.MybatisPlusHelper;
 import org.itsuka.web.utils.WebHelper;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -81,8 +73,8 @@ public class DataPermissionInterceptor implements InnerInterceptor {
      */
     private boolean isCreateByCurrentUser(Long userId, Executor executor, MappedStatement ms, Object parameter) throws SQLException {
         String selectCreateBySql = String.format("SELECT %s FROM %s %s", 
-                    property.getCreateByField(), mybatisPlusHelper.getTableInfo(ms).getTableName(), mybatisPlusHelper.where(ms, parameter));
-        List<Map<String,Object>> resultList = mybatisPlusHelper.doQuery(selectCreateBySql, parameter);
+                    property.getCreateByField(), MybatisPlusHelper.getTableInfo(ms).getTableName(), MybatisPlusHelper.where(ms, parameter));
+        List<Map<String,Object>> resultList = MybatisPlusHelper.doQuery(selectCreateBySql, parameter);
         return resultList.stream().allMatch(result -> Objects.equals(userId, result.get(property.getCreateByField())));
     }
 
@@ -93,7 +85,7 @@ public class DataPermissionInterceptor implements InnerInterceptor {
      * @return
      */
     private boolean containsCreateBy(MappedStatement ms) {
-        TableInfo tableInfo = mybatisPlusHelper.getTableInfo(ms);
+        TableInfo tableInfo = MybatisPlusHelper.getTableInfo(ms);
         return tableInfo.getFieldList().stream().anyMatch(tableFieldInfo ->
                 Objects.equals(property.getCreateByField(), tableFieldInfo.getColumn()));
     }
