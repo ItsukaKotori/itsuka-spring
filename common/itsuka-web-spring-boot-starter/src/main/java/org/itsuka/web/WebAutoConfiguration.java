@@ -1,10 +1,15 @@
 package org.itsuka.web;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import org.itsuka.web.utils.SpringContextHolderUtils;
 import org.itsuka.web.utils.WebHelper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 /**
  * Web自动注入类
@@ -25,8 +30,27 @@ public class WebAutoConfiguration {
         return new WebHelper();
     }
 
+    /**
+     * Spring ContextUtils
+     *
+     * @return Spring ContextUtils
+     */
     @Bean
     public SpringContextHolderUtils springContextHolderUtils() {
         return new SpringContextHolderUtils();
+    }
+
+    /**
+     * 自定义ObjectMapper
+     *
+     * @return 自定义ObjectMapper
+     */
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL);
+        return objectMapper;
     }
 }

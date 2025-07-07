@@ -1,10 +1,19 @@
 package org.itsuka.redis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
+
+import java.time.Duration;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Redis 自动配置类
@@ -13,6 +22,7 @@ import org.springframework.data.redis.serializer.RedisSerializer;
  * @since 2023/3/18
  */
 @Configuration
+@EnableConfigurationProperties(RedisCacheProperties.class)
 public class RedisAutoConfiguration {
     /**
      * RedisTemplate Bean
@@ -30,5 +40,41 @@ public class RedisAutoConfiguration {
         redisTemplate.setHashKeySerializer(RedisSerializer.string());
         redisTemplate.setHashValueSerializer(RedisSerializer.json());
         return redisTemplate;
+    }
+
+    /**
+     * 自定义CacheManager
+     * 缓存击穿: @Cacheable(sync = true)
+     *
+     * @param factory
+     * @param objectMapper
+     * @param properties
+     * @return
+     */
+    @Bean
+    public CacheManager cacheManager(RedisConnectionFactory factory,
+                                     ObjectMapper objectMapper,
+                                     RedisCacheProperties properties) {
+        RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(ttl(properties))
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.string()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.json()))
+                .disableCachingNullValues();
+
+        return RedisCacheManager.builder(factory)
+                .cacheDefaults(configuration)
+                .build();
+    }
+
+
+    private Duration ttl(RedisCacheProperties properties) {
+        RedisCacheProperties.RandomTtl randomTtl = properties.getRandomTtl();
+        if (!randomTtl.isEnable()) {
+            return Duration.ofSeconds(properties.getTtl());
+        }
+        int baseTtl = randomTtl.getBaseTtl();
+        int floatTtl = randomTtl.getFloatTtl();
+        int random = ThreadLocalRandom.current().nextInt(-floatTtl, floatTtl) + baseTtl;
+        return Duration.ofSeconds(random);
     }
 }
