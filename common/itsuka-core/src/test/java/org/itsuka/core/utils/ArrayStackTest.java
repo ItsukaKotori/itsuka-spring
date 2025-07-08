@@ -16,4 +16,12 @@ class ArrayStackTest {
         });
         assertEquals(3, stack.pop());
     }
+
+    @Test
+    void pushOverCapacity() {
+        ArrayStack<Integer> stack = new ArrayStack<Integer>(1);
+        stack.push(1);
+        stack.push(2);
+        assertEquals(2, stack.pop());
+    }
 }
