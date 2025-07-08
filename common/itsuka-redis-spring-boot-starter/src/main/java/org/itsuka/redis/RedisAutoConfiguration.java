@@ -1,6 +1,7 @@
 package org.itsuka.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * @since 2023/3/18
  */
 @Configuration
+@ConditionalOnProperty(prefix = "spring.cache", value = "type", havingValue = "redis")
 @EnableConfigurationProperties(RedisCacheProperties.class)
 public class RedisAutoConfiguration {
     /**
@@ -47,13 +49,11 @@ public class RedisAutoConfiguration {
      * 缓存击穿: @Cacheable(sync = true)
      *
      * @param factory
-     * @param objectMapper
      * @param properties
      * @return
      */
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory factory,
-                                     ObjectMapper objectMapper,
                                      RedisCacheProperties properties) {
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(ttl(properties))
