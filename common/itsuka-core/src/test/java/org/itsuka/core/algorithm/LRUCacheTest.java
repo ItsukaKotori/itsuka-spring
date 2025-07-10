@@ -1,4 +1,4 @@
-package org.itsuka.core.utils;
+package org.itsuka.core.algorithm;
 
 import org.itsuka.core.algorithm.LRUCache;
 import org.junit.jupiter.api.Test;
