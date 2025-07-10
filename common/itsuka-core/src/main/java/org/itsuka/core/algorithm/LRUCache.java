@@ -1,4 +1,4 @@
-package org.itsuka.core.utils;
+package org.itsuka.core.algorithm;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

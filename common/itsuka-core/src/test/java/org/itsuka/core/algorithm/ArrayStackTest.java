@@ -1,5 +1,6 @@
-package org.itsuka.core.utils;
+package org.itsuka.core.algorithm;
 
+import org.itsuka.core.algorithm.ArrayStack;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

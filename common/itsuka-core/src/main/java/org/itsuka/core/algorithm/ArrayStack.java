@@ -1,4 +1,4 @@
-package org.itsuka.core.utils;
+package org.itsuka.core.algorithm;
 
 /**
  * 基于数组的顺序栈
