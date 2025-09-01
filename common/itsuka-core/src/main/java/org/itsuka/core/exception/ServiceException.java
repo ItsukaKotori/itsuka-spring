@@ -1,6 +1,7 @@
 package org.itsuka.core.exception;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import static org.itsuka.core.constant.Constants.ERROR_CODE;
 
@@ -10,6 +11,7 @@ import static org.itsuka.core.constant.Constants.ERROR_CODE;
  * @author Itsuka
  * @since 2023/2/26
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class ServiceException extends RuntimeException {
     private Integer code;

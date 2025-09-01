@@ -3,7 +3,6 @@ package org.itsuka.web.utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
-import java.util.List;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -16,7 +15,7 @@ import org.springframework.context.ApplicationContextAware;
  * @since 2023/3/1
  */
 @Slf4j
-public class SpringContextHolderUtils implements ApplicationContextAware {
+public class SpringContextHolder implements ApplicationContextAware {
 
     private static ApplicationContext beanHolder;
 
@@ -29,9 +28,9 @@ public class SpringContextHolderUtils implements ApplicationContextAware {
     /**
      * 获取某一类型的Bean列表
      * 
-     * @param <T>
-     * @param beanType
-     * @return
+     * @param <T> T
+     * @param beanType Bean类型
+     * @return Bean列表
      */
     public static <T> Collection<T> getBeansOfType(Class<T> beanType) {
         return beanHolder.getBeansOfType(beanType).values();

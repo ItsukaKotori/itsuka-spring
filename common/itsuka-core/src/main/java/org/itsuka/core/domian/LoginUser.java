@@ -1,6 +1,8 @@
 package org.itsuka.core.domian;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -11,6 +13,8 @@ import java.util.List;
  * @since 2023/2/26
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class LoginUser {
     /**
      * 用户ID

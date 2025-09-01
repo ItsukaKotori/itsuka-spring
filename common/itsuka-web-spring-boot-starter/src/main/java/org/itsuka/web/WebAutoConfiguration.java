@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
-import org.itsuka.web.utils.SpringContextHolderUtils;
+import org.itsuka.web.utils.SpringContextHolder;
 import org.itsuka.web.utils.WebHelper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -36,8 +36,8 @@ public class WebAutoConfiguration {
      * @return Spring ContextUtils
      */
     @Bean
-    public SpringContextHolderUtils springContextHolderUtils() {
-        return new SpringContextHolderUtils();
+    public SpringContextHolder springContextHolderUtils() {
+        return new SpringContextHolder();
     }
 
     /**
