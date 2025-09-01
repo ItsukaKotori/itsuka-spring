@@ -1,6 +1,8 @@
 package org.itsuka.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.itsuka.redis.aspect.DbSwitchAspect;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
@@ -48,9 +50,9 @@ public class RedisAutoConfiguration {
      * 自定义CacheManager
      * 缓存击穿: @Cacheable(sync = true)
      *
-     * @param factory
-     * @param properties
-     * @return
+     * @param factory RedisConnectionFactory
+     * @param properties RedisCacheProperties
+     * @return CacheManager
      */
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory factory,
@@ -64,6 +66,18 @@ public class RedisAutoConfiguration {
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(configuration)
                 .build();
+    }
+
+    /**
+     * Redis Db切换器
+     * 基于RedisConnectionFactory
+     *
+     * @param redisConnectionFactory RedisConnectionFactory
+     * @return DbSwitchAspect
+     */
+    @Bean
+    public DbSwitchAspect dbSwitchAspect(RedisConnectionFactory redisConnectionFactory) {
+        return new DbSwitchAspect(redisConnectionFactory);
     }
 
 
