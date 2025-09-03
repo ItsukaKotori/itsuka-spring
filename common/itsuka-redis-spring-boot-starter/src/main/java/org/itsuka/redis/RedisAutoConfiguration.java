@@ -1,9 +1,12 @@
 package org.itsuka.redis;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.itsuka.redis.aspect.DbSwitchAspect;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnSingleCandidate;
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
@@ -12,10 +15,12 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -26,18 +31,20 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 @Configuration
 @ConditionalOnProperty(prefix = "spring.cache", value = "type", havingValue = "redis")
-@EnableConfigurationProperties(RedisCacheProperties.class)
+@EnableConfigurationProperties({RedisCacheProperties.class, RedisProperties.class})
+@RequiredArgsConstructor
 public class RedisAutoConfiguration {
+    private final ObjectProvider<RedisConnectionFactory> connectionFactoryObjectProvider;
+
     /**
      * RedisTemplate Bean
      *
-     * @param redisConnectionFactory redis连接工厂
      * @return RedisTemplate
      */
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
+    public RedisTemplate<String, Object> redisTemplate() {
+        CustomRedisTemplate<String, Object> redisTemplate = new CustomRedisTemplate<>();
+        redisTemplate.setConnectionFactory(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()));
         // 设置序列化格式 默认为JDK Serializer
         redisTemplate.setKeySerializer(RedisSerializer.string());
         redisTemplate.setValueSerializer(RedisSerializer.json());
@@ -46,24 +53,29 @@ public class RedisAutoConfiguration {
         return redisTemplate;
     }
 
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnSingleCandidate(RedisConnectionFactory.class)
+    public StringRedisTemplate stringRedisTemplate() {
+        return new CustomStringRedisTemplate(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()));
+    }
+
     /**
      * 自定义CacheManager
      * 缓存击穿: @Cacheable(sync = true)
      *
-     * @param factory RedisConnectionFactory
      * @param properties RedisCacheProperties
      * @return CacheManager
      */
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory factory,
-                                     RedisCacheProperties properties) {
+    public CacheManager cacheManager(RedisCacheProperties properties) {
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(ttl(properties))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.string()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.json()))
                 .disableCachingNullValues();
 
-        return RedisCacheManager.builder(factory)
+        return RedisCacheManager.builder(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()))
                 .cacheDefaults(configuration)
                 .build();
     }
@@ -72,14 +84,12 @@ public class RedisAutoConfiguration {
      * Redis Db切换器
      * 基于RedisConnectionFactory
      *
-     * @param redisConnectionFactory RedisConnectionFactory
      * @return DbSwitchAspect
      */
     @Bean
-    public DbSwitchAspect dbSwitchAspect(RedisConnectionFactory redisConnectionFactory) {
-        return new DbSwitchAspect(redisConnectionFactory);
+    public DbSwitchAspect dbSwitchAspect(RedisProperties redisProperties) {
+        return new DbSwitchAspect(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()), redisProperties);
     }
-
 
     private Duration ttl(RedisCacheProperties properties) {
         RedisCacheProperties.RandomTtl randomTtl = properties.getRandomTtl();
