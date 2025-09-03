@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.itsuka.system.domain.SysUserRole;
 import com.itsuka.system.mapper.SysUserRoleMapper;
+import com.itsuka.system.service.SysUserRoleService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class SysUserRoleServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUserRole>
-    implements IService<SysUserRole> {
+        implements SysUserRoleService {
 
 }
 

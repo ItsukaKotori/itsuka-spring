@@ -2,7 +2,7 @@ package com.itsuka.system.dto.user;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 /**
