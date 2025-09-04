@@ -4,7 +4,7 @@ import com.itsuka.system.config.handler.CustomAuthenticationFailureHandler;
 import com.itsuka.system.config.handler.CustomAuthenticationSuccessHandler;
 import com.itsuka.system.config.handler.CustomLogoutSuccessHandler;
 import com.itsuka.system.config.handler.SecurityExceptionHandler;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -24,25 +24,20 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
     
-    @Autowired
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
     
-    @Autowired
-    private CustomAuthenticationSuccessHandler authenticationSuccessHandler;
+    private final CustomAuthenticationSuccessHandler authenticationSuccessHandler;
     
-    @Autowired
-    private CustomAuthenticationFailureHandler authenticationFailureHandler;
+    private final CustomAuthenticationFailureHandler authenticationFailureHandler;
     
-    @Autowired
-    private CustomLogoutSuccessHandler logoutSuccessHandler;
+    private final CustomLogoutSuccessHandler logoutSuccessHandler;
     
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     
-    @Autowired
-    private SecurityExceptionHandler securityExceptionHandler;
+    private final SecurityExceptionHandler securityExceptionHandler;
     
     /**
      * 密码编码器

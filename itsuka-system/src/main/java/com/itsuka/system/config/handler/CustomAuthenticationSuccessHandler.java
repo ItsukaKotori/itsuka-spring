@@ -5,8 +5,8 @@ import com.itsuka.system.utils.JwtUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.itsuka.core.domian.Response;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -21,13 +21,12 @@ import java.util.Map;
  * @author Itsuka
  */
 @Component
+@RequiredArgsConstructor
 public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     
-    @Autowired
-    private JwtUtils jwtUtils;
+    private final JwtUtils jwtUtils;
     
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
     
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,

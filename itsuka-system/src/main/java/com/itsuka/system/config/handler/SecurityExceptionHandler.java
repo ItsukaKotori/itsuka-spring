@@ -1,8 +1,8 @@
 package com.itsuka.system.config.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.itsuka.core.domian.Response;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -23,10 +23,10 @@ import java.io.PrintWriter;
  * @author Itsuka
  */
 @Component
+@RequiredArgsConstructor
 public class SecurityExceptionHandler implements AccessDeniedHandler, AuthenticationEntryPoint {
     
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
     
     /**
      * 处理权限不足异常
