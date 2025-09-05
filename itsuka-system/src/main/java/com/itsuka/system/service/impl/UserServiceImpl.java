@@ -2,24 +2,21 @@ package com.itsuka.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.itsuka.system.convert.UserConvert;
-import com.itsuka.system.domain.SysUser;
-import com.itsuka.system.domain.SysUserRole;
+import com.itsuka.system.domain.User;
+import com.itsuka.system.domain.UserRole;
 import com.itsuka.system.dto.user.UserCreateDto;
 import com.itsuka.system.dto.user.UserQueryCriteria;
 import com.itsuka.system.dto.user.UserUpdateDto;
-import com.itsuka.system.mapper.SysUserMapper;
-import com.itsuka.system.service.SysRoleService;
-import com.itsuka.system.service.SysUserRoleService;
-import com.itsuka.system.service.SysUserService;
+import com.itsuka.system.mapper.UserMapper;
+import com.itsuka.system.service.UserRoleService;
+import com.itsuka.system.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 import java.util.stream.Collectors;
 
-import org.apache.ibatis.javassist.tools.framedump;
 import org.itsuka.core.exception.ServiceException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,25 +30,25 @@ import org.springframework.util.ObjectUtils;
  */
 @Service
 @RequiredArgsConstructor
-public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
 
-    private final SysUserRoleService userRoleService;
+    private final UserRoleService userRoleService;
 
     @Override
-    public Page<SysUser> pageUser(Page<SysUser> page, UserQueryCriteria criteria) {
+    public Page<User> pageUser(Page<User> page, UserQueryCriteria criteria) {
         return page(page, getWrapper(criteria));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean create(UserCreateDto createDto) {
-        SysUser user = UserConvert.INSTANCE.convert(createDto);
+        User user = UserConvert.INSTANCE.convert(createDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         this.save(user);
         if (!ObjectUtils.isEmpty(createDto.getRoleIds())) {
             userRoleService.saveBatch(createDto.getRoleIds().stream()
-                    .map(roleId -> new SysUserRole().setRoleId(roleId).setUserId(user.getId()))
+                    .map(roleId -> new UserRole().setRoleId(roleId).setUserId(user.getId()))
                     .collect(Collectors.toList()));
         }
         return Boolean.TRUE;
@@ -59,23 +56,23 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     public Boolean update(UserUpdateDto updateDto) {
-        SysUser user = this.getById(updateDto.getId());
+        User user = this.getById(updateDto.getId());
         if (ObjectUtils.isEmpty(user)) {
             throw ServiceException.create("用户不存在!");
         }
-        SysUser updateUser = UserConvert.INSTANCE.convert(updateDto);
-        return this.update(updateUser, new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getId, updateDto.getId()));
+        User updateUser = UserConvert.INSTANCE.convert(updateDto);
+        return this.update(updateUser, new LambdaQueryWrapper<User>()
+                .eq(User::getId, updateDto.getId()));
     }
 
-    private Wrapper<SysUser> getWrapper(UserQueryCriteria criteria) {
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+    private Wrapper<User> getWrapper(UserQueryCriteria criteria) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(!ObjectUtils.isEmpty(criteria.getUsername()),
-                SysUser::getUsername, criteria.getUsername());
+                User::getUsername, criteria.getUsername());
         wrapper.like(!ObjectUtils.isEmpty(criteria.getNickname()),
-                SysUser::getNickname, criteria.getNickname());
+                User::getNickname, criteria.getNickname());
         wrapper.like(!ObjectUtils.isEmpty(criteria.getEnable()),
-                SysUser::getEnable, criteria.getEnable());
+                User::getEnable, criteria.getEnable());
         return wrapper;
     }
 }

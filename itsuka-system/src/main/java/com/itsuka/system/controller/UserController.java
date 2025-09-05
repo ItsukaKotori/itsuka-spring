@@ -1,11 +1,11 @@
 package com.itsuka.system.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.itsuka.system.domain.SysUser;
+import com.itsuka.system.domain.User;
 import com.itsuka.system.dto.user.UserCreateDto;
 import com.itsuka.system.dto.user.UserQueryCriteria;
 import com.itsuka.system.dto.user.UserUpdateDto;
-import com.itsuka.system.service.SysUserService;
+import com.itsuka.system.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +26,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequestMapping("/user")
 @RequiredArgsConstructor
 public class UserController {
-    private final SysUserService userService;
+    private final UserService userService;
 
     @GetMapping("/page")
     @Operation(summary = "用户分页", description = "用户分页")
-    public Response<Page<SysUser>> page(Page<SysUser> page, UserQueryCriteria criteria) {
+    public Response<Page<User>> page(Page<User> page, UserQueryCriteria criteria) {
         return Response.success(userService.pageUser(page, criteria));
     }
 

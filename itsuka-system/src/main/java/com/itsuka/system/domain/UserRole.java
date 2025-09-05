@@ -1,6 +1,5 @@
 package com.itsuka.system.domain;
 
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -10,19 +9,17 @@ import lombok.experimental.Accessors;
  *
  * @author itsuka
  */
-@TableName(value ="sys_user_role")
+@TableName(value ="user_role")
 @Data
 @Accessors(chain = true)
-public class SysUserRole {
+public class UserRole {
     /**
      * 用户ID
      */
-    @TableId
     private Long userId;
 
     /**
      * 角色ID
      */
-    @TableId
     private Long roleId;
 }

@@ -12,9 +12,9 @@ import org.itsuka.mybatis.plus.domain.BaseDomain;
  * @author  itsuka
  */
 @EqualsAndHashCode(callSuper = true)
-@TableName(value ="sys_resource")
+@TableName(value ="resource")
 @Data
-public class SysResource extends BaseDomain {
+public class Resource extends BaseDomain {
     /**
      * 主键
      */

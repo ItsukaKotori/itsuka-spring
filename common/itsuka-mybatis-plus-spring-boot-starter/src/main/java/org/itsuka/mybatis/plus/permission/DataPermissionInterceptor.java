@@ -32,8 +32,6 @@ public class DataPermissionInterceptor implements InnerInterceptor {
 
     private final DataPermissionEscaper escaper;
 
-    private final MybatisPlusHelper mybatisPlusHelper;
-
     @Override
     public boolean willDoUpdate(Executor executor, MappedStatement ms, Object parameter) throws SQLException {
         // 只拦截更新与删除

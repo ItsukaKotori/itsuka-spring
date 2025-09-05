@@ -2,7 +2,7 @@ package com.itsuka.system.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.itsuka.system.domain.SysUser;
+import com.itsuka.system.domain.User;
 import com.itsuka.system.dto.user.UserCreateDto;
 import com.itsuka.system.dto.user.UserQueryCriteria;
 import com.itsuka.system.dto.user.UserUpdateDto;
@@ -12,7 +12,7 @@ import com.itsuka.system.dto.user.UserUpdateDto;
  *
  * @author itsuka
  */
-public interface SysUserService extends IService<SysUser> {
+public interface UserService extends IService<User> {
     /**
      * 分页查询
      *
@@ -20,7 +20,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param criteria 查询条件
      * @return 分页
      */
-    Page<SysUser> pageUser(Page<SysUser> page, UserQueryCriteria criteria);
+    Page<User> pageUser(Page<User> page, UserQueryCriteria criteria);
 
     /**
      * 创建用户

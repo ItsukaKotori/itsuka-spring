@@ -33,11 +33,10 @@ public class MybatisPlusAutoConfiguration {
      */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor(
-        DataPermissionProperty property, WebHelper webHelper, 
-        DataPermissionEscaper escaper, MybatisPlusHelper mybatisPlusHelper) {
+        DataPermissionProperty property, WebHelper webHelper, DataPermissionEscaper escaper) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
-        interceptor.addInnerInterceptor(new DataPermissionInterceptor(property, webHelper, escaper, mybatisPlusHelper));
+        interceptor.addInnerInterceptor(new DataPermissionInterceptor(property, webHelper, escaper));
         return interceptor;
     }
 

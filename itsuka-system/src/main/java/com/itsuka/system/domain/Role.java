@@ -11,9 +11,9 @@ import org.itsuka.mybatis.plus.domain.BaseDomain;
  * @author itsuka
  */
 @EqualsAndHashCode(callSuper = true)
-@TableName(value ="sys_role")
+@TableName(value ="role")
 @Data
-public class SysRole extends BaseDomain {
+public class Role extends BaseDomain {
     /**
      * 
      */

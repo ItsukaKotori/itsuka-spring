@@ -3,7 +3,9 @@ package com.itsuka.system.domain;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.itsuka.core.domian.LoginUser;
 import org.itsuka.mybatis.plus.domain.BaseDomain;
+import org.springframework.security.core.GrantedAuthority;
 
 /**
  * 系统用户表
@@ -11,9 +13,9 @@ import org.itsuka.mybatis.plus.domain.BaseDomain;
  * @author itsuka
  */
 @EqualsAndHashCode(callSuper = true)
-@TableName(value ="sys_user")
+@TableName(value = "user")
 @Data
-public class SysUser extends BaseDomain {
+public class User extends BaseDomain {
     /**
      * 主键
      */

@@ -1,13 +1,13 @@
 package com.itsuka.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.itsuka.system.domain.SysResource;
+import com.itsuka.system.domain.Resource;
 
 /**
  * SysResourceService
  *
  * @author itsuka
  */
-public interface SysResourceService extends IService<SysResource> {
+public interface ResourceService extends IService<Resource> {
 
 }

@@ -1,6 +1,5 @@
 package com.itsuka.system.domain;
 
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -9,18 +8,16 @@ import lombok.Data;
  *
  * @author itsuka
  */
-@TableName(value ="sys_menu_role")
+@TableName(value ="menu_role")
 @Data
-public class SysMenuRole {
+public class MenuRole {
     /**
      * 角色ID
      */
-    @TableId
     private Long roleId;
 
     /**
      * 菜单ID
      */
-    @TableId
     private Long menuId;
 }

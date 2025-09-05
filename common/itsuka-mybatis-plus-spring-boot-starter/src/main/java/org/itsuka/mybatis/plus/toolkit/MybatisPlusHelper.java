@@ -52,9 +52,8 @@ public class MybatisPlusHelper {
      * @return
      */
     public static List<Map<String, Object>> doQuery(String sql, Object... parameters) {
-        try (SqlRunner sqlRunner = SqlRunner.db()) {
-            return sqlRunner.selectList(sql, parameters);
-        }
+        SqlRunner sqlRunner = SqlRunner.db();
+        return sqlRunner.selectList(sql, parameters);
     }
 
     /**

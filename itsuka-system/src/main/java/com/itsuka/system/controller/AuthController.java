@@ -1,7 +1,7 @@
 package com.itsuka.system.controller;
 
 import com.itsuka.system.dto.user.UserCreateDto;
-import com.itsuka.system.service.SysUserService;
+import com.itsuka.system.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.itsuka.core.domian.Response;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
     
-    private final SysUserService sysUserService;
+    private final UserService userService;
     
     /**
      * 未授权访问处理
@@ -37,7 +37,7 @@ public class AuthController {
     @PostMapping("/register")
     public Response<String> register(@RequestBody UserCreateDto createDto) {
         // 注册用户
-        Boolean result = sysUserService.create(createDto);
+        Boolean result = userService.create(createDto);
         if (result) {
             @SuppressWarnings("unchecked")
             Response<String> successResponse = (Response<String>) Response.success("注册成功");

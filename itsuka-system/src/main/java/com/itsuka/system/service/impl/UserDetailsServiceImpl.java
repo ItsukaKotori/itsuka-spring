@@ -1,9 +1,9 @@
 package com.itsuka.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.itsuka.system.domain.LoginUser;
-import com.itsuka.system.domain.SysUser;
-import com.itsuka.system.service.SysUserService;
+import com.itsuka.system.convert.UserConvert;
+import com.itsuka.system.domain.User;
+import com.itsuka.system.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.itsuka.core.exception.ServiceException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,13 +24,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
     
-    private final SysUserService sysUserService;
+    private final UserService userService;
     
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // 根据用户名查询用户
-        SysUser user = sysUserService.getOne(new LambdaQueryWrapper<SysUser>()
-            .eq(SysUser::getUsername, username));
+        User user = userService.getOne(new LambdaQueryWrapper<User>()
+            .eq(User::getUsername, username));
         
         // 如果用户不存在，抛出异常
         if (user == null) {
@@ -51,6 +51,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
         
         // 返回LoginUser对象
-        return new LoginUser(user, authorities);
+        return UserConvert.INSTANCE.toLoginUser(user, authorities);
     }
 }

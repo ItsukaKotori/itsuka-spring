@@ -14,7 +14,8 @@
         <lombok.version>1.18.26</lombok.version>
         <spring.boot.version>3.5.5</spring.boot.version>
         <jakarta.validation.version>3.0.2</jakarta.validation.version>
-        <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
+        <mybatis-plus.version>3.5.7</mybatis-plus.version>
+        <mybatis-spring.version>3.0.3</mybatis-spring.version>
         <spring.doc.version>1.8.0</spring.doc.version>
         <mysql.version>8.0.33</mysql.version>
         <mapstruct.version>1.5.3.Final</mapstruct.version>
@@ -63,6 +64,11 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis-spring</artifactId>
+                <version>${mybatis-spring.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
