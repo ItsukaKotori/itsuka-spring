@@ -24,6 +24,17 @@ public class DictProperties {
     private boolean autoLoad;
 
     /**
+     * 数据库类型，可选值：mysql, oracle, postgresql，不配置时自动根据驱动类名或URL识别
+     */
+    private String databaseType;
+
+    /**
+     * 自定义数据库方言类的全限定名，优先级高于databaseType
+     * 设置后将使用该类的实例作为数据库方言
+     */
+    private String dialectClass;
+
+    /**
      * 数据库属性
      */
     private DatasourceProperties datasource;

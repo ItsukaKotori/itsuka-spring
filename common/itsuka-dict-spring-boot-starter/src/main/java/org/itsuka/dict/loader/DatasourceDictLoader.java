@@ -1,6 +1,8 @@
 package org.itsuka.dict.loader;
 
 import org.itsuka.dict.cache.DictCacheManager;
+import org.itsuka.dict.dialect.DatabaseDialect;
+import org.itsuka.dict.dialect.DatabaseDialectFactory;
 import org.itsuka.dict.properties.DictProperties;
 import org.itsuka.dict.properties.DictProperties.DatasourceProperties;
 
@@ -78,9 +80,13 @@ public class DatasourceDictLoader implements DictLoader {
      * 检测并创建字典表
      */
     private void checkAndCreateDictTables(Connection connection) throws Exception {
-        // 检查表是否存在的SQL
-        String checkDictTableSql = "SELECT count(*) FROM information_schema.tables WHERE table_name = 'dict'";
-        String checkDictDetailTableSql = "SELECT count(*) FROM information_schema.tables WHERE table_name = 'dict_detail'";
+        // 获取数据库方言
+        DatabaseDialect dialect = getDatabaseDialect();
+        log.info("使用数据库方言: {}", dialect.getDatabaseType());
+        
+        // 检查表是否存在的SQL（使用对应数据库方言的SQL）
+        String checkDictTableSql = dialect.getTableExistsSql("dict");
+        String checkDictDetailTableSql = dialect.getTableExistsSql("dict_detail");
         
         boolean dictTableExists = false;
         boolean dictDetailTableExists = false;
@@ -101,19 +107,23 @@ public class DatasourceDictLoader implements DictLoader {
             }
         }
         
-        // 如果表不存在，读取并执行建表SQL
+        // 如果表不存在，使用数据库方言提供的SQL创建表
         if (!dictTableExists || !dictDetailTableExists) {
-            String createTableSql = readCreateTableSql();
-            
             try (Statement stmt = connection.createStatement()) {
-                // 分割SQL语句并执行
-                String[] sqlStatements = createTableSql.split(";\n");
-                for (String sql : sqlStatements) {
-                    if (!sql.trim().isEmpty()) {
-                        stmt.executeUpdate(sql);
-                        log.info("执行SQL: {}", sql);
-                    }
+                // 如果字典主表不存在，创建字典主表
+                if (!dictTableExists) {
+                    String createDictTableSql = dialect.getCreateDictTableSql();
+                    stmt.executeUpdate(createDictTableSql);
+                    log.info("执行创建字典主表SQL: {}", createDictTableSql);
                 }
+                
+                // 如果字典详情表不存在，创建字典详情表
+                if (!dictDetailTableExists) {
+                    String createDictDetailTableSql = dialect.getCreateDictDetailTableSql();
+                    stmt.executeUpdate(createDictDetailTableSql);
+                    log.info("执行创建字典详情表SQL: {}", createDictDetailTableSql);
+                }
+                
                 log.info("成功创建字典表");
             }
         } else {
@@ -122,35 +132,16 @@ public class DatasourceDictLoader implements DictLoader {
     }
     
     /**
-     * 读取建表SQL文件
-     */
-    private String readCreateTableSql() throws Exception {
-        try (InputStream inputStream = getClass().getResourceAsStream("/schema/dict.sql");
-             Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8.name())) {
-            
-            if (inputStream == null) {
-                throw new Exception("未找到dict.sql文件");
-            }
-            
-            // 读取完整的SQL内容
-            StringBuilder sqlBuilder = new StringBuilder();
-            while (scanner.hasNextLine()) {
-                sqlBuilder.append(scanner.nextLine()).append("\n");
-            }
-            
-            return sqlBuilder.toString();
-        }
-    }
-
-    /**
      * 查询字典数据
      * 从dict和dict_detail表中关联查询字典数据
      */
     private List<Map<String, Object>> queryDictData(Connection connection) throws SQLException {
         List<Map<String, Object>> result = new ArrayList<>();
-        // 关联查询字典数据
-        String sql = "SELECT d.name AS dict_type, dd.value AS dict_code, dd.label AS dict_value " +
-                     "FROM dict d JOIN dict_detail dd ON d.id = dd.dict_id";
+        
+        // 获取数据库方言并使用其提供的查询SQL
+        DatabaseDialect dialect = getDatabaseDialect();
+        String sql = dialect.getQueryDictDataSql();
+        log.debug("使用查询SQL: {}", sql);
         
         try (PreparedStatement ps = connection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -165,6 +156,62 @@ public class DatasourceDictLoader implements DictLoader {
         }
         
         return result;
+    }
+    
+    /**
+     * 获取数据库方言实例
+     * @return 数据库方言实例
+     */
+    private DatabaseDialect getDatabaseDialect() {
+        // 优先使用用户自定义的方言类
+        if (properties.getDialectClass() != null && !properties.getDialectClass().isEmpty()) {
+            try {
+                Class<?> dialectClass = Class.forName(properties.getDialectClass());
+                if (DatabaseDialect.class.isAssignableFrom(dialectClass)) {
+                    DatabaseDialect customDialect = (DatabaseDialect) dialectClass.getDeclaredConstructor().newInstance();
+                    log.info("使用自定义数据库方言: {}", properties.getDialectClass());
+                    return customDialect;
+                } else {
+                    log.warn("配置的方言类 {} 不是 DatabaseDialect 的实现类", properties.getDialectClass());
+                }
+            } catch (ClassNotFoundException e) {
+                log.warn("找不到配置的方言类: {}", properties.getDialectClass(), e);
+            } catch (Exception e) {
+                log.warn("实例化自定义方言类失败: {}", properties.getDialectClass(), e);
+            }
+        }
+        
+        // 其次使用用户配置的数据库类型
+        if (properties.getDatabaseType() != null && !properties.getDatabaseType().isEmpty()) {
+            String dbType = properties.getDatabaseType().toLowerCase();
+            switch (dbType) {
+                case "mysql":
+                    return new org.itsuka.dict.dialect.MySQLDialect();
+                case "oracle":
+                    return new org.itsuka.dict.dialect.OracleDialect();
+                case "postgresql":
+                    return new org.itsuka.dict.dialect.PostgreSQLDialect();
+                default:
+                    log.warn("配置的数据库类型 {} 不支持，将根据驱动类名自动识别", dbType);
+                    break;
+            }
+        }
+        
+        DatasourceProperties datasource = properties.getDatasource();
+        if (datasource != null) {
+            // 先尝试根据驱动类名识别
+            if (datasource.getDriverClassName() != null) {
+                return DatabaseDialectFactory.getDialect(datasource.getDriverClassName());
+            }
+            // 再尝试根据URL识别
+            if (datasource.getUrl() != null) {
+                return DatabaseDialectFactory.getDialectByUrl(datasource.getUrl());
+            }
+        }
+        
+        // 默认返回MySQL方言
+        log.warn("无法识别数据库类型，使用MySQL方言作为默认值");
+        return new org.itsuka.dict.dialect.MySQLDialect();
     }
 
     /**
