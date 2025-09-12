@@ -35,12 +35,12 @@ create table role (
     unique key uk_code (code)
 ) comment '角色表';
 
--- 创建菜单表
+-- 创建资源表
 drop table if exists resource;
 create table resource (
     id bigint not null comment '主键（雪花算法生成）',
-    name varchar(50) not null comment '菜单名称',
-    code varchar(50) not null comment '菜单编码',
+    name varchar(50) not null comment '资源名称',
+    code varchar(50) not null comment '资源编码',
     type varchar(20) not null comment '资源类型',
     component varchar(255) comment '前端组件',
     path varchar(255) comment '路由路径',
@@ -52,7 +52,7 @@ create table resource (
     update_by varchar(50) comment '更新人',
     primary key (id),
     unique key uk_code (code)
-) comment '菜单表';
+) comment '资源表';
 
 -- 创建用户角色关联表
 drop table if exists user_role;
@@ -64,15 +64,15 @@ create table user_role (
     foreign key (role_id) references role(id) on delete cascade
 ) comment '用户角色关联表';
 
--- 创建角色菜单关联表
-drop table if exists menu_role;
-create table menu_role (
+-- 创建角色资源关联表
+drop table if exists resource_role;
+create table resource_role (
     role_id bigint not null comment '角色ID',
-    menu_id bigint not null comment '菜单ID',
-    primary key (role_id, menu_id),
+    resource_id bigint not null comment '资源ID',
+    primary key (role_id, resource_id),
     foreign key (role_id) references role(id) on delete cascade,
-    foreign key (menu_id) references resource(id) on delete cascade
-) comment '角色菜单关联表';
+    foreign key (resource_id) references resource(id) on delete cascade
+) comment '角色资源关联表';
 
 /*
  * 初始化数据

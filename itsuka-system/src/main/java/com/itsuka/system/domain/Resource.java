@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 import org.itsuka.mybatis.plus.domain.BaseDomain;
 
 /**
- * 菜单表
+ * 资源表
  *
  * @author  itsuka
  */
@@ -23,12 +23,12 @@ public class Resource extends BaseDomain {
     private Long id;
 
     /**
-     * 菜单名称
+     * 资源名称
      */
     private String name;
 
     /**
-     * 菜单编码
+     * 资源编码
      */
     private String code;
 

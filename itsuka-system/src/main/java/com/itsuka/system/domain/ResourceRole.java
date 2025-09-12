@@ -2,22 +2,24 @@ package com.itsuka.system.domain;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
- * 角色菜单关联表
+ * 角色资源关联表
  *
  * @author itsuka
  */
-@TableName(value ="menu_role")
+@TableName(value ="resource_role")
 @Data
-public class MenuRole {
+@Accessors(chain = true)
+public class ResourceRole {
     /**
      * 角色ID
      */
     private Long roleId;
 
     /**
-     * 菜单ID
+     * 资源ID
      */
-    private Long menuId;
+    private Long resourceId;
 }
