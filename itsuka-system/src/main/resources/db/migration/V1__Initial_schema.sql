@@ -79,12 +79,12 @@ create table menu_role (
  */
 
 -- 初始化管理员用户
-insert into user (username, nickname, password, enable, `lock`, create_time, update_time) 
-values ('admin', '系统管理员', '$2a$10$J3u5t8n9O1pR2e3wQ4e5rT6y7uI8o9p', true, false, now(), now());
+insert into user (id, username, nickname, password, enable, `lock`, create_time, update_time) 
+values (1, 'admin', '系统管理员', '$2a$10$J3u5t8n9O1pR2e3wQ4e5rT6y7uI8o9p', true, false, now(), now());
 
 -- 初始化角色
-insert into role (code, name, description, create_time, update_time) 
-values ('ADMIN', '管理员', '系统管理员角色，拥有所有权限', now(), now());
+insert into role (id, code, name, description, create_time, update_time) 
+values (1, 'ADMIN', '管理员', '系统管理员角色，拥有所有权限', now(), now());
 
 -- 关联管理员用户和管理员角色
 insert into user_role (user_id, role_id) 
