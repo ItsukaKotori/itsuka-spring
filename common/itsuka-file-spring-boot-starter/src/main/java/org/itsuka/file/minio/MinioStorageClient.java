@@ -22,8 +22,9 @@ import java.util.concurrent.TimeUnit;
  */
 @RequiredArgsConstructor
 public class MinioStorageClient {
-    private final MinioClient minioClient;
-    private final MinioProperties minioProperties;
+    private final MinioClient client;
+
+    private final MinioProperties properties;
 
     /**
      * 创建存储桶
@@ -31,8 +32,8 @@ public class MinioStorageClient {
      * @param bucketName 存储桶名称
      */
     public void createBucket(String bucketName) throws Exception {
-        if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
-            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+        if (!client.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
+            client.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
         }
     }
 
@@ -47,7 +48,7 @@ public class MinioStorageClient {
     public String uploadFile(String bucketName, String objectName, MultipartFile file) throws Exception {
         createBucket(bucketName);
         
-        minioClient.putObject(
+        client.putObject(
                 PutObjectArgs.builder()
                         .bucket(bucketName)
                         .object(objectName)
@@ -56,7 +57,7 @@ public class MinioStorageClient {
                         .build()
         );
         
-        return String.format("%s/%s/%s", minioProperties.getUrl(), bucketName, objectName);
+        return String.format("%s/%s/%s", properties.getUrl(), bucketName, objectName);
     }
 
     /**
@@ -67,8 +68,8 @@ public class MinioStorageClient {
      * @return 文件路径
      */
     public String uploadFile(String objectName, MultipartFile file) throws Exception {
-        String bucketName = StringUtils.hasText(minioProperties.getBucketName())
-                ? minioProperties.getBucketName()
+        String bucketName = StringUtils.hasText(properties.getBucketName())
+                ? properties.getBucketName()
                 : "default";
         return uploadFile(bucketName, objectName, file);
     }
@@ -81,7 +82,7 @@ public class MinioStorageClient {
      * @return 文件流
      */
     public InputStream getObject(String bucketName, String objectName) throws Exception {
-        return minioClient.getObject(
+        return client.getObject(
                 GetObjectArgs.builder()
                         .bucket(bucketName)
                         .object(objectName)
@@ -96,8 +97,8 @@ public class MinioStorageClient {
      * @return 文件流
      */
     public InputStream getObject(String objectName) throws Exception {
-        String bucketName = StringUtils.hasText(minioProperties.getBucketName())
-                ? minioProperties.getBucketName()
+        String bucketName = StringUtils.hasText(properties.getBucketName())
+                ? properties.getBucketName()
                 : "default";
         return getObject(bucketName, objectName);
     }
@@ -109,7 +110,7 @@ public class MinioStorageClient {
      * @param objectName 对象名称
      */
     public void deleteObject(String bucketName, String objectName) throws Exception {
-        minioClient.removeObject(
+        client.removeObject(
                 RemoveObjectArgs.builder()
                         .bucket(bucketName)
                         .object(objectName)
@@ -123,8 +124,8 @@ public class MinioStorageClient {
      * @param objectName 对象名称
      */
     public void deleteObject(String objectName) throws Exception {
-        String bucketName = StringUtils.hasText(minioProperties.getBucketName())
-                ? minioProperties.getBucketName()
+        String bucketName = StringUtils.hasText(properties.getBucketName())
+                ? properties.getBucketName()
                 : "default";
         deleteObject(bucketName, objectName);
     }
@@ -135,7 +136,7 @@ public class MinioStorageClient {
      * @return 存储桶列表
      */
     public List<Bucket> listBuckets() throws Exception {
-        return minioClient.listBuckets();
+        return client.listBuckets();
     }
 
     /**
@@ -146,7 +147,7 @@ public class MinioStorageClient {
      */
     public List<Item> listObjects(String bucketName) throws Exception {
         List<Item> items = new ArrayList<>();
-        Iterable<Result<Item>> results = minioClient.listObjects(
+        Iterable<Result<Item>> results = client.listObjects(
                 ListObjectsArgs.builder()
                         .bucket(bucketName)
                         .recursive(true)
@@ -164,8 +165,8 @@ public class MinioStorageClient {
      * @return 对象列表
      */
     public List<Item> listObjects() throws Exception {
-        String bucketName = StringUtils.hasText(minioProperties.getBucketName())
-                ? minioProperties.getBucketName()
+        String bucketName = StringUtils.hasText(properties.getBucketName())
+                ? properties.getBucketName()
                 : "default";
         return listObjects(bucketName);
     }
@@ -180,7 +181,7 @@ public class MinioStorageClient {
      * @return 预签名URL
      */
     public String getPresignedUrl(String bucketName, String objectName, int expires, TimeUnit timeUnit) throws Exception {
-        return minioClient.getPresignedObjectUrl(
+        return client.getPresignedObjectUrl(
                 GetPresignedObjectUrlArgs.builder()
                         .method(Method.GET)
                         .bucket(bucketName)
@@ -199,8 +200,8 @@ public class MinioStorageClient {
      * @return 预签名URL
      */
     public String getPresignedUrl(String objectName, int expires, TimeUnit timeUnit) throws Exception {
-        String bucketName = StringUtils.hasText(minioProperties.getBucketName())
-                ? minioProperties.getBucketName()
+        String bucketName = StringUtils.hasText(properties.getBucketName())
+                ? properties.getBucketName()
                 : "default";
         return getPresignedUrl(bucketName, objectName, expires, timeUnit);
     }

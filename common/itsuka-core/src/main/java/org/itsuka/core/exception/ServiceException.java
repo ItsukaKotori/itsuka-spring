@@ -18,7 +18,8 @@ public class ServiceException extends RuntimeException {
 
     private String message;
 
-    private ServiceException(Integer code, String message) {
+    public ServiceException(Throwable cause, Integer code, String message) {
+        super(cause);
         this.code = code;
         this.message = message;
     }
@@ -27,7 +28,11 @@ public class ServiceException extends RuntimeException {
         return create(ERROR_CODE, message);
     }
 
+    public static ServiceException error(Throwable cause) {
+        return new ServiceException(cause, ERROR_CODE, null);
+    }
+
     public static ServiceException create(Integer code, String message) {
-        return new ServiceException(code, message);
+        return new ServiceException(null, code, message);
     }
 }
