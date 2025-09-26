@@ -17,5 +17,17 @@ public @interface DictField {
      */
     String key();
 
+    /**
+     * 默认值
+     *
+     * @return
+     */
     String defaultValue() default "";
+
+    /**
+     * 是否覆盖原值
+     *
+     * @return
+     */
+    boolean override() default true;
 }

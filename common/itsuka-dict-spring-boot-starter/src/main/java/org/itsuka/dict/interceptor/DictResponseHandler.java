@@ -1,10 +1,12 @@
 package org.itsuka.dict.interceptor;
 
+import org.itsuka.core.utils.ReflectionKit;
 import org.itsuka.dict.annotation.DictField;
 import org.itsuka.dict.annotation.DictModel;
 import org.itsuka.dict.cache.DictCacheManager;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -13,6 +15,7 @@ import java.util.*;
  * 字典响应处理器
  * 用于处理响应实体中的字典字段，当实体中存在@DictField及DictModel注解时，从缓存中获取字典值替换对应的字段值
  */
+@Slf4j
 @RequiredArgsConstructor
 public class DictResponseHandler {
     private final DictCacheManager dictCacheManager;
@@ -56,8 +59,7 @@ public class DictResponseHandler {
         }
 
         // 处理基本类型和包装类型
-        if (responseObject instanceof String || responseObject instanceof Number || 
-            responseObject instanceof Boolean || responseObject instanceof Character) {
+        if (ReflectionKit.isPrimitiveOrWrapper(responseObject.getClass()) || ReflectionKit.isString(responseObject.getClass())) {
             return responseObject;
         }
 
@@ -75,18 +77,21 @@ public class DictResponseHandler {
             return null;
         }
         Class<?> clazz = object.getClass();
-        DictModel dictModel = clazz.getAnnotation(DictModel.class);
+        
+        // 使用 ReflectionKit 获取注解
+        DictModel dictModel = ReflectionKit.getAnnotation(clazz, DictModel.class);
         String prefix = dictModel != null ? dictModel.prefix() : "";
 
-        // 获取所有字段，包括父类的字段
-        List<Field> fields = getAllFields(clazz);
+        // 使用 ReflectionKit 获取所有字段（包括父类）
+        List<Field> fields = ReflectionKit.getFields(clazz);
 
         for (Field field : fields) {
-            DictField dictField = field.getAnnotation(DictField.class);
+            // 使用 ReflectionKit 获取字段注解
+            DictField dictField = ReflectionKit.getAnnotation(field, DictField.class);
             if (dictField != null) {
                 try {
-                    field.setAccessible(true);
-                    Object fieldValue = field.get(object);
+                    // 使用 ReflectionKit 获取字段值
+                    Object fieldValue = ReflectionKit.getFieldValue(object, field.getName());
                     if (fieldValue != null) {
                         // 构建字典key
                         String dictKey = buildDictKey(prefix, dictField.key(), fieldValue.toString());
@@ -96,12 +101,19 @@ public class DictResponseHandler {
                             // 如果缓存中没有值，使用默认值
                             dictValue = dictField.defaultValue();
                         }
-                        // 设置字典值到对应的文本字段（假设字段名为fieldNameText）
-                        setDictTextValue(object, field.getName(), dictValue);
+                        
+                        // 根据配置决定是否覆盖原值或设置文本字段
+                        if (dictField.override() && (dictValue != null && !dictValue.isEmpty())) {
+                            // 覆盖原字段值
+                            ReflectionKit.setFieldValue(object, field.getName(), dictValue);
+                        } else {
+                            // 设置字典值到对应的文本字段（假设字段名为fieldNameText）
+                            setDictTextValue(object, field.getName(), dictValue);
+                        }
                     }
                 } catch (Exception e) {
-                    // 处理异常，但不影响主流程
-                    e.printStackTrace();
+                    // 使用日志记录错误，但不影响主流程
+                    log.warn("处理字典字段 {} 时出现异常", field.getName(), e);
                 }
             }
         }
@@ -132,48 +144,27 @@ public class DictResponseHandler {
      * @param dictValue 字典文本值
      */
     private void setDictTextValue(Object object, String fieldName, String dictValue) {
+        if (dictValue == null || dictValue.isEmpty()) {
+            return;
+        }
+        
         try {
             // 假设字典文本字段名为原字段名加上Text后缀
             String textFieldName = fieldName + "Text";
-            Field textField = findField(object.getClass(), textFieldName);
-            if (textField != null) {
-                textField.setAccessible(true);
-                textField.set(object, dictValue);
+            
+            // 使用 ReflectionKit 查找字段，如果不存在则返回
+            try {
+                ReflectionKit.setFieldValue(object, textFieldName, dictValue);
+                log.debug("成功设置字典文本字段 {} = {}", textFieldName, dictValue);
+            } catch (RuntimeException e) {
+                // 字段不存在，跳过
+                log.debug("字典文本字段 {} 不存在，跳过设置", textFieldName);
             }
         } catch (Exception e) {
             // 处理异常，但不影响主流程
-            e.printStackTrace();
+            log.warn("设置字典文本字段 {} 时出现异常", fieldName, e);
         }
     }
 
-    /**
-     * 获取类的所有字段，包括父类的字段
-     * @param clazz 类
-     * @return 字段列表
-     */
-    private List<Field> getAllFields(Class<?> clazz) {
-        List<Field> fields = new ArrayList<>();
-        while (clazz != null && clazz != Object.class) {
-            fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
-            clazz = clazz.getSuperclass();
-        }
-        return fields;
-    }
 
-    /**
-     * 查找类中的指定字段
-     * @param clazz 类
-     * @param fieldName 字段名
-     * @return 字段对象，如果不存在则返回null
-     */
-    private Field findField(Class<?> clazz, String fieldName) {
-        while (clazz != null && clazz != Object.class) {
-            try {
-                return clazz.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException e) {
-                clazz = clazz.getSuperclass();
-            }
-        }
-        return null;
-    }
 }

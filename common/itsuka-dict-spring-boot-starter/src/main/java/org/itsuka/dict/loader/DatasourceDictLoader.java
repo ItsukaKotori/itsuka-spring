@@ -1,5 +1,6 @@
 package org.itsuka.dict.loader;
 
+import org.itsuka.core.utils.ReflectionKit;
 import org.itsuka.dict.cache.DictCacheManager;
 import org.itsuka.dict.dialect.DatabaseDialect;
 import org.itsuka.dict.dialect.DatabaseDialectFactory;
@@ -9,14 +10,11 @@ import org.itsuka.dict.properties.DictProperties.DatasourceProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -164,18 +162,19 @@ public class DatasourceDictLoader implements DictLoader {
      */
     private DatabaseDialect getDatabaseDialect() {
         // 优先使用用户自定义的方言类
-        if (properties.getDialectClass() != null && !properties.getDialectClass().isEmpty()) {
+        if (properties.getDialectClass() != null && !properties.getDialectClass().trim().isEmpty()) {
             try {
-                Class<?> dialectClass = Class.forName(properties.getDialectClass());
-                if (DatabaseDialect.class.isAssignableFrom(dialectClass)) {
-                    DatabaseDialect customDialect = (DatabaseDialect) dialectClass.getDeclaredConstructor().newInstance();
+                // 使用 ReflectionKit 安全获取类
+                Class<?> dialectClass = ReflectionKit.safeGetClass(properties.getDialectClass());
+                if (dialectClass != null && DatabaseDialect.class.isAssignableFrom(dialectClass)) {
+                    // 使用 ReflectionKit 创建实例
+                    @SuppressWarnings("unchecked")
+                    DatabaseDialect customDialect = ReflectionKit.newInstance((Class<DatabaseDialect>) dialectClass);
                     log.info("使用自定义数据库方言: {}", properties.getDialectClass());
                     return customDialect;
                 } else {
                     log.warn("配置的方言类 {} 不是 DatabaseDialect 的实现类", properties.getDialectClass());
                 }
-            } catch (ClassNotFoundException e) {
-                log.warn("找不到配置的方言类: {}", properties.getDialectClass(), e);
             } catch (Exception e) {
                 log.warn("实例化自定义方言类失败: {}", properties.getDialectClass(), e);
             }
