@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
-import org.itsuka.core.domian.LoginUser;
+import org.itsuka.core.domain.LoginUser;
 import org.itsuka.mybatis.plus.toolkit.MybatisPlusHelper;
 import org.itsuka.web.utils.WebHelper;
 

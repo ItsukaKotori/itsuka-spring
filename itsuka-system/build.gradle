@@ -1,0 +1,54 @@
+plugins {
+    id 'org.springframework.boot'
+    id 'java-library'
+    id "io.freefair.lombok" version "8.10.2"
+}
+
+dependencies {
+    // MapStruct - 使用根项目版本管理
+    implementation 'org.mapstruct:mapstruct'
+    annotationProcessor 'org.mapstruct:mapstruct-processor'
+    
+    // Lombok - 必须显式指定版本
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // SpringDoc OpenAPI
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui'
+    
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // JWT 依赖
+    implementation 'io.jsonwebtoken:jjwt-api'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson'
+    
+    // Flyway 数据库版本控制
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
+    
+    // MyBatis Plus - 显式添加
+    implementation 'com.baomidou:mybatis-plus-boot-starter'
+    implementation 'com.baomidou:mybatis-plus-core'
+    implementation 'com.baomidou:mybatis-plus-extension'
+    
+    // MySQL
+    implementation 'com.mysql:mysql-connector-j'
+    
+    // Jakarta Servlet API - 解决缺失问题
+    implementation 'jakarta.servlet:jakarta.servlet-api'
+    implementation 'jakarta.validation:jakarta.validation-api'
+    
+    // 本项目依赖
+    implementation project(':common:itsuka-core')
+    implementation project(':common:itsuka-mybatis-plus-spring-boot-starter')
+    implementation project(':common:itsuka-redis-spring-boot-starter')
+    
+    // 测试依赖
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.junit.platform:junit-platform-launcher'
+}

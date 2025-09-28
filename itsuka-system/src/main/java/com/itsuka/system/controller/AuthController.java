@@ -3,7 +3,7 @@ package com.itsuka.system.controller;
 import com.itsuka.system.dto.user.UserCreateDto;
 import com.itsuka.system.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.itsuka.core.domian.Response;
+import org.itsuka.core.domain.Response;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

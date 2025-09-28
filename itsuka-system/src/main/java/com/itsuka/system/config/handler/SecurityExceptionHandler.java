@@ -2,7 +2,7 @@ package com.itsuka.system.config.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.itsuka.core.domian.Response;
+import org.itsuka.core.domain.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;

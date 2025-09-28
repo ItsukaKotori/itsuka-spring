@@ -1,4 +1,4 @@
-package org.itsuka.core.domian;
+package org.itsuka.core.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;

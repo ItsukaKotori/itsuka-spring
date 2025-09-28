@@ -3,7 +3,7 @@ package com.itsuka.system.convert;
 import com.itsuka.system.domain.User;
 import com.itsuka.system.dto.user.UserCreateDto;
 import com.itsuka.system.dto.user.UserUpdateDto;
-import org.itsuka.core.domian.LoginUser;
+import org.itsuka.core.domain.LoginUser;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -24,28 +24,36 @@ public interface UserConvert {
      * convert
      *
      * @param createDto UserCreateDto
-     * @return SysUser
+     * @return User
      */
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
-    @Mapping(target = "lock", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "createBy", ignore = true)
+    @Mapping(target = "lock", constant = "false")
     User convert(UserCreateDto createDto);
 
     /**
      * convert
      *
      * @param updateDto UserUpdateDto
-     * @return SysUser
+     * @return User
      */
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
-    @Mapping(target = "lock", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "createBy", ignore = true)
+    @Mapping(target = "lock", ignore = true)
     User convert(UserUpdateDto updateDto);
 
+    /**
+     * convert User to LoginUser
+     *
+     * @param user User
+     * @param authorities Collection<? extends GrantedAuthority>
+     * @return LoginUser
+     */
+    @Mapping(target = "authorities", source = "authorities")
     LoginUser toLoginUser(User user, Collection<? extends GrantedAuthority> authorities);
 }

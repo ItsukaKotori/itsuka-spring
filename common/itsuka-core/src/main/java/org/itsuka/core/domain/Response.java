@@ -1,4 +1,4 @@
-package org.itsuka.core.domian;
+package org.itsuka.core.domain;
 
 import lombok.Data;
 import org.itsuka.core.exception.ServiceException;

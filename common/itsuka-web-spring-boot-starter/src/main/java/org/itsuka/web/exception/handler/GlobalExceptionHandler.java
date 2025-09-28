@@ -1,7 +1,7 @@
 package org.itsuka.web.exception.handler;
 
 import lombok.extern.slf4j.Slf4j;
-import org.itsuka.core.domian.Response;
+import org.itsuka.core.domain.Response;
 import org.itsuka.core.exception.ServiceException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;

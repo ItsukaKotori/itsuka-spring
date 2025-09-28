@@ -3,7 +3,7 @@ package org.itsuka.mybatis.plus.handler;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.reflection.MetaObject;
-import org.itsuka.core.domian.LoginUser;
+import org.itsuka.core.domain.LoginUser;
 import org.itsuka.web.utils.WebHelper;
 
 import java.time.LocalDateTime;

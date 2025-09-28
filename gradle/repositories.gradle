@@ -1,0 +1,31 @@
+// 阿里云镜像配置
+// 可以在各个子项目中引用此文件来统一配置仓库
+
+repositories {
+    // 阿里云公共仓库
+    maven { 
+        url 'https://maven.aliyun.com/repository/public'
+        name 'Aliyun Public'
+    }
+    
+    // 阿里云 Spring 仓库
+    maven { 
+        url 'https://maven.aliyun.com/repository/spring'
+        name 'Aliyun Spring'
+    }
+    
+    // 阿里云 Spring 插件仓库
+    maven { 
+        url 'https://maven.aliyun.com/repository/spring-plugin'
+        name 'Aliyun Spring Plugin'
+    }
+    
+    // 阿里云 Gradle 插件仓库
+    maven { 
+        url 'https://maven.aliyun.com/repository/gradle-plugin'
+        name 'Aliyun Gradle Plugin'
+    }
+    
+    // Maven 中央仓库作为备用
+    mavenCentral()
+}

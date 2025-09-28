@@ -2,14 +2,10 @@ package org.itsuka.core.algorithm;
 
 import lombok.Data;
 
-import java.security.PublicKey;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * 顺序队列
  *
- * @param <T>
+ * @param <T> 队列元素类型
  */
 @Data
 public class ArrayQueue<T> {
@@ -44,6 +40,7 @@ public class ArrayQueue<T> {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     public T dequeue() {
         if (tail - head == 0) {
             return null;

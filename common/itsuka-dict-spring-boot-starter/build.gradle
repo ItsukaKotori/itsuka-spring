@@ -1,0 +1,18 @@
+dependencies {
+    // Spring Boot AOP
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    
+    // Spring Boot Web (需要用于ResponseBodyAdvice等)
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    
+    // Lombok
+    implementation 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // 本项目依赖
+    implementation project(':common:itsuka-core')
+    
+    // 可选依赖 - Redis (provided scope)
+    compileOnly project(':common:itsuka-redis-spring-boot-starter')
+    compileOnly 'org.springframework.data:spring-data-redis'
+}
