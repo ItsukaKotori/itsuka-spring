@@ -61,7 +61,27 @@ itsuka:
       clean-session: true
 ```
 
-### 4. 创建消息处理器
+### 4. 使用启用注解（更简便）
+
+你也可以不在 `application.yml` 设置 `enabled=true`，而是在应用入口上添加注解：
+
+```java
+import org.itsuka.mqtt.annotation.EnableMqttServer; // 或 EnableMqttClient / EnableMqtt
+
+@SpringBootApplication
+@EnableMqttServer
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+```
+
+- `@EnableMqttServer`: 启用服务器功能
+- `@EnableMqttClient`: 启用客户端功能
+- `@EnableMqtt`: 同时启用服务器与客户端
+
+### 5. 创建消息处理器
 
 ```java
 @Component
@@ -88,7 +108,7 @@ public class MqttMessageHandler {
 }
 ```
 
-### 5. 使用 MQTT 客户端
+### 6. 使用 MQTT 客户端
 
 ```java
 @Service

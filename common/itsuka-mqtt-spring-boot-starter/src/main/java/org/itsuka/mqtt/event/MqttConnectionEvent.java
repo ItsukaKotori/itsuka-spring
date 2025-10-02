@@ -1,9 +1,9 @@
 package org.itsuka.mqtt.event;
 
 import io.netty.channel.Channel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.context.ApplicationEvent;
 
 /**
@@ -11,9 +11,9 @@ import org.springframework.context.ApplicationEvent;
  * 
  * @author itsuka
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = false)
 public class MqttConnectionEvent extends ApplicationEvent {
     
     /**
@@ -51,10 +51,6 @@ public class MqttConnectionEvent extends ApplicationEvent {
      */
     private EventType eventType;
     
-    /**
-     * 事件时间戳
-     */
-    private long timestamp;
     
     /**
      * 错误信息（可选）
@@ -66,7 +62,6 @@ public class MqttConnectionEvent extends ApplicationEvent {
         this.channel = channel;
         this.clientId = clientId;
         this.eventType = eventType;
-        this.timestamp = System.currentTimeMillis();
     }
     
     public MqttConnectionEvent(Channel channel, String clientId, EventType eventType, String errorMessage) {

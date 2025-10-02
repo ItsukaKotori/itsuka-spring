@@ -6,6 +6,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.mqtt.codec.MqttDecoder;
 import org.itsuka.mqtt.codec.MqttEncoder;
@@ -56,7 +58,7 @@ public class MqttServer implements InitializingBean, DisposableBean {
     /**
      * 启动MQTT服务器
      */
-    public void start() throws InterruptedException {
+    public java.util.concurrent.CompletableFuture<Void> start() {
         log.info("Starting MQTT server on port {}", properties.getPort());
         
         bossGroup = new NioEventLoopGroup(properties.getBossThreads());
@@ -94,46 +96,66 @@ public class MqttServer implements InitializingBean, DisposableBean {
                     });
             
             // 绑定端口并启动服务器
-            ChannelFuture future = bootstrap.bind(properties.getPort()).sync();
-            serverChannel = future.channel();
-            
-            log.info("MQTT server started successfully on port {}", properties.getPort());
-            
-            // 等待服务器关闭
-            future.channel().closeFuture().addListener((ChannelFutureListener) channelFuture -> {
-                log.info("MQTT server stopped");
+            ChannelFuture future = bootstrap.bind(properties.getPort());
+            java.util.concurrent.CompletableFuture<Void> cf = new java.util.concurrent.CompletableFuture<>();
+            future.addListener((ChannelFutureListener) f -> {
+                if (f.isSuccess()) {
+                    serverChannel = f.channel();
+                    log.info("MQTT server started successfully on port {}", properties.getPort());
+                    cf.complete(null);
+                    // 等待服务器关闭
+                    f.channel().closeFuture().addListener((ChannelFutureListener) channelFuture -> {
+                        log.info("MQTT server stopped");
+                    });
+                } else {
+                    cf.completeExceptionally(f.cause());
+                }
             });
+            return cf;
             
         } catch (Exception e) {
             log.error("Failed to start MQTT server", e);
             stop();
-            throw e;
+            java.util.concurrent.CompletableFuture<Void> cf = new java.util.concurrent.CompletableFuture<>();
+            cf.completeExceptionally(e);
+            return cf;
         }
     }
     
     /**
      * 停止MQTT服务器
      */
-    public void stop() {
+    public java.util.concurrent.CompletableFuture<Void> stop() {
         log.info("Stopping MQTT server...");
+        java.util.concurrent.CompletableFuture<Void> cf = new java.util.concurrent.CompletableFuture<>();
         
-        try {
-            if (serverChannel != null) {
-                serverChannel.close().sync();
-            }
-        } catch (InterruptedException e) {
-            log.warn("Interrupted while closing server channel", e);
-            Thread.currentThread().interrupt();
-        } finally {
+        if (serverChannel != null) {
+            serverChannel.close().addListener((ChannelFutureListener) f -> {
+                if (f.isSuccess()) {
+                    if (bossGroup != null) {
+                        bossGroup.shutdownGracefully();
+                    }
+                    if (workerGroup != null) {
+                        workerGroup.shutdownGracefully();
+                    }
+                    log.info("MQTT server stopped successfully");
+                    cf.complete(null);
+                } else {
+                    cf.completeExceptionally(f.cause());
+                }
+            });
+        } else {
             if (bossGroup != null) {
                 bossGroup.shutdownGracefully();
             }
             if (workerGroup != null) {
                 workerGroup.shutdownGracefully();
             }
+            log.info("MQTT server stopped successfully");
+            cf.complete(null);
         }
         
-        log.info("MQTT server stopped successfully");
+        return cf;
     }
     
     /**

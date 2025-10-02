@@ -29,7 +29,7 @@ public class MqttClient implements DisposableBean {
     private final MqttEventPublisher eventPublisher;
     
     private EventLoopGroup workerGroup;
-    private Channel channel;
+    private Channel clientChannel;
     private volatile boolean connected = false;
     
     public MqttClient(MqttClientProperties properties, MqttEventPublisher eventPublisher) {
@@ -45,10 +45,11 @@ public class MqttClient implements DisposableBean {
     /**
      * 连接到MQTT服务器
      */
-    public CompletableFuture<Void> connect() {
-        return CompletableFuture.runAsync(() -> {
+    public CompletableFuture<Boolean> connect() {
+        return CompletableFuture.supplyAsync(() -> {
             try {
                 doConnect();
+                return true;
             } catch (Exception e) {
                 log.error("Failed to connect to MQTT server", e);
                 throw new RuntimeException(e);
@@ -170,6 +171,60 @@ public class MqttClient implements DisposableBean {
         });
         
         return future;
+    }
+
+    /**
+     * 适配 Netty MQTT 消息的发送
+     */
+    public CompletableFuture<Void> sendMessage(io.netty.handler.codec.mqtt.MqttMessage nettyMessage) {
+        org.itsuka.mqtt.protocol.MqttMessage custom = convertFromNetty(nettyMessage);
+        return sendMessage(custom);
+    }
+
+    private org.itsuka.mqtt.protocol.MqttMessage convertFromNetty(io.netty.handler.codec.mqtt.MqttMessage nettyMessage) {
+        io.netty.handler.codec.mqtt.MqttFixedHeader nfh = nettyMessage.fixedHeader();
+        org.itsuka.mqtt.protocol.MqttFixedHeader fixedHeader = new org.itsuka.mqtt.protocol.MqttFixedHeader(
+                org.itsuka.mqtt.protocol.MqttMessageType.valueOf(nfh.messageType().value()),
+                nfh.isDup(),
+                org.itsuka.mqtt.protocol.MqttQoS.valueOf(nfh.qosLevel().value()),
+                nfh.isRetain(),
+                nfh.remainingLength()
+        );
+
+        Object variableHeader = null;
+        Object payload = null;
+
+        switch (nfh.messageType()) {
+            case PUBLISH: {
+                io.netty.handler.codec.mqtt.MqttPublishMessage pm = (io.netty.handler.codec.mqtt.MqttPublishMessage) nettyMessage;
+                io.netty.handler.codec.mqtt.MqttPublishVariableHeader vh = pm.variableHeader();
+                variableHeader = java.util.Map.of(
+                        "topic", vh.topicName(),
+                        "messageId", vh.packetId()
+                );
+                io.netty.buffer.ByteBuf buf = pm.payload();
+                byte[] bytes = new byte[buf.readableBytes()];
+                buf.getBytes(buf.readerIndex(), bytes);
+                payload = bytes;
+                break;
+            }
+            case SUBSCRIBE: {
+                io.netty.handler.codec.mqtt.MqttSubscribeMessage sm = (io.netty.handler.codec.mqtt.MqttSubscribeMessage) nettyMessage;
+                io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader vh = (io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader) sm.variableHeader();
+                variableHeader = vh.messageId();
+                java.util.List<String> topics = new java.util.ArrayList<>();
+                for (io.netty.handler.codec.mqtt.MqttTopicSubscription ts : sm.payload().topicSubscriptions()) {
+                    topics.add(ts.topicName());
+                }
+                payload = topics;
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+
+        return new org.itsuka.mqtt.protocol.MqttMessage(fixedHeader, variableHeader, payload);
     }
     
     /**

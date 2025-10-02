@@ -6,6 +6,7 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.mqtt.event.MqttEventPublisher;
+import org.itsuka.mqtt.event.MqttMessageEvent;
 import org.itsuka.mqtt.protocol.MqttMessage;
 import org.itsuka.mqtt.protocol.MqttMessageType;
 
