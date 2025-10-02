@@ -23,6 +23,8 @@ dependencies {
     
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'io.netty:netty-transport-native-epoll:4.1.104.Final:linux-x86_64'
     testImplementation 'io.netty:netty-transport-native-kqueue:4.1.104.Final:osx-x86_64'
 }

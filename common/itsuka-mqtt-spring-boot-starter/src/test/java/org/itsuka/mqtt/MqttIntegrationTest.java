@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * 
  * 测试 MQTT 服务器和客户端的完整功能
  */
-@SpringBootTest
+@SpringBootTest(classes = TestApplication.class)
 @TestPropertySource(properties = {
     "itsuka.mqtt.server.enabled=true",
     "itsuka.mqtt.server.port=1884",
