@@ -1,0 +1,85 @@
+# MQTT 客户端配置示例
+# 使用方式: --spring.profiles.active=client
+
+spring:
+  application:
+    name: mqtt-client-example
+
+# MQTT 客户端配置
+itsuka:
+  mqtt:
+    server:
+      # 禁用 MQTT 服务器
+      enabled: false
+    
+    client:
+      # 启用 MQTT 客户端
+      enabled: true
+      # MQTT 服务器地址
+      host: localhost
+      # MQTT 服务器端口
+      port: 1883
+      # 客户端 ID（如果不设置，会自动生成）
+      client-id: mqtt-client-example-001
+      # 用户名（可选）
+      username: 
+      # 密码（可选）
+      password: 
+      # 心跳间隔（秒）
+      keep-alive-interval: 60
+      # 连接超时（秒）
+      connect-timeout: 30
+      # 是否自动重连
+      auto-reconnect: true
+      # 重连间隔（秒）
+      reconnect-interval: 5
+      # 最大重连次数（-1 表示无限重连）
+      max-reconnect-attempts: -1
+      # 是否清除会话
+      clean-session: true
+      # 遗嘱配置
+      will:
+        # 是否启用遗嘱
+        enabled: false
+        # 遗嘱主题
+        topic: client/will
+        # 遗嘱消息
+        message: Client disconnected unexpectedly
+        # 遗嘱 QoS
+        qos: 0
+        # 遗嘱保留标志
+        retain: false
+      # SSL/TLS 配置
+      ssl:
+        # 是否启用 SSL
+        enabled: false
+        # 密钥库路径
+        keystore-path: 
+        # 密钥库密码
+        keystore-password: 
+        # 信任库路径
+        truststore-path: 
+        # 信任库密码
+        truststore-password: 
+
+# 日志配置
+logging:
+  level:
+    org.itsuka.mqtt: DEBUG
+    io.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# 服务器配置
+server:
+  port: 8081
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

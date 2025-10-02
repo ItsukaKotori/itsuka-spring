@@ -1,0 +1,55 @@
+# MQTT 服务器配置示例
+# 使用方式: --spring.profiles.active=server
+
+spring:
+  application:
+    name: mqtt-server-example
+
+# MQTT 服务器配置
+itsuka:
+  mqtt:
+    server:
+      # 启用 MQTT 服务器
+      enabled: true
+      # 服务器端口
+      port: 1883
+      # Boss 线程数（用于接受连接）
+      boss-threads: 1
+      # Worker 线程数（用于处理 I/O）
+      worker-threads: 4
+      # 读空闲时间（秒）- 如果在此时间内没有读取到数据，触发读空闲事件
+      reader-idle-time: 60
+      # 写空闲时间（秒）- 如果在此时间内没有写入数据，触发写空闲事件
+      writer-idle-time: 30
+      # 全空闲时间（秒）- 如果在此时间内既没有读也没有写，触发全空闲事件
+      all-idle-time: 90
+      # 最大连接数
+      max-connections: 1000
+      # 最大消息大小（字节）
+      max-message-size: 1048576
+    
+    # 客户端配置（如果需要同时作为客户端）
+    client:
+      enabled: false
+
+# 日志配置
+logging:
+  level:
+    org.itsuka.mqtt: DEBUG
+    io.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# 服务器配置
+server:
+  port: 8080
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
