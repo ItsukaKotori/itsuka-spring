@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.itsuka.mybatis.plus.domain.BaseDomain;
+import org.itsuka.mybatis.plus.domain.AuditableDomain;
 
 /**
  * 系统用户表
@@ -15,7 +15,7 @@ import org.itsuka.mybatis.plus.domain.BaseDomain;
 @EqualsAndHashCode(callSuper = true)
 @TableName(value = "user")
 @Data
-public class User extends BaseDomain {
+public class User extends AuditableDomain {
     /**
      * 主键
      */
