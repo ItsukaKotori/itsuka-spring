@@ -38,6 +38,9 @@ dependencies {
     // MySQL
     implementation 'com.mysql:mysql-connector-j'
     
+    // H2 数据库 - 用于开发和测试
+    runtimeOnly 'com.h2database:h2'
+    
     // Jakarta Servlet API - 解决缺失问题
     implementation 'jakarta.servlet:jakarta.servlet-api'
     implementation 'jakarta.validation:jakarta.validation-api'

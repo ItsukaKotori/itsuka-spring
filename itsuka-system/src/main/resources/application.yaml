@@ -4,7 +4,7 @@ spring:
   application:
     name: system
   profiles:
-    active: dev
+    active: demo
   main:
     allow-bean-definition-overriding: true
   # Flyway 配置

@@ -12,9 +12,9 @@ class ArrayStackTest {
         stack.push(1);
         stack.push(2);
         stack.push(3);
-        assertThrows(RuntimeException.class, () -> {
-            stack.push(4);
-        });
+        // ArrayStack支持动态扩容，所以不会抛出异常
+        stack.push(4);
+        assertEquals(4, stack.pop());
         assertEquals(3, stack.pop());
     }
 
