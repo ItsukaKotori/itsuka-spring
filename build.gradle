@@ -53,6 +53,10 @@ subprojects {
             dependency 'io.jsonwebtoken:jjwt-api:0.11.5'
             dependency 'io.jsonwebtoken:jjwt-impl:0.11.5'
             dependency 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+            // Netty 版本管理
+            dependency 'io.netty:netty-all:4.1.104.Final'
+            dependency 'io.netty:netty-transport-native-epoll:4.1.104.Final'
+            dependency 'io.netty:netty-transport-native-kqueue:4.1.104.Final'
         }
     }
     
