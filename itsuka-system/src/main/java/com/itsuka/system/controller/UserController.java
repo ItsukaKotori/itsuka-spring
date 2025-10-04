@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.itsuka.core.domain.Response;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 /**
  * UserController

@@ -1,9 +1,8 @@
 package org.itsuka.dict.properties;
 
+import lombok.Data;
 import org.itsuka.dict.enums.DictCacheType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-
-import lombok.Data;
 
 @Data
 @ConfigurationProperties(prefix = "itsuka.dict")

@@ -9,6 +9,11 @@ java {
     }
 }
 
+// 启用编译器警告
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ["-Xlint:deprecation"]
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor

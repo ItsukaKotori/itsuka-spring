@@ -2,6 +2,7 @@ package org.itsuka.web.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.core.domain.LoginUser;
 import org.springframework.util.ObjectUtils;
@@ -9,7 +10,6 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 import static org.itsuka.core.constant.Constants.LOGIN_HEADER;

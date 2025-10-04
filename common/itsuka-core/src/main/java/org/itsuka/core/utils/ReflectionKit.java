@@ -259,7 +259,6 @@ public class ReflectionKit {
      * @param defaultValue 默认值
      * @return 字段值，如果获取失败则返回默认值
      */
-    @SuppressWarnings("unchecked")
     public static <T> T getFieldValueOrDefault(Object obj, String fieldName, T defaultValue) {
         try {
             return getFieldValue(obj, fieldName);

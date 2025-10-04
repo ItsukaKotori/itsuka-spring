@@ -1,8 +1,7 @@
 package com.itsuka.system.dto.resource;
 
-import lombok.Data;
-
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 /**
  * 资源更新DTO

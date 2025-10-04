@@ -1,9 +1,8 @@
 package org.itsuka.dict;
 
+import lombok.RequiredArgsConstructor;
 import org.itsuka.dict.loader.DictLoader;
 import org.springframework.boot.CommandLineRunner;
-
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class DictCacheLoadRunner implements CommandLineRunner {

@@ -1,7 +1,5 @@
 package org.itsuka.dict.cache;
 
-import lombok.val;
-
 public interface DictCacheManager {
     /**
      * 根据Key获取缓存值

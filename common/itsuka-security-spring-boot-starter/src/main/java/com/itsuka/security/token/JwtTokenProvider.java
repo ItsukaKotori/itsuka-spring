@@ -1,10 +1,9 @@
 package com.itsuka.security.token;
 
-import com.itsuka.security.toolkit.TokenBlacklistManager;
 import com.itsuka.security.autoconfigure.SecurityProperties;
+import com.itsuka.security.toolkit.TokenBlacklistManager;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,12 +48,12 @@ public class JwtTokenProvider implements TokenProvider {
         Date expiration = new Date(now.getTime() + jwtProperties.getExpiration().toMillis());
         
         return Jwts.builder().claims(claims)
-                .setSubject(username)
-                .setIssuer(jwtProperties.getIssuer())
-                .setAudience(jwtProperties.getAudience())
-                .setIssuedAt(now)
-                .setExpiration(expiration)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .subject(username)
+                .issuer(jwtProperties.getIssuer())
+                .audience().add(jwtProperties.getAudience()).and()
+                .issuedAt(now)
+                .expiration(expiration)
+                .signWith(getSigningKey())
                 .compact();
     }
     
@@ -67,13 +66,13 @@ public class JwtTokenProvider implements TokenProvider {
         claims.put("type", "refresh");
         
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)
-                .setIssuer(jwtProperties.getIssuer())
-                .setAudience(jwtProperties.getAudience())
-                .setIssuedAt(now)
-                .setExpiration(expiration)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .claims(claims)
+                .subject(username)
+                .issuer(jwtProperties.getIssuer())
+                .audience().add(jwtProperties.getAudience()).and()
+                .issuedAt(now)
+                .expiration(expiration)
+                .signWith(getSigningKey())
                 .compact();
     }
     

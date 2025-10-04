@@ -1,8 +1,8 @@
 package com.itsuka.system.dto.role;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 /**

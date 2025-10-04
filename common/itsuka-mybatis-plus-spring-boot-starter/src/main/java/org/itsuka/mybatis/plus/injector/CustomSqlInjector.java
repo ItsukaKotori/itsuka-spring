@@ -1,7 +1,6 @@
 package org.itsuka.mybatis.plus.injector;
 
 import com.baomidou.mybatisplus.core.injector.AbstractMethod;
-import com.baomidou.mybatisplus.core.injector.AbstractSqlInjector;
 import com.baomidou.mybatisplus.core.injector.DefaultSqlInjector;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
 import org.itsuka.mybatis.plus.injector.methods.SelectValueRange;

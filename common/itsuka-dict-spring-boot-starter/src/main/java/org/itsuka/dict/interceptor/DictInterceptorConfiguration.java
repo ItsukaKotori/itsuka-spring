@@ -1,8 +1,6 @@
 package org.itsuka.dict.interceptor;
 
-import lombok.RequiredArgsConstructor;
 import org.itsuka.dict.cache.DictCacheManager;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

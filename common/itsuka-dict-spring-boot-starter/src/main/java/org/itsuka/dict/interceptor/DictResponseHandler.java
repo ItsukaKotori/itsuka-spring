@@ -1,12 +1,11 @@
 package org.itsuka.dict.interceptor;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.itsuka.core.utils.ReflectionKit;
 import org.itsuka.dict.annotation.DictField;
 import org.itsuka.dict.annotation.DictModel;
 import org.itsuka.dict.cache.DictCacheManager;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.util.*;

@@ -1,7 +1,7 @@
 package com.itsuka.security.autoconfigure;
 
-import com.itsuka.security.token.TokenProvider;
 import com.itsuka.security.token.JwtTokenProvider;
+import com.itsuka.security.token.TokenProvider;
 import com.itsuka.security.toolkit.TokenBlacklistManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;

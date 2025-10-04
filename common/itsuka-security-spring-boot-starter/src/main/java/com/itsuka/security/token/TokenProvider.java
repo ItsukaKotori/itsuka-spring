@@ -78,7 +78,6 @@ public interface TokenProvider {
     boolean isTokenExpiringSoon(String token, long refreshThresholdMinutes);
     
     /**
-    /**
      * 检查令牌是否在黑名单中
      *
      * @param token JWT令牌

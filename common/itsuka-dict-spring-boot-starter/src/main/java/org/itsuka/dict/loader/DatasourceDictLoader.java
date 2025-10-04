@@ -1,14 +1,13 @@
 package org.itsuka.dict.loader;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.itsuka.core.utils.ReflectionKit;
 import org.itsuka.dict.cache.DictCacheManager;
 import org.itsuka.dict.dialect.DatabaseDialect;
 import org.itsuka.dict.dialect.DatabaseDialectFactory;
 import org.itsuka.dict.properties.DictProperties;
 import org.itsuka.dict.properties.DictProperties.DatasourceProperties;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
 import java.util.ArrayList;

@@ -14,14 +14,13 @@ import com.itsuka.system.mapper.UserMapper;
 import com.itsuka.system.service.UserRoleService;
 import com.itsuka.system.service.UserService;
 import lombok.RequiredArgsConstructor;
-
-import java.util.stream.Collectors;
-
 import org.itsuka.core.exception.ServiceException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
+
+import java.util.stream.Collectors;
 
 /**
  * SysUserServiceImpl

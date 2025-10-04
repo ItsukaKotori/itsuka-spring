@@ -7,8 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.itsuka.core.enums.ContentType;
 import org.itsuka.core.exception.ServiceException;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

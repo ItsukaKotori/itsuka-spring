@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import org.itsuka.mybatis.plus.handler.DefaultFieldHandler;
 import org.itsuka.mybatis.plus.injector.CustomSqlInjector;
-import org.itsuka.mybatis.plus.toolkit.MybatisPlusHelper;
 import org.itsuka.mybatis.plus.permission.DataPermissionEscaper;
 import org.itsuka.mybatis.plus.permission.DataPermissionInterceptor;
 import org.itsuka.mybatis.plus.permission.DataPermissionProperty;
