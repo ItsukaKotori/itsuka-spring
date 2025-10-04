@@ -2,8 +2,8 @@ package com.itsuka.gateway.filter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itsuka.security.autoconfigure.SecurityProperties;
 import com.itsuka.security.jwt.JwtManager;
-import com.itsuka.security.properties.AuthProperties;
 import com.itsuka.security.util.AuthUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ import java.util.Map;
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     private final JwtManager jwtManager;
-    private final AuthProperties authProperties;
+    private final SecurityProperties securityProperties;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -46,7 +46,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         log.debug("Authentication filter processing path: {}", path);
 
         // 检查是否为排除路径
-        if (AuthUtils.isExcludedPath(path, authProperties.getExcludedPaths())) {
+        if (AuthUtils.isExcludedPath(path, securityProperties.getAuth().getExcludedPaths())) {
             log.debug("Path {} is excluded from authentication", path);
             return chain.filter(exchange);
         }

@@ -1,6 +1,9 @@
 package com.itsuka.gateway;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -12,10 +15,14 @@ import org.springframework.test.context.TestPropertySource;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@EnableAutoConfiguration(exclude = {
+    RedisAutoConfiguration.class,
+    RedisReactiveAutoConfiguration.class
+})
 @TestPropertySource(properties = {
     "spring.cloud.gateway.enabled=false",
-    "spring.data.redis.host=localhost",
-    "spring.data.redis.port=6379"
+    "spring.cloud.loadbalancer.ribbon.enabled=false",
+    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration"
 })
 class GatewayApplicationTests {
 

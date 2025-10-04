@@ -7,6 +7,7 @@ import com.itsuka.security.jwt.JwtManager;
 import com.itsuka.security.jwt.impl.DefaultJwtManager;
 import com.itsuka.security.manager.TokenBlacklistManager;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -46,11 +47,11 @@ public class SecurityAutoConfiguration {
     @ConditionalOnBean({JwtManager.class, UserDetailsProvider.class})
     public AuthenticationHandler authenticationHandler(
             JwtManager jwtManager,
-            UserDetailsProvider userDetailsProvider,
+            ObjectProvider<UserDetailsProvider> userDetailsProvider,
             SecurityProperties securityProperties,
             TokenBlacklistManager tokenBlacklistManager) {
         log.info("Initializing authentication handler");
-        return new DefaultAuthenticationHandler(jwtManager, userDetailsProvider, securityProperties.getJwt(), tokenBlacklistManager);
+        return new DefaultAuthenticationHandler(jwtManager, userDetailsProvider.getIfAvailable(), securityProperties.getJwt(), tokenBlacklistManager);
     }
     
     /**
