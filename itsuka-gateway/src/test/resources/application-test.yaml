@@ -1,0 +1,27 @@
+spring:
+  cloud:
+    gateway:
+      default-filters: []
+      routes: []
+      discovery:
+        locator:
+          enabled: false
+  
+  # 测试环境使用嵌入式Redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 15  # 使用不同的数据库避免冲突
+
+# 测试日志配置
+logging:
+  level:
+    root: WARN
+    com.itsuka.gateway: DEBUG
+
+# 网关配置
+gateway:
+  jwt:
+    secret: test-secret-key-for-jwt-token-generation-must-be-at-least-256-bits
+    expiration: 86400000

@@ -1,0 +1,117 @@
+{
+  "groups": [
+    {
+      "name": "itsuka.security",
+      "type": "com.itsuka.security.autoconfigure.SecurityProperties",
+      "description": "Itsuka Security configuration properties."
+    },
+    {
+      "name": "itsuka.security.jwt",
+      "type": "com.itsuka.security.autoconfigure.SecurityProperties$JwtProperties",
+      "description": "JWT configuration properties."
+    },
+    {
+      "name": "itsuka.security.auth",
+      "type": "com.itsuka.security.autoconfigure.SecurityProperties$AuthProperties",
+      "description": "Authentication configuration properties."
+    }
+  ],
+  "properties": [
+    {
+      "name": "itsuka.security.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable the security framework.",
+      "defaultValue": true
+    },
+    {
+      "name": "itsuka.security.jwt.secret",
+      "type": "java.lang.String",
+      "description": "JWT signing secret key.",
+      "defaultValue": "itsuka-default-secret-key-for-jwt-token-generation-very-long-key"
+    },
+    {
+      "name": "itsuka.security.jwt.expiration",
+      "type": "java.time.Duration",
+      "description": "JWT token expiration duration.",
+      "defaultValue": "24h"
+    },
+    {
+      "name": "itsuka.security.jwt.refresh-expiration",
+      "type": "java.time.Duration",
+      "description": "JWT refresh token expiration duration.",
+      "defaultValue": "7d"
+    },
+    {
+      "name": "itsuka.security.jwt.issuer",
+      "type": "java.lang.String",
+      "description": "JWT token issuer.",
+      "defaultValue": "itsuka-security"
+    },
+    {
+      "name": "itsuka.security.jwt.audience",
+      "type": "java.lang.String",
+      "description": "JWT token audience.",
+      "defaultValue": "itsuka-app"
+    },
+    {
+      "name": "itsuka.security.jwt.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable JWT support.",
+      "defaultValue": true
+    },
+    {
+      "name": "itsuka.security.auth.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable authentication.",
+      "defaultValue": true
+    },
+    {
+      "name": "itsuka.security.auth.excluded-paths",
+      "type": "java.util.List<java.lang.String>",
+      "description": "List of paths to exclude from authentication.",
+      "defaultValue": ["/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/favicon.ico", "/error"]
+    },
+    {
+      "name": "itsuka.security.auth.login-url",
+      "type": "java.lang.String",
+      "description": "Login URL.",
+      "defaultValue": "/api/auth/login"
+    },
+    {
+      "name": "itsuka.security.auth.login-success-url",
+      "type": "java.lang.String",
+      "description": "Login success redirect URL.",
+      "defaultValue": "/"
+    },
+    {
+      "name": "itsuka.security.auth.login-failure-url",
+      "type": "java.lang.String",
+      "description": "Login failure redirect URL.",
+      "defaultValue": "/api/auth/login?error"
+    },
+    {
+      "name": "itsuka.security.auth.logout-url",
+      "type": "java.lang.String",
+      "description": "Logout URL.",
+      "defaultValue": "/api/auth/logout"
+    },
+    {
+      "name": "itsuka.security.auth.logout-success-url",
+      "type": "java.lang.String",
+      "description": "Logout success redirect URL.",
+      "defaultValue": "/api/auth/login?logout"
+    },
+    {
+      "name": "itsuka.security.auth.unauthorized-url",
+      "type": "java.lang.String",
+      "description": "Unauthorized access redirect URL.",
+      "defaultValue": "/api/auth/unauthorized"
+    },
+    {
+      "name": "itsuka.security.auth.access-denied-url",
+      "type": "java.lang.String",
+      "description": "Access denied redirect URL.",
+      "defaultValue": "/api/auth/access-denied"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        # 生产环境的路由配置
+        - id: system-service-prod
+          uri: lb://system-service
+          predicates:
+            - Path=/api/system/**
+          filters:
+            - StripPrefix=2
+            - AddRequestHeader=X-Gateway-Source, gateway-prod
+            - name: CircuitBreaker
+              args:
+                name: system-service-circuit-breaker
+                fallbackUri: forward:/fallback/default
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
+
+# 生产环境Redis配置
+  data:
+    redis:
+      cluster:
+        nodes:
+          - redis-node1:6379
+          - redis-node2:6379
+          - redis-node3:6379
+      password: ${REDIS_PASSWORD}
+      timeout: 5000
+      lettuce:
+        pool:
+          max-active: 500
+          max-wait: -1ms
+          max-idle: 20
+          min-idle: 5
+
+# 生产环境日志配置
+logging:
+  level:
+    root: WARN
+    com.itsuka.gateway: INFO
+    org.springframework.cloud.gateway: INFO
+  file:
+    name: /var/log/itsuka-gateway/gateway.log
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# 生产环境管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized

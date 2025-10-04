@@ -27,6 +27,8 @@ public interface ResourceConvert {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "createBy", ignore = true)
+    @Mapping(target = "createInfo", ignore = true)
+    @Mapping(target = "updateInfo", ignore = true)
     Resource convert(ResourceCreateDto createDto);
 
     /**
@@ -39,5 +41,7 @@ public interface ResourceConvert {
     @Mapping(target = "updateBy", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "createBy", ignore = true)
+    @Mapping(target = "createInfo", ignore = true)
+    @Mapping(target = "updateInfo", ignore = true)
     Resource convert(ResourceUpdateDto updateDto);
 }

@@ -21,10 +21,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     
-    // JWT 依赖
-    implementation 'io.jsonwebtoken:jjwt-api'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson'
+    // Itsuka Security Starter
+    implementation project(':common:itsuka-security-spring-boot-starter')
     
     // Flyway 数据库版本控制
     implementation 'org.flywaydb:flyway-core'

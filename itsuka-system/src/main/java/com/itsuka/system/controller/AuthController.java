@@ -10,7 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 认证控制器
+ * 认证控制器 - 简化版本，认证由网关统一处理
  *
  * @author Itsuka
  */
@@ -22,42 +22,26 @@ public class AuthController {
     private final UserService userService;
     
     /**
-     * 未授权访问处理
-     */
-    @GetMapping("/unauthorized")
-    public Response<String> unauthorized() {
-        @SuppressWarnings("unchecked")
-        Response<String> errorResponse = (Response<String>) Response.error("未授权访问，请先登录");
-        return errorResponse;
-    }
-    
-    /**
      * 注册新用户
      */
     @PostMapping("/register")
-    public Response<String> register(@RequestBody UserCreateDto createDto) {
+    public Response<?> register(@RequestBody UserCreateDto createDto) {
         // 注册用户
         Boolean result = userService.create(createDto);
         if (result) {
-            @SuppressWarnings("unchecked")
-            Response<String> successResponse = (Response<String>) Response.success("注册成功");
-            return successResponse;
+            return Response.success("注册成功");
         } else {
-            @SuppressWarnings("unchecked")
-            Response<String> errorResponse = (Response<String>) Response.error("注册失败");
-            return errorResponse;
+            return Response.error("注册失败");
         }
     }
     
     /**
-     * 获取当前登录用户信息
+     * 获取当前登录用户信息 - 仅用于系统内部调用
      */
     @GetMapping("/current")
     @PreAuthorize("isAuthenticated()")
     public Response<Authentication> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        @SuppressWarnings("unchecked")
-        Response<Authentication> successResponse = (Response<Authentication>) Response.success(authentication);
-        return successResponse;
+        return Response.success(authentication);
     }
 }

@@ -31,6 +31,8 @@ public interface UserConvert {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "createBy", ignore = true)
+    @Mapping(target = "createInfo", ignore = true)
+    @Mapping(target = "updateInfo", ignore = true)
     @Mapping(target = "lock", constant = "false")
     User convert(UserCreateDto createDto);
 
@@ -44,6 +46,8 @@ public interface UserConvert {
     @Mapping(target = "updateBy", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "createBy", ignore = true)
+    @Mapping(target = "createInfo", ignore = true)
+    @Mapping(target = "updateInfo", ignore = true)
     @Mapping(target = "lock", ignore = true)
     User convert(UserUpdateDto updateDto);
 

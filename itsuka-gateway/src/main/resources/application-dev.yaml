@@ -1,0 +1,16 @@
+spring:
+  # 开发环境Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+# 开发环境日志配置
+logging:
+  level:
+    root: INFO
+    com.itsuka.gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty.http.client: DEBUG

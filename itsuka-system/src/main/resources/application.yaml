@@ -53,3 +53,22 @@ springdoc:
     enabled: true
     # http://server:port/context-path/swagger-ui.html
     path: /swagger-ui.html
+
+# Itsuka Security配置
+itsuka:
+  security:
+    jwt:
+      secret: itsuka-system-secret-key-for-jwt-token-generation-must-be-at-least-256-bits
+      expiration: 24h
+      refresh-expiration: 7d
+      issuer: itsuka-system
+      audience: itsuka-app
+    auth:
+      enabled: true
+      excluded-paths:
+        - "/api/auth/**"
+        - "/actuator/**"
+        - "/swagger-ui/**"
+        - "/v3/api-docs/**"
+        - "/favicon.ico"
+        - "/error"
