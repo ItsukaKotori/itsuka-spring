@@ -1,10 +1,6 @@
 // common 模块的构建脚本
 // 这是一个纯粹的父模块，不包含代码，只用于组织子模块
 
-// 应用必要的插件以支持子模块
-apply plugin: 'java-library'
-apply plugin: 'io.spring.dependency-management'
-
 // 禁用 jar 构建，因为这是一个父模块
 jar {
     enabled = false

@@ -1,38 +1,12 @@
-plugins {
-    id 'java-library'
-    id 'io.spring.dependency-management'
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
-// 启用编译器警告
-tasks.withType(JavaCompile) {
-    options.compilerArgs += ["-Xlint:deprecation"]
-}
-
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     // Spring Boot Starter
     api 'org.springframework.boot:spring-boot-starter'
     api 'org.springframework.boot:spring-boot-autoconfigure'
     
-    // JWT dependencies
-    api 'io.jsonwebtoken:jjwt-api:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+    // JWT dependencies - 使用根项目版本管理
+    api 'io.jsonwebtoken:jjwt-api'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson'
     
     // Spring Security (optional for reactive environments)
     compileOnly 'org.springframework.security:spring-security-core'
@@ -58,14 +32,4 @@ dependencies {
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
-}
-
-// Configuration for spring boot starter
-jar {
-    enabled = true
-    archiveClassifier = ''
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
 }

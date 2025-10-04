@@ -43,5 +43,6 @@ public interface ResourceConvert {
     @Mapping(target = "createBy", ignore = true)
     @Mapping(target = "createInfo", ignore = true)
     @Mapping(target = "updateInfo", ignore = true)
+    @Mapping(target = "id", ignore = true)
     Resource convert(ResourceUpdateDto updateDto);
 }

@@ -43,5 +43,6 @@ public interface RoleConvert {
     @Mapping(target = "createBy", ignore = true)
     @Mapping(target = "createInfo", ignore = true)
     @Mapping(target = "updateInfo", ignore = true)
+    @Mapping(target = "id", ignore = true)
     Role convert(RoleUpdateDto updateDto);
 }
