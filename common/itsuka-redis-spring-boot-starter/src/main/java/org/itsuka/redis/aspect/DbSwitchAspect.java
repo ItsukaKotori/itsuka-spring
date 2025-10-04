@@ -12,6 +12,8 @@ import org.itsuka.redis.annotation.DbSwitch;
 import org.itsuka.web.utils.JacksonDeepCopyer;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisSentinelConfiguration;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
@@ -43,26 +45,82 @@ public class DbSwitchAspect {
     }
 
     private RedisConnectionFactory connectionFactoryWithSpecifiedDb(int database) {
-        RedisConnectionFactory connectionFactory = JacksonDeepCopyer.copy(redisConnectionFactory);
         RedisProperties.ClientType clientType = redisProperties.getClientType();
         switch (clientType) {
             case LETTUCE:
-                if (connectionFactory instanceof LettuceConnectionFactory lettuceConnectionFactory) {
-                    lettuceConnectionFactory.setDatabase(database);
-                    lettuceConnectionFactory.afterPropertiesSet();
+                if (redisConnectionFactory instanceof LettuceConnectionFactory lettuceConnectionFactory) {
+                    return createLettuceConnectionFactory(lettuceConnectionFactory, database);
                 }
                 break;
             case JEDIS:
-                if (connectionFactory instanceof JedisConnectionFactory jedisConnectionFactory) {
-                    if (jedisConnectionFactory.getSentinelConfiguration() != null) {
-                        jedisConnectionFactory.getSentinelConfiguration().setDatabase(database);
-                    }
-                    if (jedisConnectionFactory.getStandaloneConfiguration() != null) {
-                        jedisConnectionFactory.getStandaloneConfiguration().setDatabase(database);
-                    }
-                    jedisConnectionFactory.afterPropertiesSet();
+                if (redisConnectionFactory instanceof JedisConnectionFactory jedisConnectionFactory) {
+                    return createJedisConnectionFactory(jedisConnectionFactory, database);
                 }
         }
-        return connectionFactory;
+        return redisConnectionFactory;
+    }
+
+    private LettuceConnectionFactory createLettuceConnectionFactory(LettuceConnectionFactory original, int database) {
+        LettuceConnectionFactory newFactory;
+        
+        // 检查是否为集群配置
+        if (original.getClusterConfiguration() != null) {
+            // Redis集群配置 - 集群模式不支持数据库切换
+            throw new UnsupportedOperationException("Database switching is not supported in Redis Cluster mode");
+        }
+        // 检查是否为哨兵配置
+        else if (original.getSentinelConfiguration() != null) {
+            // Redis哨兵配置
+            RedisSentinelConfiguration sentinelConfig = new RedisSentinelConfiguration();
+            sentinelConfig.master(original.getSentinelConfiguration().getMaster());
+            original.getSentinelConfiguration().getSentinels().forEach(sentinelConfig::sentinel);
+            sentinelConfig.setDatabase(database);
+            if (redisProperties.getPassword() != null) {
+                sentinelConfig.setPassword(redisProperties.getPassword());
+            }
+            if (redisProperties.getUsername() != null) {
+                sentinelConfig.setUsername(redisProperties.getUsername());
+            }
+            newFactory = new LettuceConnectionFactory(sentinelConfig, original.getClientConfiguration());
+        }
+        // 单节点配置
+        else {
+            RedisStandaloneConfiguration standaloneConfig = new RedisStandaloneConfiguration();
+            standaloneConfig.setHostName(redisProperties.getHost());
+            standaloneConfig.setPort(redisProperties.getPort());
+            standaloneConfig.setDatabase(database);
+            if (redisProperties.getPassword() != null) {
+                standaloneConfig.setPassword(redisProperties.getPassword());
+            }
+            if (redisProperties.getUsername() != null) {
+                standaloneConfig.setUsername(redisProperties.getUsername());
+            }
+            newFactory = new LettuceConnectionFactory(standaloneConfig, original.getClientConfiguration());
+        }
+        
+        newFactory.afterPropertiesSet();
+        return newFactory;
+    }
+
+    private JedisConnectionFactory createJedisConnectionFactory(JedisConnectionFactory original, int database) {
+        // 对于Jedis，创建新的连接工厂副本
+        JedisConnectionFactory newFactory = JacksonDeepCopyer.copy(original);
+        
+        // 检查是否为集群配置
+        if (newFactory.getClusterConfiguration() != null) {
+            // Redis集群配置 - 集群模式不支持数据库切换
+            throw new UnsupportedOperationException("Database switching is not supported in Redis Cluster mode");
+        }
+        // 检查是否为哨兵配置
+        else if (newFactory.getSentinelConfiguration() != null) {
+            newFactory.getSentinelConfiguration().setDatabase(database);
+        }
+        // 单节点配置
+        else if (newFactory.getStandaloneConfiguration() != null) {
+            newFactory.getStandaloneConfiguration().setDatabase(database);
+        }
+        
+        newFactory.afterPropertiesSet();
+        return newFactory;
     }
 }
