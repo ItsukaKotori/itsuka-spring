@@ -2,9 +2,10 @@ package com.itsuka.gateway.filter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itsuka.gateway.service.UserCacheService;
 import com.itsuka.security.autoconfigure.SecurityProperties;
-import com.itsuka.security.jwt.JwtManager;
-import com.itsuka.security.util.AuthUtils;
+import com.itsuka.security.token.TokenProvider;
+import com.itsuka.security.toolkit.SecurityToolkit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -33,10 +34,13 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter implements GlobalFilter, Ordered {
+    private final TokenProvider tokenProvider;
 
-    private final JwtManager jwtManager;
     private final SecurityProperties securityProperties;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final ObjectMapper objectMapper;
+    
+    private final UserCacheService userCacheService;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -46,7 +50,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         log.debug("Authentication filter processing path: {}", path);
 
         // 检查是否为排除路径
-        if (AuthUtils.isExcludedPath(path, securityProperties.getAuth().getExcludedPaths())) {
+        if (SecurityToolkit.isExcludedPath(path, securityProperties.getAuth().getExcludedPaths())) {
             log.debug("Path {} is excluded from authentication", path);
             return chain.filter(exchange);
         }
@@ -55,30 +59,50 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String authHeader = request.getHeaders().getFirst("Authorization");
         
         // 提取JWT令牌
-        String token = AuthUtils.extractToken(authHeader);
+        String token = SecurityToolkit.extractToken(authHeader);
         if (token == null) {
             log.warn("Missing or invalid Authorization header for path: {}", path);
             return unauthorizedResponse(exchange, "Missing or invalid Authorization header");
         }
 
         // 验证token并获取用户上下文
-        if (!jwtManager.validateToken(token)) {
+        if (!tokenProvider.validateToken(token)) {
             log.warn("Invalid JWT token for path: {}", path);
             return unauthorizedResponse(exchange, "Invalid JWT token");
         }
 
         // 从token中获取用户信息
-        String username = jwtManager.getUsernameFromToken(token);
-        String userId = jwtManager.getUserIdFromToken(token);
+        String username = tokenProvider.getUsernameFromToken(token);
+        String userId = tokenProvider.getUserIdFromToken(token);
 
-        if (!StringUtils.hasText(username)) {
-            log.warn("Cannot extract username from token for path: {}", path);
+        if (!StringUtils.hasText(username) || !StringUtils.hasText(userId)) {
+            log.warn("Cannot extract username or userId from token for path: {}", path);
             return unauthorizedResponse(exchange, "Invalid token payload");
         }
+        
+        // 校验Redis中的用户信息
+        return userCacheService.isUserValid(userId)
+                .flatMap(isValid -> {
+                    if (!isValid) {
+                        log.warn("User not found or invalid in cache for userId: {} on path: {}", userId, path);
+                        return unauthorizedResponse(exchange, "User not found or disabled");
+                    }
+                    
+                    // 刷新用户缓存过期时间
+                    return userCacheService.refreshUserCacheExpiration(userId, securityProperties.getJwt().getExpiration())
+                            .then(continueWithValidUser(exchange, chain, request, username, userId, token, path));
+                });
+    }
 
+    /**
+     * 继续处理有效用户的请求
+     */
+    private Mono<Void> continueWithValidUser(ServerWebExchange exchange, GatewayFilterChain chain, 
+                                           ServerHttpRequest request, String username, String userId, 
+                                           String token, String path) {
         // 添加用户信息到请求头，传递给下游服务
         ServerHttpRequest mutatedRequest = request.mutate()
-                .header("X-User-Id", userId != null ? userId : "")
+                .header("X-User-Id", userId)
                 .header("X-Username", username)
                 .header("X-Token", token)
                 .build();
@@ -90,7 +114,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         log.debug("Authentication successful for user: {} on path: {}", username, path);
         return chain.filter(mutatedExchange);
     }
-
+    
     /**
      * 返回未授权响应
      */

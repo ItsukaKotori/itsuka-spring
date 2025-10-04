@@ -1,4 +1,4 @@
-package com.itsuka.security.manager;
+package com.itsuka.security.toolkit;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,18 +24,17 @@ public class TokenBlacklistManager {
      * 黑名单缓存 - key: token, value: 过期时间
      */
     private final ConcurrentMap<String, Long> blacklistedTokens = new ConcurrentHashMap<>();
-    
-    /**
-     * 定时清理器
-     */
-    private final ScheduledExecutorService cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread t = new Thread(r, "token-blacklist-cleanup");
-        t.setDaemon(true);
-        return t;
-    });
-    
+
     public TokenBlacklistManager() {
         // 每5分钟清理一次过期的黑名单令牌
+        /*
+          定时清理器
+         */
+        ScheduledExecutorService cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "token-blacklist-cleanup");
+            t.setDaemon(true);
+            return t;
+        });
         cleanupExecutor.scheduleWithFixedDelay(this::cleanupExpiredTokens, 5, 5, TimeUnit.MINUTES);
     }
     

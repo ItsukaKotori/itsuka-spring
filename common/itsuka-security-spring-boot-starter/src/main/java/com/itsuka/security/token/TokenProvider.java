@@ -1,4 +1,4 @@
-package com.itsuka.security.jwt;
+package com.itsuka.security.token;
 
 import io.jsonwebtoken.Claims;
 
@@ -9,7 +9,7 @@ import java.util.Map;
  *
  * @author Itsuka
  */
-public interface JwtManager {
+public interface TokenProvider {
     
     /**
      * 生成访问令牌

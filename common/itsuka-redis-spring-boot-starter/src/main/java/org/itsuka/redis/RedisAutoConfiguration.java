@@ -14,10 +14,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -89,6 +93,31 @@ public class RedisAutoConfiguration {
     @Bean
     public DbSwitchAspect dbSwitchAspect(RedisProperties redisProperties) {
         return new DbSwitchAspect(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()), redisProperties);
+    }
+    
+    /**
+     * 响应式RedisTemplate
+     * 用于在响应式环境中操作Redis，如Spring Cloud Gateway
+     *
+     * @param connectionFactory 响应式Redis连接工厂
+     * @return ReactiveRedisTemplate
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnSingleCandidate(ReactiveRedisConnectionFactory.class)
+    public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(
+            ReactiveRedisConnectionFactory connectionFactory) {
+        
+        // 创建序列化上下文
+        RedisSerializationContext<String, Object> serializationContext = RedisSerializationContext
+                .<String, Object>newSerializationContext()
+                .key(new StringRedisSerializer())
+                .value(new GenericJackson2JsonRedisSerializer())
+                .hashKey(new StringRedisSerializer())
+                .hashValue(new GenericJackson2JsonRedisSerializer())
+                .build();
+                
+        return new ReactiveRedisTemplate<>(connectionFactory, serializationContext);
     }
 
     private Duration ttl(RedisCacheProperties properties) {

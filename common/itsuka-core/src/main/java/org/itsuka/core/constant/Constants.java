@@ -24,6 +24,8 @@ public final class Constants {
      */
     public static final Integer BAD_REQUEST_CODE = 400;
 
+    public static final Integer AUTHENTICATION_FAILURE_CODE = 401;
+
     /**
      * 日期时间Fomatter
      */

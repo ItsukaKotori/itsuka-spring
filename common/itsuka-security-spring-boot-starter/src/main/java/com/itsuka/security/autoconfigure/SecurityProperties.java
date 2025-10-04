@@ -69,6 +69,11 @@ public class SecurityProperties {
          * 是否启用JWT
          */
         private boolean enabled = true;
+
+        /**
+         * Token前缀
+         */
+        private String prefix = "Bearer ";
     }
     
     /**

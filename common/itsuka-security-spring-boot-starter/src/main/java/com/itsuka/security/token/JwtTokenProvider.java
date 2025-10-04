@@ -1,7 +1,6 @@
-package com.itsuka.security.jwt.impl;
+package com.itsuka.security.token;
 
-import com.itsuka.security.jwt.JwtManager;
-import com.itsuka.security.manager.TokenBlacklistManager;
+import com.itsuka.security.toolkit.TokenBlacklistManager;
 import com.itsuka.security.autoconfigure.SecurityProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -26,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DefaultJwtManager implements JwtManager {
+public class JwtTokenProvider implements TokenProvider {
     
     private final SecurityProperties.JwtProperties jwtProperties;
     private final TokenBlacklistManager tokenBlacklistManager;
@@ -49,8 +48,7 @@ public class DefaultJwtManager implements JwtManager {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + jwtProperties.getExpiration().toMillis());
         
-        return Jwts.builder()
-                .setClaims(claims)
+        return Jwts.builder().claims(claims)
                 .setSubject(username)
                 .setIssuer(jwtProperties.getIssuer())
                 .setAudience(jwtProperties.getAudience())

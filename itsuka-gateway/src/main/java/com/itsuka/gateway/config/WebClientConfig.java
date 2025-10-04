@@ -12,7 +12,6 @@ import org.springframework.web.reactive.function.client.WebClient;
  */
 @Configuration
 public class WebClientConfig {
-    
     /**
      * 负载均衡的WebClient构建器
      */

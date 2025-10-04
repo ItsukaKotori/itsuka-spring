@@ -1,4 +1,4 @@
-package com.itsuka.security.util;
+package com.itsuka.security.toolkit;
 
 import lombok.experimental.UtilityClass;
 import org.springframework.util.StringUtils;
@@ -9,8 +9,8 @@ import org.springframework.util.StringUtils;
  * @author Itsuka
  */
 @UtilityClass
-public class AuthUtils {
-    
+public class SecurityToolkit {
+
     /**
      * 从Authorization头中提取JWT令牌
      *
@@ -21,11 +21,11 @@ public class AuthUtils {
         if (!StringUtils.hasText(authorizationHeader)) {
             return null;
         }
-        
+
         if (!authorizationHeader.startsWith("Bearer ")) {
             return null;
         }
-        
+
         return authorizationHeader.substring(7);
     }
     
@@ -54,15 +54,5 @@ public class AuthUtils {
                         return path.equals(excludedPath);
                     }
                 });
-    }
-    
-    /**
-     * 创建Bearer令牌字符串
-     *
-     * @param token JWT令牌
-     * @return Bearer令牌字符串
-     */
-    public static String createBearerToken(String token) {
-        return "Bearer " + token;
     }
 }

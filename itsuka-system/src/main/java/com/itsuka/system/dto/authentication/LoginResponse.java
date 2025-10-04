@@ -1,9 +1,10 @@
-package com.itsuka.security.model;
+package com.itsuka.system.dto.authentication;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.itsuka.core.domain.LoginUser;
 
 /**
  * 认证响应模型
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthResponse {
+public class LoginResponse {
     
     /**
      * 访问令牌
@@ -46,4 +47,9 @@ public class AuthResponse {
      * 用户ID
      */
     private String userId;
+    
+    /**
+     * 登录用户信息
+     */
+    private LoginUser userInfo;
 }
