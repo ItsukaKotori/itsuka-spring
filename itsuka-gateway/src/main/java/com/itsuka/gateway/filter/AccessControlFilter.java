@@ -1,8 +1,7 @@
 package com.itsuka.gateway.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itsuka.gateway.util.GatewayResponseUtils;
+import com.itsuka.gateway.response.ErrorResponse;
+import com.itsuka.gateway.utils.ResponseGenerator;
 import com.itsuka.security.manager.AccessControlManager;
 import com.itsuka.security.toolkit.IpAddressToolkit;
 import lombok.RequiredArgsConstructor;
@@ -10,11 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -30,7 +25,7 @@ import reactor.core.publisher.Mono;
 public class AccessControlFilter implements GlobalFilter, Ordered {
 
     private final AccessControlManager accessControlManager;
-    private final ObjectMapper objectMapper;
+    private final ResponseGenerator responseGenerator;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -46,7 +41,7 @@ public class AccessControlFilter implements GlobalFilter, Ordered {
         if (!accessControlManager.isAccessAllowed(path, clientIp, userAgent)) {
             log.warn("Access denied - Path: {}, IP: {}, UserAgent: {}", 
                     path, IpAddressToolkit.formatIpForLog(clientIp), userAgent);
-            return GatewayResponseUtils.createForbiddenResponse(exchange, "Access denied", objectMapper);
+            return responseGenerator.writeTo(exchange, ErrorResponse.forbidden(path, "Access denied"));
         }
 
         log.debug("Access control passed for path: {}", path);

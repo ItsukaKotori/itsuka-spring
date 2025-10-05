@@ -1,8 +1,8 @@
 package com.itsuka.gateway.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itsuka.gateway.response.ErrorResponse;
 import com.itsuka.gateway.service.UserCacheService;
-import com.itsuka.gateway.util.GatewayResponseUtils;
+import com.itsuka.gateway.utils.ResponseGenerator;
 import com.itsuka.security.autoconfigure.SecurityProperties;
 import com.itsuka.security.token.TokenProvider;
 import com.itsuka.security.toolkit.SecurityToolkit;
@@ -29,10 +29,10 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     private final TokenProvider tokenProvider;
 
     private final SecurityProperties securityProperties;
-
-    private final ObjectMapper objectMapper;
     
     private final UserCacheService userCacheService;
+
+    private final ResponseGenerator responseGenerator;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -54,13 +54,13 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String token = SecurityToolkit.extractToken(authHeader);
         if (token == null) {
             log.warn("Missing or invalid Authorization header for path: {}", path);
-            return GatewayResponseUtils.createUnauthorizedResponse(exchange, "Missing or invalid Authorization header", objectMapper);
+            return responseGenerator.writeTo(exchange, ErrorResponse.unauthorized(path, "Missing or invalid Authorization header"));
         }
 
         // 验证token并获取用户上下文
         if (!tokenProvider.validateToken(token)) {
             log.warn("Invalid JWT token for path: {}", path);
-            return GatewayResponseUtils.createUnauthorizedResponse(exchange, "Invalid JWT token", objectMapper);
+            return responseGenerator.writeTo(exchange, ErrorResponse.unauthorized(path, "Invalid JWT token"));
         }
 
         // 从token中获取用户信息
@@ -69,7 +69,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         if (!StringUtils.hasText(username) || !StringUtils.hasText(userId)) {
             log.warn("Cannot extract username or userId from token for path: {}", path);
-            return GatewayResponseUtils.createUnauthorizedResponse(exchange, "Invalid token payload", objectMapper);
+            return responseGenerator.writeTo(exchange, ErrorResponse.unauthorized(path, "Invalid token payload"));
         }
         
         // 校验Redis中的用户信息
@@ -77,7 +77,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                 .flatMap(isValid -> {
                     if (!isValid) {
                         log.warn("User not found or invalid in cache for userId: {} on path: {}", userId, path);
-                        return GatewayResponseUtils.createUnauthorizedResponse(exchange, "User not found or disabled", objectMapper);
+                        return responseGenerator.writeTo(exchange, ErrorResponse.unauthorized(path, "User not found or disabled"));
                     }
                     
                     // 刷新用户缓存过期时间

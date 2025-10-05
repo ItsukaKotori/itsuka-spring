@@ -1,7 +1,8 @@
 package com.itsuka.gateway.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itsuka.gateway.util.GatewayResponseUtils;
+import com.itsuka.gateway.response.RateLimitErrorResponse;
+import com.itsuka.gateway.utils.ResponseGenerator;
 import com.itsuka.security.toolkit.IpAddressToolkit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,12 +10,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -33,7 +30,7 @@ import java.time.Duration;
 public class RateLimitFilter implements GlobalFilter, Ordered {
 
     private final ReactiveStringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ResponseGenerator responseGenerator;
 
     // 限流配置 - 每分钟最多100个请求
     private static final int MAX_REQUESTS_PER_MINUTE = 100;
@@ -42,6 +39,7 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
+        String path = request.getURI().getPath();
         String clientId = getClientId(request);
         String redisKey = "rate_limit:" + clientId;
 
@@ -54,13 +52,10 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
                     
                     if (count >= MAX_REQUESTS_PER_MINUTE) {
                         log.warn("Rate limit exceeded for client: {}, current count: {}", clientId, count);
-                        return GatewayResponseUtils.createRateLimitResponse(
-                                exchange, 
-                                "Too many requests, please try again later", 
-                                objectMapper,
+                        return responseGenerator.writeTo(exchange, RateLimitErrorResponse.tooManyRequests(
+                                path,
                                 MAX_REQUESTS_PER_MINUTE,
-                                System.currentTimeMillis() + WINDOW_DURATION.toMillis()
-                        );
+                                System.currentTimeMillis() + WINDOW_DURATION.toMillis()));
                     }
 
                     // 增加计数
