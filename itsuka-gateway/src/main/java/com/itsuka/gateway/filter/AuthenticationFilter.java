@@ -141,7 +141,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        // 在日志过滤器之后执行
-        return Ordered.HIGHEST_PRECEDENCE + 1;
+        // 在访问控制过滤器之后执行
+        return Ordered.HIGHEST_PRECEDENCE + 2;
     }
 }

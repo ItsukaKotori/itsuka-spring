@@ -214,7 +214,7 @@ public class MqttClient implements DisposableBean {
                 variableHeader = vh.messageId();
                 java.util.List<String> topics = new java.util.ArrayList<>();
                 for (io.netty.handler.codec.mqtt.MqttTopicSubscription ts : sm.payload().topicSubscriptions()) {
-                    topics.add(ts.topicName());
+                    topics.add(ts.topicFilter());
                 }
                 payload = topics;
                 break;

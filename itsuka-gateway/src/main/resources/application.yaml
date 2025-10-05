@@ -1,58 +1,25 @@
 server:
   port: 8888
-  netty:
-    # 连接超时时间
-    connection-timeout: 5000
-    # 最大初始化行长度
-    max-initial-line-length: 8192
 
 spring:
   application:
     name: itsuka-gateway
   
   cloud:
-    # 禁用版本兼容性检查
-    compatibility-verifier:
-      enabled: false
-    
     gateway:
-      # 路由配置
       routes:
-        # 系统服务路由 - 统一管理所有系统相关接口
         - id: system-service
           uri: http://localhost:8080
           predicates:
             - Path=/api/system/**
           filters:
             - StripPrefix=2
-            - AddRequestHeader=X-Gateway-Source,itsuka-gateway
-            - name: CircuitBreaker
-              args:
-                name: system-service-circuit-breaker
-                fallbackUri: forward:/fallback/default
         
-        # 认证服务路由 - 登录注册等
-        - id: auth-service
-          uri: http://localhost:8080
-          predicates:
-            - Path=/api/auth/**
-          filters:
-            - StripPrefix=1
-            - AddRequestHeader=X-Gateway-Source,itsuka-gateway
-        
-        # 健康检查路由
-        - id: actuator-route
-          uri: http://localhost:8080
-          predicates:
-            - Path=/actuator/**
-        
-        # Swagger文档路由
         - id: swagger-route
           uri: http://localhost:8080
           predicates:
             - Path=/swagger-ui/**,/v3/api-docs/**
       
-      # 全局CORS配置
       globalcors:
         cors-configurations:
           '[/**]':
@@ -60,124 +27,65 @@ spring:
             allowed-methods: "*"
             allowed-headers: "*"
             allow-credentials: true
-            max-age: 3600
       
-      # 发现定位器
-      discovery:
-        locator:
-          enabled: false
-          lower-case-service-id: true
-      
-      # 默认过滤器
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-        - name: Retry
-          args:
-            retries: 3
-            methods: GET,POST,PUT,DELETE
-            backoff:
-              firstBackoff: 50ms
-              maxBackoff: 500ms
-              factor: 2
-              basedOnPreviousValue: false
-        - name: CircuitBreaker
-          args:
-            name: default-circuit-breaker
-            fallbackUri: forward:/fallback/default
-      
-      # HTTPClient配置
-      httpclient:
-        # 连接池配置
-        pool:
-          # 连接池类型
-          type: elastic
-          # 最大连接数
-          max-connections: 200
-          # 最大空闲时间（毫秒）
-          max-idle-time: 30000
-          # 最大生存时间（毫秒）
-          max-life-time: 60000
-          # 获取连接超时时间（毫秒）
-          acquire-timeout: 45000
-        # 连接超时时间（毫秒）
-        connect-timeout: 5000
-        # 响应超时时间（毫秒）
-        response-timeout: 10000
-        # 启用压缩
-        compression: true
-        # 启用SSL
-        ssl:
-          use-insecure-trust-manager: false
   
-  # Redis配置
   data:
     redis:
       host: localhost
       port: 6379
-      password: 
       database: 0
-      timeout: 5000
-      lettuce:
-        pool:
-          max-active: 200
-          max-wait: -1ms
-          max-idle: 10
-          min-idle: 0
 
-# 网关配置
-gateway:
-  jwt:
-    secret: itsuka-gateway-secret-key-for-jwt-token-generation-must-be-at-least-256-bits
-    expiration: 86400000  # 24小时
-
-# Itsuka Security配置
 itsuka:
   security:
     jwt:
       secret: itsuka-gateway-secret-key-for-jwt-token-generation-must-be-at-least-256-bits
       expiration: 24h
-      refresh-expiration: 7d
       issuer: itsuka-gateway
-      audience: itsuka-app
     auth:
       enabled: true
 
-# 应用配置
 app:
-  system-service:
-    url: http://localhost:8081
   gateway:
+    # JWT认证配置
     auth:
+      # 跳过JWT认证的路径（登录、健康检查等公开接口）
       excluded-paths:
-        - "/api/auth/login"
-        - "/api/auth/register" 
-        - "/api/auth/refresh"
-        - "/api/auth/unauthorized"
-        - "/api/auth/access-denied"
-        - "/actuator/**"
-        - "/swagger-ui/**"
-        - "/v3/api-docs/**"
-        - "/favicon.ico"
-        - "/error"
-        - "/fallback/**"
+        - "/api/auth/**"      # 认证相关接口
+        - "/actuator/**"      # 监控端点
+        - "/swagger-ui/**"    # API文档
+        - "/v3/api-docs/**"   # OpenAPI规范
+        - "/error"            # 错误页面
+        - "/fallback/**"      # 熔断降级页面
+    
+    # 访问控制配置（基于IP、User-Agent、路径的白名单/黑名单）
+    access-control:
+      enabled: true
+      whitelist:
+        enabled: false
+        paths:
+          - "/api/public/**"
+          - "/actuator/health"
+        ips:
+          - "127.0.0.1"
+          - "192.168.1.0/24"
+        user-agents:
+          - "*Chrome*"
+          - "*Firefox*"
+      blacklist:
+        enabled: false
+        paths:
+          - "/api/admin/dangerous/**"
+        ips:
+          - "192.168.1.100"
+          - "10.0.0.0/8"
+        user-agents:
+          - "*bot*"
+          - "*crawler*"
 
-# 日志配置
-logging:
-  level:
-    com.itsuka.gateway: DEBUG
-    org.springframework.cloud.gateway: DEBUG
-    reactor.netty: INFO
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
-# 管理端点配置
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,gateway
-  endpoint:
-    health:
-      show-details: always
-    gateway:
-      enabled: true
+        include: health,info,gateway

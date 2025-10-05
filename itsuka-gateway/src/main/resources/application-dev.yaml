@@ -1,16 +1,28 @@
-spring:
-  # 开发环境Redis配置
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      database: 0
-
-# 开发环境日志配置
+# 开发环境配置
 logging:
   level:
     root: INFO
     com.itsuka.gateway: DEBUG
     org.springframework.cloud.gateway: DEBUG
-    org.springframework.web.reactive: DEBUG
-    reactor.netty.http.client: DEBUG
+
+# 开发环境访问控制配置示例
+app:
+  gateway:
+    access-control:
+      enabled: true
+      # 示例：启用白名单，只允许本地和内网IP访问
+      whitelist:
+        enabled: false  # 开发环境可以关闭白名单
+        ips:
+          - "127.0.0.1"
+          - "192.168.0.0/16"
+          - "10.0.0.0/8"
+      # 示例：启用黑名单，阻止恶意访问
+      blacklist:
+        enabled: true
+        paths:
+          - "/api/admin/delete/**"  # 危险操作路径
+        user-agents:
+          - "*bot*"
+          - "*spider*"
+          - "*crawler*"
