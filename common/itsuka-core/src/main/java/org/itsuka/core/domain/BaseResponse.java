@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.itsuka.core.domain.Response;
 import org.springframework.http.HttpStatus;
 
 import java.util.Map;

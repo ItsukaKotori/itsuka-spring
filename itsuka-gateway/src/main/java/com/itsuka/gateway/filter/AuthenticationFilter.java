@@ -1,6 +1,5 @@
 package com.itsuka.gateway.filter;
 
-import org.itsuka.core.domain.ErrorResponse;
 import com.itsuka.gateway.service.UserCacheService;
 import com.itsuka.gateway.utils.ResponseGenerator;
 import com.itsuka.security.autoconfigure.SecurityProperties;
@@ -8,6 +7,7 @@ import com.itsuka.security.token.TokenProvider;
 import com.itsuka.security.toolkit.SecurityToolkit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.itsuka.core.domain.ErrorResponse;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;

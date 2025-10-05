@@ -1,11 +1,11 @@
 package com.itsuka.gateway.filter;
 
-import org.itsuka.core.domain.ErrorResponse;
 import com.itsuka.gateway.utils.ResponseGenerator;
 import com.itsuka.security.manager.AccessControlManager;
 import com.itsuka.security.toolkit.IpAddressToolkit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.itsuka.core.domain.ErrorResponse;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;

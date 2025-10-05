@@ -2,9 +2,9 @@ package com.itsuka.gateway.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.itsuka.core.domain.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.itsuka.core.domain.BaseResponse;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -24,7 +24,7 @@ public class ResponseGenerator {
      * 将响应写入ServerWebExchange
      *
      * @param exchange     ServerWebExchange
-     * @param objectMapper JSON序列化器
+     * @param baseResponse 响应对象
      * @return Mono<Void>
      */
     public <T> Mono<Void> writeTo(ServerWebExchange exchange, BaseResponse<T> baseResponse) {

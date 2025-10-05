@@ -1,10 +1,10 @@
 package com.itsuka.gateway.filter;
 
-import org.itsuka.core.domain.RateLimitErrorResponse;
 import com.itsuka.gateway.utils.ResponseGenerator;
 import com.itsuka.security.toolkit.IpAddressToolkit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.itsuka.core.domain.RateLimitErrorResponse;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;

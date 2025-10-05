@@ -14,7 +14,6 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -115,18 +114,28 @@ public class WebAutoConfiguration implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 注册性能监控拦截器
-        if (performanceMonitorInterceptor() != null) {
-            registry.addInterceptor(performanceMonitorInterceptor())
-                    .addPathPatterns("/**")
-                    .excludePathPatterns("/actuator/**", "/health", "/error");
+        // 性能监控拦截器
+        try {
+            PerformanceMonitorInterceptor perfInterceptor = performanceMonitorInterceptor();
+            if (perfInterceptor != null) {
+                registry.addInterceptor(perfInterceptor)
+                        .addPathPatterns("/**")
+                        .excludePathPatterns("/actuator/**", "/health", "/error");
+            }
+        } catch (Exception e) {
+            // 如果性能监控拦截器没有启用，就忽略
         }
 
-        // 注册请求响应日志拦截器
-        if (requestResponseLoggingInterceptor() != null) {
-            registry.addInterceptor(requestResponseLoggingInterceptor())
-                    .addPathPatterns("/**")
-                    .excludePathPatterns("/actuator/**", "/health", "/error");
+        // 请求响应日志拦截器
+        try {
+            RequestResponseLoggingInterceptor logInterceptor = requestResponseLoggingInterceptor();
+            if (logInterceptor != null) {
+                registry.addInterceptor(logInterceptor)
+                        .addPathPatterns("/**")
+                        .excludePathPatterns("/actuator/**", "/health", "/error");
+            }
+        } catch (Exception e) {
+            // 如果请求响应日志拦截器没有启用，就忽略
         }
     }
 }
