@@ -1,9 +1,9 @@
-package com.itsuka.gateway.service;
+package com.itsuka.security.manager;
 
-import com.itsuka.gateway.config.AccessControlProperties;
+import com.itsuka.security.autoconfigure.AccessControlProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -13,17 +13,18 @@ import java.net.UnknownHostException;
 import java.util.List;
 
 /**
- * 访问控制服务
+ * 访问控制管理器
+ * 负责管理基于路径、IP、User-Agent的访问控制逻辑
  *
  * @author itsuka
  */
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class AccessControlService {
+public class AccessControlManager {
 
     private final AccessControlProperties accessControlProperties;
-    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final AntPathMatcher pathMatcher;
 
     /**
      * 检查请求是否被允许访问

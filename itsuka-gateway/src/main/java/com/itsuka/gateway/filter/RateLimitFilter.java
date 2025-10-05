@@ -1,7 +1,8 @@
 package com.itsuka.gateway.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itsuka.gateway.util.GatewayResponseUtils;
+import com.itsuka.security.toolkit.IpAddressToolkit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -18,10 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 请求限流过滤器
@@ -56,7 +54,13 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
                     
                     if (count >= MAX_REQUESTS_PER_MINUTE) {
                         log.warn("Rate limit exceeded for client: {}, current count: {}", clientId, count);
-                        return rateLimitExceededResponse(exchange);
+                        return GatewayResponseUtils.createRateLimitResponse(
+                                exchange, 
+                                "Too many requests, please try again later", 
+                                objectMapper,
+                                MAX_REQUESTS_PER_MINUTE,
+                                System.currentTimeMillis() + WINDOW_DURATION.toMillis()
+                        );
                     }
 
                     // 增加计数
@@ -90,54 +94,8 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
         }
 
         // 使用IP地址作为标识
-        String clientIp = getClientIp(request);
+        String clientIp = IpAddressToolkit.getClientIp(request);
         return "ip:" + clientIp;
-    }
-
-    /**
-     * 获取客户端真实IP
-     */
-    private String getClientIp(ServerHttpRequest request) {
-        String xForwardedFor = request.getHeaders().getFirst("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-
-        String xRealIp = request.getHeaders().getFirst("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
-
-        return request.getRemoteAddress() != null 
-                ? request.getRemoteAddress().getAddress().getHostAddress() 
-                : "unknown";
-    }
-
-    /**
-     * 返回限流响应
-     */
-    private Mono<Void> rateLimitExceededResponse(ServerWebExchange exchange) {
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
-        response.getHeaders().add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
-        response.getHeaders().add("X-RateLimit-Limit", String.valueOf(MAX_REQUESTS_PER_MINUTE));
-        response.getHeaders().add("X-RateLimit-Remaining", "0");
-        response.getHeaders().add("X-RateLimit-Reset", String.valueOf(System.currentTimeMillis() + WINDOW_DURATION.toMillis()));
-
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("code", HttpStatus.TOO_MANY_REQUESTS.value());
-        errorResponse.put("message", "Too many requests, please try again later");
-        errorResponse.put("timestamp", System.currentTimeMillis());
-        errorResponse.put("path", exchange.getRequest().getURI().getPath());
-
-        try {
-            String responseBody = objectMapper.writeValueAsString(errorResponse);
-            DataBuffer buffer = response.bufferFactory().wrap(responseBody.getBytes(StandardCharsets.UTF_8));
-            return response.writeWith(Mono.just(buffer));
-        } catch (JsonProcessingException e) {
-            log.error("Error creating rate limit response", e);
-            return response.setComplete();
-        }
     }
 
     @Override

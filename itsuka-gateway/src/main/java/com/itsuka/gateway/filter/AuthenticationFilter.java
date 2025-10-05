@@ -1,8 +1,8 @@
 package com.itsuka.gateway.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itsuka.gateway.service.UserCacheService;
+import com.itsuka.gateway.util.GatewayResponseUtils;
 import com.itsuka.security.autoconfigure.SecurityProperties;
 import com.itsuka.security.token.TokenProvider;
 import com.itsuka.security.toolkit.SecurityToolkit;
@@ -11,19 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * JWT认证过滤器 - 使用统一的security starter
@@ -62,13 +54,13 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String token = SecurityToolkit.extractToken(authHeader);
         if (token == null) {
             log.warn("Missing or invalid Authorization header for path: {}", path);
-            return unauthorizedResponse(exchange, "Missing or invalid Authorization header");
+            return GatewayResponseUtils.createUnauthorizedResponse(exchange, "Missing or invalid Authorization header", objectMapper);
         }
 
         // 验证token并获取用户上下文
         if (!tokenProvider.validateToken(token)) {
             log.warn("Invalid JWT token for path: {}", path);
-            return unauthorizedResponse(exchange, "Invalid JWT token");
+            return GatewayResponseUtils.createUnauthorizedResponse(exchange, "Invalid JWT token", objectMapper);
         }
 
         // 从token中获取用户信息
@@ -77,7 +69,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         if (!StringUtils.hasText(username) || !StringUtils.hasText(userId)) {
             log.warn("Cannot extract username or userId from token for path: {}", path);
-            return unauthorizedResponse(exchange, "Invalid token payload");
+            return GatewayResponseUtils.createUnauthorizedResponse(exchange, "Invalid token payload", objectMapper);
         }
         
         // 校验Redis中的用户信息
@@ -85,7 +77,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                 .flatMap(isValid -> {
                     if (!isValid) {
                         log.warn("User not found or invalid in cache for userId: {} on path: {}", userId, path);
-                        return unauthorizedResponse(exchange, "User not found or disabled");
+                        return GatewayResponseUtils.createUnauthorizedResponse(exchange, "User not found or disabled", objectMapper);
                     }
                     
                     // 刷新用户缓存过期时间
@@ -113,30 +105,6 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         log.debug("Authentication successful for user: {} on path: {}", username, path);
         return chain.filter(mutatedExchange);
-    }
-    
-    /**
-     * 返回未授权响应
-     */
-    private Mono<Void> unauthorizedResponse(ServerWebExchange exchange, String message) {
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.UNAUTHORIZED);
-        response.getHeaders().add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
-
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("code", HttpStatus.UNAUTHORIZED.value());
-        errorResponse.put("message", message);
-        errorResponse.put("timestamp", System.currentTimeMillis());
-        errorResponse.put("path", exchange.getRequest().getURI().getPath());
-
-        try {
-            String responseBody = objectMapper.writeValueAsString(errorResponse);
-            DataBuffer buffer = response.bufferFactory().wrap(responseBody.getBytes(StandardCharsets.UTF_8));
-            return response.writeWith(Mono.just(buffer));
-        } catch (JsonProcessingException e) {
-            log.error("Error creating error response", e);
-            return response.setComplete();
-        }
     }
 
     @Override

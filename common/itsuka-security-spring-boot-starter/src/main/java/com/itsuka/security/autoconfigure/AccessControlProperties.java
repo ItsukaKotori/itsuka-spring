@@ -1,8 +1,7 @@
-package com.itsuka.gateway.config;
+package com.itsuka.security.autoconfigure;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -12,8 +11,7 @@ import java.util.List;
  * @author itsuka
  */
 @Data
-@Component
-@ConfigurationProperties(prefix = "app.gateway.access-control")
+@ConfigurationProperties(prefix = "itsuka.security.access-control")
 public class AccessControlProperties {
 
     /**

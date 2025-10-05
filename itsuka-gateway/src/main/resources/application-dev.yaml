@@ -6,8 +6,8 @@ logging:
     org.springframework.cloud.gateway: DEBUG
 
 # 开发环境访问控制配置示例
-app:
-  gateway:
+itsuka:
+  security:
     access-control:
       enabled: true
       # 示例：启用白名单，只允许本地和内网IP访问
