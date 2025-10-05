@@ -1,7 +1,6 @@
 package com.itsuka.gateway.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itsuka.gateway.response.RateLimitErrorResponse;
+import org.itsuka.core.domain.RateLimitErrorResponse;
 import com.itsuka.gateway.utils.ResponseGenerator;
 import com.itsuka.security.toolkit.IpAddressToolkit;
 import lombok.RequiredArgsConstructor;

@@ -1,10 +1,10 @@
 package org.itsuka.file;
 
 import org.itsuka.file.minio.MinioConfiguration;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Import;
 
-@Configuration
+@AutoConfiguration
 @Import({MinioConfiguration.class})
 public class FileAutoConfiguration {
 }

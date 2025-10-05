@@ -1,20 +1,20 @@
 dependencies {
     // Jakarta Validation
-    implementation 'jakarta.validation:jakarta.validation-api'
+    api 'jakarta.validation:jakarta.validation-api'
     
     // Spring Boot Web Starter
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-web'
     
     // Spring Boot AOP
-    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    api 'org.springframework.boot:spring-boot-starter-aop'
     
     // Spring Security Core (for UserDetails)
-    implementation 'org.springframework.security:spring-security-core'
+    compileOnly 'org.springframework.security:spring-security-core'
     
     // Lombok
-    implementation 'org.projectlombok:lombok'
+    compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     
     // 本项目依赖
-    implementation project(':common:itsuka-core')
+    api project(':common:itsuka-core')
 }

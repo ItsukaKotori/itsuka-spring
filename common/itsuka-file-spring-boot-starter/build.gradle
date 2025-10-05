@@ -16,9 +16,9 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     
-    // MinIO
-    implementation 'io.minio:minio'
+    // MinIO - 使用api确保消费者能访问MinIO类
+    api 'io.minio:minio'
     
     // 本项目依赖
-    implementation project(':common:itsuka-core')
+    api project(':common:itsuka-core')
 }

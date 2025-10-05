@@ -9,6 +9,8 @@ description = 'itsuka-gateway'
 dependencies {
     implementation project(':common:itsuka-core')
 
+    implementation project(':common:itsuka-redis-spring-boot-starter')
+
     // Spring Cloud Gateway
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
     
@@ -21,17 +23,11 @@ dependencies {
     // Spring Boot Actuator for health check
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     
-    // Redis for gateway filter state management
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
-    
     // LoadBalancer for service discovery
     implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
     
     // Itsuka Security Starter
     implementation project(':common:itsuka-security-spring-boot-starter')
-    
-    // Redis Starter for user cache
-    implementation project(':common:itsuka-redis-spring-boot-starter')
     
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'

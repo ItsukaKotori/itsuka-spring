@@ -1,4 +1,4 @@
-package org.itsuka.web.utils;
+package org.itsuka.core.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

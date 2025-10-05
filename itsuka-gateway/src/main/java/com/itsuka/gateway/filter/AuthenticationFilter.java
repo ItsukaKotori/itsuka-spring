@@ -1,6 +1,6 @@
 package com.itsuka.gateway.filter;
 
-import com.itsuka.gateway.response.ErrorResponse;
+import org.itsuka.core.domain.ErrorResponse;
 import com.itsuka.gateway.service.UserCacheService;
 import com.itsuka.gateway.utils.ResponseGenerator;
 import com.itsuka.security.autoconfigure.SecurityProperties;

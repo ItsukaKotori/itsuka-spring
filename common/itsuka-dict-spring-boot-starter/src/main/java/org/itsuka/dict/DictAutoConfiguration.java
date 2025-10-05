@@ -9,6 +9,7 @@ import org.itsuka.dict.loader.DatasourceDictLoader;
 import org.itsuka.dict.loader.DictLoader;
 import org.itsuka.dict.properties.DictProperties;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -16,7 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties(DictProperties.class)
 @ConditionalOnProperty(prefix = "itsuka.dict", value = "enable", havingValue = "true", matchIfMissing = true)
 @Import({LocalDictCacheConfiguration.class, RedisDictCacheConfiguration.class, DictInterceptorConfiguration.class})

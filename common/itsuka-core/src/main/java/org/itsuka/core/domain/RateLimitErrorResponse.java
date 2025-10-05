@@ -1,9 +1,9 @@
-package com.itsuka.gateway.response;
+package org.itsuka.core.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 import java.util.HashMap;
@@ -13,11 +13,22 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class RateLimitErrorResponse extends ErrorResponse {
+public class RateLimitErrorResponse<T> extends ErrorResponse<T> {
     private static final String message = "Too many requests, please try again later";
 
+    /**
+     * 限流最大请求数
+     */
     private int limit;
+
+    /**
+     * 限流剩余请求数
+     */
     private int remaining;
+
+    /**
+     * 限流重置时间戳
+     */
     private long reset;
 
     /**
@@ -28,13 +39,12 @@ public class RateLimitErrorResponse extends ErrorResponse {
      * @param resetTime   重置时间戳
      * @return RateLimitErrorResponse实例
      */
-    public static RateLimitErrorResponse of(String path, int maxRequests, long resetTime) {
-        RateLimitErrorResponse response = new RateLimitErrorResponse();
+    public static <T> RateLimitErrorResponse<T> of(String path, int maxRequests, long resetTime) {
+        RateLimitErrorResponse<T> response = new RateLimitErrorResponse<>();
         response.setCode(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setMessage(message);
         response.setTimestamp(System.currentTimeMillis());
         response.setPath(path);
-        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.getReasonPhrase());
         response.setHttpStatus(HttpStatus.TOO_MANY_REQUESTS);
         response.setLimit(maxRequests);
         response.setRemaining(0);
@@ -71,7 +81,7 @@ public class RateLimitErrorResponse extends ErrorResponse {
      * @param resetTime    重置时间戳
      * @return RateLimitErrorResponse实例
      */
-    public static RateLimitErrorResponse tooManyRequests(String path, int maxRequests, long resetTime) {
+    public static <T> RateLimitErrorResponse<T> tooManyRequests(String path, int maxRequests, long resetTime) {
         return of(path, maxRequests, resetTime);
     }
 }

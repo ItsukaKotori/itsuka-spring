@@ -1,0 +1,1 @@
+org.springframework.boot.env.EnvironmentPostProcessor=com.itsuka.security.autoconfigure.SecurityBeanOverrideConfiguration

@@ -1,8 +1,6 @@
-package com.itsuka.gateway.response;
+package org.itsuka.core.domain;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.EqualsAndHashCode;
 import org.springframework.http.HttpStatus;
 
@@ -11,11 +9,7 @@ import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
-@AllArgsConstructor
-public class SuccessResponse<T> extends BaseResponse {
-    private T data;
-
+public class SuccessResponse<T> extends BaseResponse<T> {
     /**
      * 创建成功响应
      *
@@ -27,11 +21,10 @@ public class SuccessResponse<T> extends BaseResponse {
     public static <T> SuccessResponse<T> of(T data, String path) {
         SuccessResponse<T> response = new SuccessResponse<>();
         response.setCode(HttpStatus.OK.value());
-        response.setMessage("Success");
+        response.setMessage("操作成功");
         response.setTimestamp(System.currentTimeMillis());
         response.setData(data);
         response.setPath(path); 
-        response.setStatus(HttpStatus.OK.getReasonPhrase());
         response.setHttpStatus(HttpStatus.OK);
         return response;
     }

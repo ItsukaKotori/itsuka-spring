@@ -1,6 +1,6 @@
 package org.itsuka.core.exception;
 
-import static org.itsuka.core.constant.Constants.AUTHENTICATION_FAILURE_CODE;
+import org.springframework.http.HttpStatus;
 
 /**
  * 认证异常
@@ -10,10 +10,10 @@ import static org.itsuka.core.constant.Constants.AUTHENTICATION_FAILURE_CODE;
 public class AuthenticationException extends ServiceException {
     
     public AuthenticationException(String message, Throwable throwable) {
-        super(throwable, AUTHENTICATION_FAILURE_CODE, message);
+        super(throwable, HttpStatus.UNAUTHORIZED, message);
     }
 
     public AuthenticationException(String message) {
-        super(null, AUTHENTICATION_FAILURE_CODE, message);
+        super(null, HttpStatus.UNAUTHORIZED, message);
     }
 }

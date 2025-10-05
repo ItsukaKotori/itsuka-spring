@@ -28,10 +28,8 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
-import static org.itsuka.core.constant.Constants.BAD_REQUEST_CODE;
 
 /**
  * 全局异常处理器
@@ -49,16 +47,12 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Response<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception,
-                                                             HttpServletRequest request) {
+    public Response<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception, HttpServletRequest request) {
         log.warn("Validation failed for request: {}", request.getRequestURI(), exception);
-        
-        String errorMessage = exception.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.joining(", "));
-                
-        return Response.error(BAD_REQUEST_CODE, "参数校验失败: " + errorMessage)
-                .withRequestId(getRequestId(request));
+
+        String errorMessage = exception.getBindingResult().getFieldErrors().stream().map(FieldError::getDefaultMessage).collect(Collectors.joining(", "));
+
+        return Response.error(HttpStatus.BAD_REQUEST, "参数校验失败: " + errorMessage).withRequestId(getRequestId(request));
     }
 
     /**
@@ -68,13 +62,10 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Response<?> handleBindException(BindException exception, HttpServletRequest request) {
         log.warn("Parameter binding failed for request: {}", request.getRequestURI(), exception);
-        
-        String errorMessage = exception.getFieldErrors().stream()
-                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
-                .collect(Collectors.joining(", "));
-                
-        return Response.error(BAD_REQUEST_CODE, "参数绑定失败: " + errorMessage)
-                .withRequestId(getRequestId(request));
+
+        String errorMessage = exception.getFieldErrors().stream().map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage()).collect(Collectors.joining(", "));
+
+        return Response.error(HttpStatus.BAD_REQUEST, "参数绑定失败: " + errorMessage).withRequestId(getRequestId(request));
     }
 
     /**
@@ -82,16 +73,12 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Response<?> handleConstraintViolationException(ConstraintViolationException exception,
-                                                          HttpServletRequest request) {
+    public Response<?> handleConstraintViolationException(ConstraintViolationException exception, HttpServletRequest request) {
         log.warn("Constraint violation for request: {}", request.getRequestURI(), exception);
-        
-        String errorMessage = exception.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage)
-                .collect(Collectors.joining(", "));
-                
-        return Response.error(BAD_REQUEST_CODE, "请求参数不正确: " + errorMessage)
-                .withRequestId(getRequestId(request));
+
+        String errorMessage = exception.getConstraintViolations().stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(", "));
+
+        return Response.error(HttpStatus.BAD_REQUEST, "请求参数不正确: " + errorMessage).withRequestId(getRequestId(request));
     }
 
     /**
@@ -99,10 +86,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ServiceException.class)
     public Response<?> handleServiceException(ServiceException serviceException, HttpServletRequest request) {
-        log.error("Business exception for request: {} - code: {}, message: {}",
-                request.getRequestURI(), serviceException.getCode(), serviceException.getMessage(), serviceException);
-        return Response.error(serviceException)
-                .withRequestId(getRequestId(request));
+        log.error("Business exception for request: {} - code: {}, message: {}", request.getRequestURI(), serviceException.getStatus(), serviceException.getMessage(), serviceException);
+        return Response.error(serviceException).withRequestId(getRequestId(request));
     }
 
     /**
@@ -110,11 +95,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
-    public Response<?> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException exception,
-                                                                    HttpServletRequest request) {
+    public Response<?> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException exception, HttpServletRequest request) {
         log.warn("Method not allowed for request: {} - method: {}", request.getRequestURI(), request.getMethod());
-        return Response.error(405, "不支持的请求方法: " + exception.getMethod())
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.METHOD_NOT_ALLOWED, "不支持的请求方法: " + exception.getMethod()).withRequestId(getRequestId(request));
     }
 
     /**
@@ -122,12 +105,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-    public Response<?> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException exception,
-                                                                HttpServletRequest request) {
-        log.warn("Unsupported media type for request: {} - content-type: {}", 
-                request.getRequestURI(), request.getContentType());
-        return Response.error(415, "不支持的媒体类型: " + exception.getContentType())
-                .withRequestId(getRequestId(request));
+    public Response<?> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException exception, HttpServletRequest request) {
+        log.warn("Unsupported media type for request: {} - content-type: {}", request.getRequestURI(), request.getContentType());
+        return Response.error(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "不支持的媒体类型: " + exception.getContentType()).withRequestId(getRequestId(request));
     }
 
     /**
@@ -135,11 +115,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
-    public Response<?> handleHttpMediaTypeNotAcceptableException(HttpMediaTypeNotAcceptableException exception,
-                                                                 HttpServletRequest request) {
+    public Response<?> handleHttpMediaTypeNotAcceptableException(HttpMediaTypeNotAcceptableException exception, HttpServletRequest request) {
         log.warn("Not acceptable media type for request: {}", request.getRequestURI());
-        return Response.error(406, "不可接受的媒体类型")
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.NOT_ACCEPTABLE, "不可接受的媒体类型").withRequestId(getRequestId(request));
     }
 
     /**
@@ -147,12 +125,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Response<?> handleMissingServletRequestParameterException(MissingServletRequestParameterException exception,
-                                                                     HttpServletRequest request) {
-        log.warn("Missing request parameter for request: {} - parameter: {}", 
-                request.getRequestURI(), exception.getParameterName());
-        return Response.error(BAD_REQUEST_CODE, "缺少必需的请求参数: " + exception.getParameterName())
-                .withRequestId(getRequestId(request));
+    public Response<?> handleMissingServletRequestParameterException(MissingServletRequestParameterException exception, HttpServletRequest request) {
+        log.warn("Missing request parameter for request: {} - parameter: {}", request.getRequestURI(), exception.getParameterName());
+        return Response.error(HttpStatus.BAD_REQUEST, "缺少必需的请求参数: " + exception.getParameterName()).withRequestId(getRequestId(request));
     }
 
     /**
@@ -160,12 +135,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MissingPathVariableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Response<?> handleMissingPathVariableException(MissingPathVariableException exception,
-                                                          HttpServletRequest request) {
-        log.warn("Missing path variable for request: {} - variable: {}", 
-                request.getRequestURI(), exception.getVariableName());
-        return Response.error(BAD_REQUEST_CODE, "缺少必需的路径变量: " + exception.getVariableName())
-                .withRequestId(getRequestId(request));
+    public Response<?> handleMissingPathVariableException(MissingPathVariableException exception, HttpServletRequest request) {
+        log.warn("Missing path variable for request: {} - variable: {}", request.getRequestURI(), exception.getVariableName());
+        return Response.error(HttpStatus.BAD_REQUEST, "缺少必需的路径变量: " + exception.getVariableName()).withRequestId(getRequestId(request));
     }
 
     /**
@@ -174,10 +146,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({MethodArgumentTypeMismatchException.class, TypeMismatchException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Response<?> handleTypeMismatchException(TypeMismatchException exception, HttpServletRequest request) {
-        log.warn("Type mismatch for request: {} - parameter: {}, required type: {}", 
-                request.getRequestURI(), exception.getPropertyName(), exception.getRequiredType());
-        return Response.error(BAD_REQUEST_CODE, "参数类型不匹配: " + exception.getPropertyName())
-                .withRequestId(getRequestId(request));
+        log.warn("Type mismatch for request: {} - parameter: {}, required type: {}", request.getRequestURI(), exception.getPropertyName(), exception.getRequiredType());
+        return Response.error(HttpStatus.BAD_REQUEST, "参数类型不匹配: " + exception.getPropertyName()).withRequestId(getRequestId(request));
     }
 
     /**
@@ -185,11 +155,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception,
-                                                             HttpServletRequest request) {
+    public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception, HttpServletRequest request) {
         log.warn("HTTP message not readable for request: {}", request.getRequestURI(), exception);
-        return Response.error(BAD_REQUEST_CODE, "请求体格式错误或无法解析")
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.BAD_REQUEST, "请求体格式错误或无法解析").withRequestId(getRequestId(request));
     }
 
     /**
@@ -197,12 +165,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
-    public Response<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException exception,
-                                                            HttpServletRequest request) {
-        log.warn("Upload size exceeded for request: {} - max size: {}", 
-                request.getRequestURI(), exception.getMaxUploadSize());
-        return Response.error(413, "上传文件大小超出限制")
-                .withRequestId(getRequestId(request));
+    public Response<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException exception, HttpServletRequest request) {
+        log.warn("Upload size exceeded for request: {} - max size: {}", request.getRequestURI(), exception.getMaxUploadSize());
+        return Response.error(HttpStatus.PAYLOAD_TOO_LARGE, "上传文件大小超出限制").withRequestId(getRequestId(request));
     }
 
     /**
@@ -212,8 +177,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Response<?> handleNoHandlerFoundException(NoHandlerFoundException exception, HttpServletRequest request) {
         log.warn("No handler found for request: {} {}", exception.getHttpMethod(), exception.getRequestURL());
-        return Response.error(404, "请求的资源不存在")
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.NOT_FOUND, "请求的资源不存在").withRequestId(getRequestId(request));
     }
 
     /**
@@ -223,8 +187,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public Response<?> handleAuthenticationException(AuthenticationException exception, HttpServletRequest request) {
         log.warn("Authentication failed for request: {}", request.getRequestURI(), exception);
-        return Response.error(401, "认证失败: " + exception.getMessage())
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.UNAUTHORIZED, "认证失败: " + exception.getMessage()).withRequestId(getRequestId(request));
     }
 
     /**
@@ -234,8 +197,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public Response<?> handleAccessDeniedException(AccessDeniedException exception, HttpServletRequest request) {
         log.warn("Access denied for request: {}", request.getRequestURI(), exception);
-        return Response.error(403, "访问被拒绝: " + exception.getMessage())
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.FORBIDDEN, "访问被拒绝: " + exception.getMessage()).withRequestId(getRequestId(request));
     }
 
     /**
@@ -245,8 +207,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Response<?> handleIOException(IOException exception, HttpServletRequest request) {
         log.error("IO error for request: {}", request.getRequestURI(), exception);
-        return Response.error(500, "文件操作失败")
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "文件操作失败").withRequestId(getRequestId(request));
     }
 
     /**
@@ -256,8 +217,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Response<?> handleSQLException(SQLException exception, HttpServletRequest request) {
         log.error("Database error for request: {}", request.getRequestURI(), exception);
-        return Response.error(500, "数据库操作失败")
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "数据库操作失败").withRequestId(getRequestId(request));
     }
 
     /**
@@ -267,8 +227,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Response<?> handleIllegalArgumentException(IllegalArgumentException exception, HttpServletRequest request) {
         log.warn("Illegal argument for request: {}", request.getRequestURI(), exception);
-        return Response.error(BAD_REQUEST_CODE, "参数错误: " + exception.getMessage())
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.BAD_REQUEST, "参数错误: " + exception.getMessage()).withRequestId(getRequestId(request));
     }
 
     /**
@@ -278,8 +237,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Response<?> handleNullPointerException(NullPointerException exception, HttpServletRequest request) {
         log.error("Null pointer exception for request: {}", request.getRequestURI(), exception);
-        return Response.error(500, "系统内部错误")
-                .withRequestId(getRequestId(request));
+        return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "系统内部错误").withRequestId(getRequestId(request));
     }
 
     /**
@@ -289,9 +247,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Response<?> handleGenericException(Exception exception, HttpServletRequest request) {
         log.error("Unexpected error for request: {}", request.getRequestURI(), exception);
-        return Response.error(500, "系统错误")
-                .withRequestId(getRequestId(request))
-                .withTimestamp(LocalDateTime.now());
+        return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "系统错误").withRequestId(getRequestId(request)).withTimestamp(System.currentTimeMillis());
     }
 
     /**

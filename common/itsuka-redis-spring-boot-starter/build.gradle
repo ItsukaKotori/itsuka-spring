@@ -1,9 +1,15 @@
 dependencies {
+    // Itsuka Core
+    api project(':common:itsuka-core')
+
     // Spring Boot Data Redis
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    api 'org.springframework.boot:spring-boot-starter-data-redis'
+    
+    // Spring Boot Data Redis Reactive
+    api 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     
     // Spring Boot Cache
-    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    api 'org.springframework.boot:spring-boot-starter-cache'
     
     // Spring Boot AOP
     implementation 'org.springframework.boot:spring-boot-starter-aop'
@@ -14,7 +20,4 @@ dependencies {
     // Lombok
     implementation 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    
-    // 本项目依赖
-    implementation project(':common:itsuka-web-spring-boot-starter')
 }

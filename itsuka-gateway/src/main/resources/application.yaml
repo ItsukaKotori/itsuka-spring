@@ -6,6 +6,8 @@ spring:
     name: itsuka-gateway
   
   cloud:
+    compatibility-verifier:
+      enabled: false
     gateway:
       routes:
         - id: system-service
@@ -31,6 +33,9 @@ spring:
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
   
+  main:
+    web-application-type: reactive
+  
   data:
     redis:
       host: localhost
@@ -38,6 +43,7 @@ spring:
       database: 0
 
 itsuka:
+  
   security:
     jwt:
       secret: itsuka-gateway-secret-key-for-jwt-token-generation-must-be-at-least-256-bits

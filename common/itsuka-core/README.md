@@ -96,30 +96,6 @@ public class UserService {
 }
 ```
 
-### Assert 断言工具
-
-```java
-import org.itsuka.core.utils.Assert;
-
-@Service
-public class OrderService {
-    
-    public void createOrder(CreateOrderRequest request) {
-        // 参数校验
-        Assert.notNull(request, "请求参数不能为空");
-        Assert.hasText(request.getProductId(), "商品ID不能为空");
-        Assert.positive(request.getQuantity(), "商品数量必须大于0");
-        
-        // 业务校验
-        Product product = productService.findById(request.getProductId());
-        Assert.notNull(product, 404, "商品不存在");
-        Assert.state(product.getStock() >= request.getQuantity(), "库存不足");
-        
-        // 创建订单逻辑...
-    }
-}
-```
-
 ### ReflectionKit 反射工具
 
 ```java

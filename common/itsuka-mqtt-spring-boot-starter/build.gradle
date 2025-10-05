@@ -1,25 +1,25 @@
 dependencies {
     // Netty 核心依赖 - 使用统一版本管理
-    implementation 'io.netty:netty-all'
+    api 'io.netty:netty-all'
 
     // Spring Boot Starter
-    implementation 'org.springframework.boot:spring-boot-starter'
+    api 'org.springframework.boot:spring-boot-starter'
 
     // Spring Boot Configuration Processor
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     // Lombok
-    implementation 'org.projectlombok:lombok'
+    compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
     // Jackson for JSON processing
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    api 'com.fasterxml.jackson.core:jackson-databind'
 
     // Validation
-    implementation 'jakarta.validation:jakarta.validation-api'
+    api 'jakarta.validation:jakarta.validation-api'
 
     // 本项目依赖
-    implementation project(':common:itsuka-core')
+    api project(':common:itsuka-core')
 
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

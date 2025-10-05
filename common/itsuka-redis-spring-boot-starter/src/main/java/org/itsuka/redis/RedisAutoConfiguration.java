@@ -3,14 +3,19 @@ package org.itsuka.redis;
 import lombok.RequiredArgsConstructor;
 import org.itsuka.redis.aspect.DbSwitchAspect;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnSingleCandidate;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
+import org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
@@ -33,101 +38,9 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author Itsuka
  * @since 2023/3/18
  */
-@Configuration
-@ConditionalOnProperty(prefix = "spring.cache", value = "type", havingValue = "redis")
+@AutoConfiguration
 @EnableConfigurationProperties({RedisCacheProperties.class, RedisProperties.class})
-@RequiredArgsConstructor
+@Import({RedisConfiguration.class, RedisReactiveConfiguration.class})
 public class RedisAutoConfiguration {
-    private final ObjectProvider<RedisConnectionFactory> connectionFactoryObjectProvider;
 
-    /**
-     * RedisTemplate Bean
-     *
-     * @return RedisTemplate
-     */
-    @Bean
-    public RedisTemplate<String, Object> redisTemplate() {
-        CustomRedisTemplate<String, Object> redisTemplate = new CustomRedisTemplate<>();
-        redisTemplate.setConnectionFactory(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()));
-        // 设置序列化格式 默认为JDK Serializer
-        redisTemplate.setKeySerializer(RedisSerializer.string());
-        redisTemplate.setValueSerializer(RedisSerializer.json());
-        redisTemplate.setHashKeySerializer(RedisSerializer.string());
-        redisTemplate.setHashValueSerializer(RedisSerializer.json());
-        return redisTemplate;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnSingleCandidate(RedisConnectionFactory.class)
-    public StringRedisTemplate stringRedisTemplate() {
-        return new CustomStringRedisTemplate(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()));
-    }
-
-    /**
-     * 自定义CacheManager
-     * 缓存击穿: @Cacheable(sync = true)
-     *
-     * @param properties RedisCacheProperties
-     * @return CacheManager
-     */
-    @Bean
-    public CacheManager cacheManager(RedisCacheProperties properties) {
-        RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(ttl(properties))
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.string()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(RedisSerializer.json()))
-                .disableCachingNullValues();
-
-        return RedisCacheManager.builder(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()))
-                .cacheDefaults(configuration)
-                .build();
-    }
-
-    /**
-     * Redis Db切换器
-     * 基于RedisConnectionFactory
-     *
-     * @return DbSwitchAspect
-     */
-    @Bean
-    public DbSwitchAspect dbSwitchAspect(RedisProperties redisProperties) {
-        return new DbSwitchAspect(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()), redisProperties);
-    }
-    
-    /**
-     * 响应式RedisTemplate
-     * 用于在响应式环境中操作Redis，如Spring Cloud Gateway
-     *
-     * @param connectionFactory 响应式Redis连接工厂
-     * @return ReactiveRedisTemplate
-     */
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnSingleCandidate(ReactiveRedisConnectionFactory.class)
-    public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(
-            ReactiveRedisConnectionFactory connectionFactory) {
-        
-        // 创建序列化上下文
-        RedisSerializationContext<String, Object> serializationContext = RedisSerializationContext
-                .<String, Object>newSerializationContext()
-                .key(new StringRedisSerializer())
-                .value(new GenericJackson2JsonRedisSerializer())
-                .hashKey(new StringRedisSerializer())
-                .hashValue(new GenericJackson2JsonRedisSerializer())
-                .build();
-                
-        return new ReactiveRedisTemplate<>(connectionFactory, serializationContext);
-    }
-
-    private Duration ttl(RedisCacheProperties properties) {
-        RedisCacheProperties.RandomTtl randomTtl = properties.getRandomTtl();
-        if (!randomTtl.isEnable()) {
-            return Duration.ofSeconds(properties.getTtl());
-        }
-        int baseTtl = randomTtl.getBaseTtl();
-        int floatTtl = randomTtl.getFloatTtl();
-        int random = ThreadLocalRandom.current().nextInt(-floatTtl, floatTtl) + baseTtl;
-        return Duration.ofSeconds(random);
-    }
 }

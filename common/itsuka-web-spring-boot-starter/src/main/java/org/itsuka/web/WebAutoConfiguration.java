@@ -10,6 +10,7 @@ import org.itsuka.web.interceptor.RequestResponseLoggingInterceptor;
 import org.itsuka.web.rest.CustomRestTemplate;
 import org.itsuka.web.utils.SpringContextHolder;
 import org.itsuka.web.utils.WebHelper;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -26,7 +27,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author Itsuka
  * @since 2023/2/26
  */
-@Configuration
+@AutoConfiguration
 @ConditionalOnProperty(prefix = "itsuka.web", value = "enable", matchIfMissing = true)
 public class WebAutoConfiguration implements WebMvcConfigurer {
 
@@ -53,14 +54,14 @@ public class WebAutoConfiguration implements WebMvcConfigurer {
     }
 
     /**
-     * 自定义ObjectMapper
-     * 配置JSON序列化和反序列化规则
+     * 统一的ObjectMapper配置
+     * 强制所有项目使用相同的JSON序列化配置，确保数据一致性
+     * 直接覆盖Spring Boot默认的ObjectMapper
      *
      * @return 自定义ObjectMapper
      */
-    @Bean
+    @Bean("objectMapper")
     @Primary
-    @ConditionalOnMissingBean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         

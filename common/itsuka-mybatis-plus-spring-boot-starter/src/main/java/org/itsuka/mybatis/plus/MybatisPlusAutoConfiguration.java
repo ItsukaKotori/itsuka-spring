@@ -10,6 +10,7 @@ import org.itsuka.mybatis.plus.permission.DataPermissionEscaper;
 import org.itsuka.mybatis.plus.permission.DataPermissionInterceptor;
 import org.itsuka.mybatis.plus.permission.DataPermissionProperty;
 import org.itsuka.web.utils.WebHelper;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
  * @author Itsuka
  * @since 2023/3/5
  */
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties({DataPermissionProperty.class})
 @ConditionalOnProperty(prefix = "itsuka.mybatis-plus", value = "enable", matchIfMissing = true)
 public class MybatisPlusAutoConfiguration {

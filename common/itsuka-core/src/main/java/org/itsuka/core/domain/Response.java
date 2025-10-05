@@ -1,13 +1,9 @@
 package org.itsuka.core.domain;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.itsuka.core.exception.ServiceException;
-
-import java.time.LocalDateTime;
-import java.util.Objects;
-
-import static org.itsuka.core.constant.Constants.ERROR_CODE;
-import static org.itsuka.core.constant.Constants.SUCCESS_CODE;
+import org.springframework.http.HttpStatus;
 
 /**
  * 统一返回信息
@@ -16,7 +12,13 @@ import static org.itsuka.core.constant.Constants.SUCCESS_CODE;
  * @since 2023/2/26
  */
 @Data
+@NoArgsConstructor
 public class Response<T> {
+    /**
+     * 网络状态
+     */
+    private HttpStatus httpStatus;
+
     /**
      * 响应码
      */
@@ -40,102 +42,88 @@ public class Response<T> {
     /**
      * 响应时间戳
      */
-    private LocalDateTime timestamp;
+    private long timestamp;
 
     /**
      * 请求ID（用于链路追踪）
      */
     private String requestId;
 
-    private Response() {
-        this.timestamp = LocalDateTime.now();
-    }
-
-    private Response(Integer code, boolean success, String message, T data) {
-        this.code = code;
-        this.success = success;
+    public Response(HttpStatus status, String message, T data, String requestId) {
+        this.httpStatus = status;
+        this.code = status.value();
+        this.success = status == HttpStatus.OK;
         this.message = message;
         this.data = data;
-        this.timestamp = LocalDateTime.now();
-    }
-
-    private Response(Integer code, boolean success, String message, T data, String requestId) {
-        this.code = code;
-        this.success = success;
-        this.message = message;
-        this.data = data;
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = System.currentTimeMillis();
         this.requestId = requestId;
+    }
+
+    public Response(HttpStatus httpStatus, String message, T data) {
+        this(httpStatus, message, data, null);
     }
 
     /**
      * 成功响应
      */
     public static <T> Response<T> success() {
-        return new Response<>(SUCCESS_CODE, true, "操作成功", null);
+        return new Response<>(HttpStatus.OK, "操作成功", null);
     }
 
     /**
      * 成功响应（带数据）
      */
     public static <T> Response<T> success(T data) {
-        return new Response<>(SUCCESS_CODE, true, "操作成功", data);
+        return new Response<>(HttpStatus.OK, "操作成功", data);
     }
 
     /**
      * 成功响应（带数据和消息）
      */
     public static <T> Response<T> success(String message, T data) {
-        return new Response<>(SUCCESS_CODE, true, message, data);
+        return new Response<>(HttpStatus.OK, message, data);
     }
 
     /**
      * 成功响应（带请求ID）
      */
     public static <T> Response<T> success(T data, String requestId) {
-        return new Response<>(SUCCESS_CODE, true, "操作成功", data, requestId);
+        return new Response<>(HttpStatus.OK, "操作成功", data, requestId);
     }
 
     /**
      * 失败响应
      */
     public static Response<?> error(String message) {
-        return error(ERROR_CODE, message);
+        return new Response<>(HttpStatus.INTERNAL_SERVER_ERROR, message, null);
     }
 
     /**
      * 失败响应（带错误码）
      */
-    public static Response<?> error(Integer code, String message) {
-        return new Response<>(code, false, message, null);
+    public static Response<?> error(HttpStatus status, String message) {
+        return new Response<>(status, message, null);
     }
 
     /**
      * 失败响应（带请求ID）
      */
-    public static Response<?> error(Integer code, String message, String requestId) {
-        return new Response<>(code, false, message, null, requestId);
+    public static Response<?> error(HttpStatus status, String message, String requestId) {
+        return new Response<>(status, message, null, requestId);
     }
 
     /**
      * 服务异常响应
      */
     public static Response<?> error(ServiceException serviceException) {
-        return error(serviceException.getCode(), serviceException.getMessage());
+        return error(serviceException.getStatus(), serviceException.getMessage());
     }
 
     /**
      * 服务异常响应（带请求ID）
      */
     public static Response<?> error(ServiceException serviceException, String requestId) {
-        return error(serviceException.getCode(), serviceException.getMessage(), requestId);
-    }
-
-    /**
-     * 判断响应是否成功
-     */
-    public boolean isSuccess() {
-        return success && Objects.equals(code, SUCCESS_CODE);
+        return error(serviceException.getStatus(), serviceException.getMessage(), requestId);
     }
 
     /**
@@ -170,7 +158,7 @@ public class Response<T> {
     /**
      * 链式设置时间戳
      */
-    public Response<T> withTimestamp(LocalDateTime timestamp) {
+    public Response<T> withTimestamp(long timestamp) {
         this.timestamp = timestamp;
         return this;
     }

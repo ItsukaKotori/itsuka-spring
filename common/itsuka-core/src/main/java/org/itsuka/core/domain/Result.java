@@ -2,6 +2,7 @@ package org.itsuka.core.domain;
 
 import lombok.Data;
 import org.itsuka.core.exception.ServiceException;
+import org.springframework.http.HttpStatus;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -99,7 +100,7 @@ public class Result<T> {
      * 从ServiceException创建失败结果
      */
     public static <T> Result<T> failure(ServiceException serviceException) {
-        return new Result<>(false, null, serviceException.getMessage(), serviceException.getCode(), serviceException);
+        return new Result<>(false, null, serviceException.getMessage(), serviceException.getStatus().value(), serviceException);
     }
     
     /**
@@ -305,7 +306,7 @@ public class Result<T> {
             return Response.success(data);
         } else {
             return errorCode != null 
-                ? (Response<T>) Response.error(errorCode, errorMessage)
+                ? (Response<T>) Response.error(HttpStatus.INTERNAL_SERVER_ERROR, errorMessage)
                 : (Response<T>) Response.error(errorMessage);
         }
     }
@@ -319,7 +320,7 @@ public class Result<T> {
             return Response.success(data, requestId);
         } else {
             return errorCode != null 
-                ? (Response<T>) Response.error(errorCode, errorMessage, requestId)
+                ? (Response<T>) Response.error(HttpStatus.INTERNAL_SERVER_ERROR, errorMessage, requestId)
                 : (Response<T>) Response.error(errorMessage).withRequestId(requestId);
         }
     }
@@ -340,7 +341,7 @@ public class Result<T> {
         } else if (throwable instanceof ServiceException serviceException) {
             throw serviceException;
         } else {
-            throw new ServiceException(throwable, errorCode, errorMessage);
+            throw new ServiceException(throwable, HttpStatus.INTERNAL_SERVER_ERROR, errorMessage);
         }
     }
     

@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.util.AntPathMatcher;
 
@@ -48,11 +49,12 @@ public class SecurityAutoConfiguration {
     }
     
     /**
-     * 密码编码器Bean
-     * 提供BCrypt密码编码功能
+     * 统一的密码编码器Bean
+     * 强制所有项目使用BCrypt密码编码，确保安全性一致
+     * 直接覆盖其他可能的PasswordEncoder实现
      */
-    @Bean
-    @ConditionalOnMissingBean
+    @Bean("passwordEncoder")
+    @Primary
     public BCryptPasswordEncoder passwordEncoder() {
         log.info("Initializing BCrypt password encoder");
         return new BCryptPasswordEncoder();

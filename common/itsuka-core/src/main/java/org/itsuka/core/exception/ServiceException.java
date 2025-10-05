@@ -2,8 +2,7 @@ package org.itsuka.core.exception;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import static org.itsuka.core.constant.Constants.ERROR_CODE;
+import org.springframework.http.HttpStatus;
 
 /**
  * 自定义异常信息
@@ -14,25 +13,25 @@ import static org.itsuka.core.constant.Constants.ERROR_CODE;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class ServiceException extends RuntimeException {
-    private Integer code;
+    private HttpStatus status;
 
     private String message;
 
-    public ServiceException(Throwable cause, Integer code, String message) {
+    public ServiceException(Throwable cause, HttpStatus status, String message) {
         super(cause);
-        this.code = code;
+        this.status = status;
         this.message = message;
     }
 
     public static ServiceException create(String message) {
-        return create(ERROR_CODE, message);
+        return create(HttpStatus.INTERNAL_SERVER_ERROR, message);
     }
 
     public static ServiceException error(Throwable cause) {
-        return new ServiceException(cause, ERROR_CODE, null);
+        return new ServiceException(cause, HttpStatus.INTERNAL_SERVER_ERROR, null);
     }
 
-    public static ServiceException create(Integer code, String message) {
-        return new ServiceException(null, code, message);
+    public static ServiceException create(HttpStatus status, String message) {
+        return new ServiceException(null, status, message);
     }
 }

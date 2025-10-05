@@ -1,29 +1,29 @@
 dependencies {
     // MySQL 连接器
-    implementation 'com.mysql:mysql-connector-j'
+    api 'com.mysql:mysql-connector-j'
     
     // Spring Boot Starter
-    implementation 'org.springframework.boot:spring-boot-starter'
+    api 'org.springframework.boot:spring-boot-starter'
     
     // Spring Security Core (for UserDetails)
-    implementation 'org.springframework.security:spring-security-core'
+    compileOnly 'org.springframework.security:spring-security-core'
     
     // MyBatis Plus (排除原有的 mybatis-spring)
-    implementation('com.baomidou:mybatis-plus-boot-starter') {
+    api('com.baomidou:mybatis-plus-boot-starter') {
         exclude group: 'org.mybatis', module: 'mybatis-spring'
     }
     
     // 使用指定版本的 MyBatis Spring
-    implementation 'org.mybatis:mybatis-spring'
+    api 'org.mybatis:mybatis-spring'
     
     // Jackson (for JSON annotations)
-    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+    api 'com.fasterxml.jackson.core:jackson-annotations'
     
     // Lombok
-    implementation 'org.projectlombok:lombok'
+    compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     
     // 本项目依赖 - 直接依赖itsuka-core
-    implementation project(':common:itsuka-core')
-    implementation project(':common:itsuka-web-spring-boot-starter')
+    api project(':common:itsuka-core')
+    api project(':common:itsuka-web-spring-boot-starter')
 }
