@@ -11,7 +11,7 @@ Itsuka-Spring 是一个基于 Spring Boot 的企业级微服务开发框架，�
 ```
 itsuka-spring/
 ├── common/                           # 基础组件模块
-│   ├── itsuka-core/                  # 核心工具库
+│   ├── itsuka-spring-boot-starter/                  # 核心工具库
 │   ├── itsuka-web-spring-boot-starter/        # Web 功能增强
 │   ├── itsuka-mybatis-plus-spring-boot-starter/ # MyBatis Plus 增强
 │   ├── itsuka-redis-spring-boot-starter/       # Redis 集成
@@ -23,7 +23,7 @@ itsuka-spring/
 
 ### 🧩 核心组件
 
-#### `itsuka-core` - 核心工具库
+#### `itsuka-spring-boot-starter` - 核心工具库
 - 统一响应结构 (`Response<T>`) 和结果包装 (`Result<T>`)
 - 用户认证实体 (`LoginUser`, `AnonymousLoginUser`)
 - 异常体系 (`ServiceException`, `BusinessException`)
@@ -139,7 +139,7 @@ java -jar itsuka-system/build/libs/itsuka-system-1.0.0.jar
 
 ```gradle
 dependencies {
-    implementation project(':common:itsuka-core')
+    implementation project(':common:itsuka-spring-boot-starter')
     implementation project(':common:itsuka-web-spring-boot-starter')
     implementation project(':common:itsuka-mybatis-plus-spring-boot-starter')
     implementation project(':common:itsuka-redis-spring-boot-starter')

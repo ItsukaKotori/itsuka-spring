@@ -20,5 +20,5 @@ dependencies {
     api 'io.minio:minio'
     
     // 本项目依赖
-    api project(':common:itsuka-core')
+    api project(':common:itsuka-spring-boot-starter')
 }

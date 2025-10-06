@@ -248,7 +248,7 @@ List<Object> selectValueRange(@Param("col") String column, @Param(Constants.WRAP
 ## 📚 依赖模块
 
 - `mybatis-plus-boot-starter` - MyBatis-Plus基础功能
-- `itsuka-core` - 核心工具类
+- `itsuka-spring-boot-starter` - 核心工具类
 - `itsuka-web-spring-boot-starter` - Web工具类
 
 ## ⚠️ 注意事项

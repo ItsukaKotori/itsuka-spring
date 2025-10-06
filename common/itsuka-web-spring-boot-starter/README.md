@@ -169,7 +169,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 ## 📚 依赖模块
 
-- `itsuka-core` - 核心工具类和响应模型
+- `itsuka-spring-boot-starter` - 核心工具类和响应模型
 - `spring-boot-starter-web` - Spring Boot Web支持
 - `spring-boot-starter-validation` - 参数验证支持
 

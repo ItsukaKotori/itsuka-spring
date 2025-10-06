@@ -7,7 +7,7 @@
 - **模块聚合**: 作为所有通用 `Starter` 和 `core` 模块的父级，简化构建流程。
 
 ## 子模块列表
-- `itsuka-core`: 核心工具与通用模型。
+- `itsuka-spring-boot-starter`: 核心工具与通用模型。
 - `itsuka-dict-spring-boot-starter`: 数据字典 `Starter`。
 - `itsuka-file-spring-boot-starter`: 文件操作 `Starter`。
 - `itsuka-mqtt-spring-boot-starter`: MQTT `Starter`。

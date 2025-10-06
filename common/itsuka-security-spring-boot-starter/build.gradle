@@ -33,7 +33,7 @@ dependencies {
     api 'org.springframework.boot:spring-boot-starter-validation'
     
     // Common module dependency
-    api project(':common:itsuka-core')
+    api project(':common:itsuka-spring-boot-starter')
     
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

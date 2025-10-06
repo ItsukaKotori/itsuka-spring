@@ -275,7 +275,7 @@ public class Role {
 
 ## 📚 依赖模块
 
-- `itsuka-core` - 核心工具类
+- `itsuka-spring-boot-starter` - 核心工具类
 - `spring-boot-starter-web` - Web支持
 - `spring-boot-starter-data-redis` - Redis支持（可选）
 

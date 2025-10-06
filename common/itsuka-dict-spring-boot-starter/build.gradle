@@ -10,7 +10,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     
     // 本项目依赖
-    api project(':common:itsuka-core')
+    api project(':common:itsuka-spring-boot-starter')
     
     // 可选依赖 - Redis (provided scope)
     compileOnly project(':common:itsuka-redis-spring-boot-starter')

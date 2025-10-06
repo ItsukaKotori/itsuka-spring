@@ -37,7 +37,7 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     
     // 本项目依赖
-    implementation project(':common:itsuka-core')
+    implementation project(':common:itsuka-spring-boot-starter')
     implementation project(':common:itsuka-mybatis-plus-spring-boot-starter')
     implementation project(':common:itsuka-redis-spring-boot-starter')
     

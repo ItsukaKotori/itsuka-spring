@@ -16,5 +16,5 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     
     // 本项目依赖
-    api project(':common:itsuka-core')
+    api project(':common:itsuka-spring-boot-starter')
 }

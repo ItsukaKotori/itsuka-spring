@@ -38,7 +38,7 @@
 
 ```gradle
 dependencies {
-    implementation project(':common:itsuka-core')
+    implementation project(':common:itsuka-spring-boot-starter')
 }
 ```
 
@@ -164,7 +164,7 @@ public class FileService {
 ## 📁 模块结构
 
 ```
-itsuka-core/
+itsuka-spring-boot-starter/
 ├── src/main/java/org/itsuka/core/
 │   ├── constant/
 │   │   └── Constants.java              # 通用常量定义

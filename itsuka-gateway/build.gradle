@@ -7,7 +7,7 @@ plugins {
 description = 'itsuka-gateway'
 
 dependencies {
-    implementation project(':common:itsuka-core')
+    implementation project(':common:itsuka-spring-boot-starter')
 
     implementation project(':common:itsuka-redis-spring-boot-starter')
 

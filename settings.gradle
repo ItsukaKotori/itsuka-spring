@@ -22,7 +22,7 @@ rootProject.name = 'itsuka-spring'
 
 // 包含所有子模块
 include 'common'
-include 'common:itsuka-core'
+include 'common:itsuka-spring-boot-starter'
 include 'common:itsuka-web-spring-boot-starter'
 include 'common:itsuka-mybatis-plus-spring-boot-starter'
 include 'common:itsuka-redis-spring-boot-starter'

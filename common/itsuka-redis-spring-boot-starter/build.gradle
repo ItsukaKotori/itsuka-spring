@@ -1,6 +1,6 @@
 dependencies {
     // Itsuka Core
-    api project(':common:itsuka-core')
+    api project(':common:itsuka-spring-boot-starter')
 
     // Spring Boot Data Redis
     api 'org.springframework.boot:spring-boot-starter-data-redis'

@@ -19,7 +19,7 @@ dependencies {
     api 'jakarta.validation:jakarta.validation-api'
 
     // 本项目依赖
-    api project(':common:itsuka-core')
+    api project(':common:itsuka-spring-boot-starter')
 
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
