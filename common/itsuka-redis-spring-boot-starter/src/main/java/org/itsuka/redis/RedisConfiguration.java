@@ -1,6 +1,8 @@
 package org.itsuka.redis;
 
 import lombok.RequiredArgsConstructor;
+
+import org.itsuka.core.utils.JacksonDeepCopyer;
 import org.itsuka.redis.aspect.DbSwitchAspect;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -57,8 +59,8 @@ public class RedisConfiguration {
      * @return DbSwitchAspect
      */
     @Bean
-    public DbSwitchAspect dbSwitchAspect(RedisProperties redisProperties) {
-        return new DbSwitchAspect(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()), redisProperties);
+    public DbSwitchAspect dbSwitchAspect(RedisProperties redisProperties, JacksonDeepCopyer deepCopyer) {
+        return new DbSwitchAspect(Objects.requireNonNull(connectionFactoryObjectProvider.getIfAvailable()), redisProperties, deepCopyer);
     }
 
     /**

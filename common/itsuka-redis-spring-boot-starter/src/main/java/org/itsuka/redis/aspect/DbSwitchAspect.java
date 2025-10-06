@@ -24,6 +24,8 @@ public class DbSwitchAspect {
 
     private final RedisProperties redisProperties;
 
+    private final JacksonDeepCopyer deepCopyer;
+
     @Pointcut("@annotation(org.itsuka.redis.annotation.DbSwitch)")
     public void dbSwitchAspect() {}
 
@@ -104,7 +106,7 @@ public class DbSwitchAspect {
 
     private JedisConnectionFactory createJedisConnectionFactory(JedisConnectionFactory original, int database) {
         // 对于Jedis，创建新的连接工厂副本
-        JedisConnectionFactory newFactory = JacksonDeepCopyer.copy(original);
+        JedisConnectionFactory newFactory = deepCopyer.copy(original);
         
         // 检查是否为集群配置
         if (newFactory.getClusterConfiguration() != null) {

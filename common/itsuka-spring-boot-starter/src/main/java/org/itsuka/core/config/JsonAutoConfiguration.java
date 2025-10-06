@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
+
+import org.itsuka.core.utils.JacksonDeepCopyer;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -51,5 +53,19 @@ public class JsonAutoConfiguration {
         log.info("ObjectMapper configuration completed with JavaTimeModule and default typing");
         
         return objectMapper;
+    }
+
+    /**
+     * 自定义的Jackson深拷贝器
+     * 提供类型安全的深拷贝功能，避免类型转换问题
+     *
+     * @param objectMapper 用于序列化和反序列化的ObjectMapper
+     * @return 自定义的JacksonDeepCopyer实例
+     */
+    @Bean("jacksonDeepCopyer")
+    @Primary
+    @ConditionalOnMissingBean(JacksonDeepCopyer.class)
+    public JacksonDeepCopyer jacksonDeepCopyer(ObjectMapper objectMapper) {
+        return new JacksonDeepCopyer(objectMapper);
     }
 }

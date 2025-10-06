@@ -2,8 +2,11 @@ package org.itsuka.core.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public class JacksonDeepCopyer {
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper ;
 
     /**
      * 深拷贝对象
@@ -11,7 +14,7 @@ public class JacksonDeepCopyer {
      * 确保了类型的一致性
      */
     @SuppressWarnings("unchecked")
-    public static <T> T copy(T source) {
+    public <T> T copy(T source) {
         try {
             String json = mapper.writeValueAsString(source);
             return (T) mapper.readValue(json, source.getClass());
@@ -24,7 +27,7 @@ public class JacksonDeepCopyer {
      * 深拷贝对象 - 类型安全版本
      * 调用者显式传入目标类型，避免类型安全警告
      */
-    public static <T> T copyWithClass(T source, Class<T> targetClass) {
+    public <T> T copyWithClass(T source, Class<T> targetClass) {
         try {
             String json = mapper.writeValueAsString(source);
             return mapper.readValue(json, targetClass);
