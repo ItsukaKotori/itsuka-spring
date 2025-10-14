@@ -7,7 +7,8 @@ import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.mqtt.event.MqttEventPublisher;
 import org.itsuka.mqtt.event.MqttMessageEvent;
-import org.itsuka.mqtt.protocol.MqttMessage;
+import org.itsuka.mqtt.protocol.*;
+import org.itsuka.mqtt.session.MqttSession;
 import org.itsuka.mqtt.session.MqttSessionManager;
 
 /**
@@ -119,16 +120,34 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
     private void handleConnect(ChannelHandlerContext ctx, MqttMessage msg) {
         log.debug("Handling CONNECT message from {}", ctx.channel().remoteAddress());
         
-        // TODO: 实现CONNECT消息处理逻辑
-        // 1. 验证客户端认证信息
-        // 2. 创建或恢复会话
-        // 3. 发送CONNACK响应
-        
-        sessionManager.createSession(ctx.channel(), "client-" + ctx.channel().id().asShortText());
-        
-        // 发送CONNACK响应（简化实现）
-        // MqttMessage connAck = createConnAckMessage();
-        // ctx.writeAndFlush(connAck);
+        try {
+            MqttConnectVariableHeader variableHeader = (MqttConnectVariableHeader) msg.getVariableHeader();
+            MqttConnectPayload payload = (MqttConnectPayload) msg.getPayload();
+            
+            if (variableHeader == null || payload == null) {
+                log.error("Invalid CONNECT message: missing variable header or payload");
+                ctx.close();
+                return;
+            }
+            
+            String clientId = payload.getClientId();
+            boolean cleanSession = variableHeader.getConnectFlags().isCleanSession();
+            
+            // TODO: 验证客户端认证信息
+            // 这里可以添加用户名和密码验证逻辑
+            
+            // 创建或恢复会话
+            sessionManager.createSession(ctx.channel(), clientId, cleanSession);
+            
+            // 发送CONNACK响应
+            sendConnAck(ctx, true, MqttConnectReturnCode.CONNECTION_ACCEPTED);
+            
+            log.info("Client {} connected successfully, cleanSession: {}", clientId, cleanSession);
+        } catch (Exception e) {
+            log.error("Error handling CONNECT message", e);
+            sendConnAck(ctx, false, MqttConnectReturnCode.SERVER_UNAVAILABLE);
+            ctx.close();
+        }
     }
     
     /**
@@ -137,10 +156,32 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
     private void handlePublish(ChannelHandlerContext ctx, MqttMessage msg) {
         log.debug("Handling PUBLISH message from {}", ctx.channel().remoteAddress());
         
-        // TODO: 实现PUBLISH消息处理逻辑
-        // 1. 根据QoS等级处理消息
-        // 2. 转发消息给订阅者
-        // 3. 发送相应的确认消息
+        try {
+            MqttPublishVariableHeader variableHeader = (MqttPublishVariableHeader) msg.getVariableHeader();
+            
+            if (variableHeader == null) {
+                log.error("Invalid PUBLISH message: missing variable header");
+                return;
+            }
+            
+            String topic = variableHeader.getTopicName();
+            int messageId = variableHeader.getMessageId();
+            MqttQoS qos = msg.getQosLevel();
+            
+            log.info("Received PUBLISH message on topic: {}, QoS: {}", topic, qos);
+            
+            // TODO: 转发消息给订阅者
+            // 这里需要从 TopicManager 获取订阅者并转发消息
+            
+            // 根据QoS等级发送相应的确认消息
+            if (qos == MqttQoS.AT_LEAST_ONCE) {
+                sendPubAck(ctx, messageId);
+            } else if (qos == MqttQoS.EXACTLY_ONCE) {
+                sendPubRec(ctx, messageId);
+            }
+        } catch (Exception e) {
+            log.error("Error handling PUBLISH message", e);
+        }
     }
     
     /**
@@ -149,7 +190,14 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
     private void handlePubAck(ChannelHandlerContext ctx, MqttMessage msg) {
         log.debug("Handling PUBACK message from {}", ctx.channel().remoteAddress());
         
-        // TODO: 实现PUBACK消息处理逻辑
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) msg.getVariableHeader();
+            if (variableHeader != null) {
+                log.info("Received PUBACK for message ID: {}", variableHeader.getMessageId());
+            }
+        } catch (Exception e) {
+            log.error("Error handling PUBACK message", e);
+        }
     }
     
     /**
@@ -158,7 +206,16 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
     private void handlePubRec(ChannelHandlerContext ctx, MqttMessage msg) {
         log.debug("Handling PUBREC message from {}", ctx.channel().remoteAddress());
         
-        // TODO: 实现PUBREC消息处理逻辑
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) msg.getVariableHeader();
+            if (variableHeader != null) {
+                int messageId = variableHeader.getMessageId();
+                log.info("Received PUBREC for message ID: {}, sending PUBREL", messageId);
+                sendPubRel(ctx, messageId);
+            }
+        } catch (Exception e) {
+            log.error("Error handling PUBREC message", e);
+        }
     }
     
     /**
@@ -167,7 +224,16 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
     private void handlePubRel(ChannelHandlerContext ctx, MqttMessage msg) {
         log.debug("Handling PUBREL message from {}", ctx.channel().remoteAddress());
         
-        // TODO: 实现PUBREL消息处理逻辑
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) msg.getVariableHeader();
+            if (variableHeader != null) {
+                int messageId = variableHeader.getMessageId();
+                log.info("Received PUBREL for message ID: {}, sending PUBCOMP", messageId);
+                sendPubComp(ctx, messageId);
+            }
+        } catch (Exception e) {
+            log.error("Error handling PUBREL message", e);
+        }
     }
     
     /**
@@ -176,7 +242,14 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
     private void handlePubComp(ChannelHandlerContext ctx, MqttMessage msg) {
         log.debug("Handling PUBCOMP message from {}", ctx.channel().remoteAddress());
         
-        // TODO: 实现PUBCOMP消息处理逻辑
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) msg.getVariableHeader();
+            if (variableHeader != null) {
+                log.info("Received PUBCOMP for message ID: {}", variableHeader.getMessageId());
+            }
+        } catch (Exception e) {
+            log.error("Error handling PUBCOMP message", e);
+        }
     }
     
     /**
@@ -185,10 +258,37 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
     private void handleSubscribe(ChannelHandlerContext ctx, MqttMessage msg) {
         log.debug("Handling SUBSCRIBE message from {}", ctx.channel().remoteAddress());
         
-        // TODO: 实现SUBSCRIBE消息处理逻辑
-        // 1. 解析订阅主题和QoS
-        // 2. 添加订阅关系
-        // 3. 发送SUBACK响应
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) msg.getVariableHeader();
+            MqttSubscribePayload payload = (MqttSubscribePayload) msg.getPayload();
+            
+            if (variableHeader == null || payload == null) {
+                log.error("Invalid SUBSCRIBE message: missing variable header or payload");
+                return;
+            }
+            
+            int messageId = variableHeader.getMessageId();
+            MqttSubAckPayload ackPayload = new MqttSubAckPayload();
+            
+            // 处理订阅请求
+            for (MqttTopicSubscription subscription : payload.getTopicSubscriptions()) {
+                String topic = subscription.getTopicFilter();
+                MqttQoS qos = subscription.getQos();
+                
+                log.info("Client subscribing to topic: {} with QoS: {}", topic, qos);
+                
+                // TODO: 添加订阅关系到 TopicManager
+                // topicManager.addSubscription(clientId, topic, qos);
+                
+                // 添加授予的QoS
+                ackPayload.addGrantedQoS(qos);
+            }
+            
+            // 发送SUBACK响应
+            sendSubAck(ctx, messageId, ackPayload);
+        } catch (Exception e) {
+            log.error("Error handling SUBSCRIBE message", e);
+        }
     }
     
     /**
@@ -197,10 +297,29 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
     private void handleUnsubscribe(ChannelHandlerContext ctx, MqttMessage msg) {
         log.debug("Handling UNSUBSCRIBE message from {}", ctx.channel().remoteAddress());
         
-        // TODO: 实现UNSUBSCRIBE消息处理逻辑
-        // 1. 解析取消订阅的主题
-        // 2. 移除订阅关系
-        // 3. 发送UNSUBACK响应
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) msg.getVariableHeader();
+            MqttUnsubscribePayload payload = (MqttUnsubscribePayload) msg.getPayload();
+            
+            if (variableHeader == null || payload == null) {
+                log.error("Invalid UNSUBSCRIBE message: missing variable header or payload");
+                return;
+            }
+            
+            int messageId = variableHeader.getMessageId();
+            
+            // 处理取消订阅请求
+            for (String topic : payload.getTopics()) {
+                log.info("Client unsubscribing from topic: {}", topic);
+                // TODO: 从 TopicManager 移除订阅关系
+                // topicManager.removeSubscription(clientId, topic);
+            }
+            
+            // 发送UNSUBACK响应
+            sendUnsubAck(ctx, messageId);
+        } catch (Exception e) {
+            log.error("Error handling UNSUBSCRIBE message", e);
+        }
     }
     
     /**
@@ -210,8 +329,7 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
         log.debug("Handling PINGREQ message from {}", ctx.channel().remoteAddress());
         
         // 发送PINGRESP响应
-        // MqttMessage pingResp = createPingRespMessage();
-        // ctx.writeAndFlush(pingResp);
+        sendPingResp(ctx);
     }
     
     /**
@@ -223,5 +341,94 @@ public class MqttServerHandler extends SimpleChannelInboundHandler<MqttMessage> 
         // 清理会话并关闭连接
         sessionManager.removeSession(ctx.channel());
         ctx.close();
+    }
+    
+    /**
+     * 发送CONNACK消息
+     */
+    private void sendConnAck(ChannelHandlerContext ctx, boolean sessionPresent, MqttConnectReturnCode returnCode) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                MqttMessageType.CONNACK, false, MqttQoS.AT_MOST_ONCE, false, 2);
+        MqttConnAckVariableHeader variableHeader = new MqttConnAckVariableHeader(
+                sessionPresent, returnCode);
+        MqttMessage connAck = new MqttMessage(fixedHeader, variableHeader);
+        ctx.writeAndFlush(connAck);
+    }
+    
+    /**
+     * 发送PUBACK消息
+     */
+    private void sendPubAck(ChannelHandlerContext ctx, int messageId) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                MqttMessageType.PUBACK, false, MqttQoS.AT_MOST_ONCE, false, 2);
+        MqttMessageIdVariableHeader variableHeader = new MqttMessageIdVariableHeader(messageId);
+        MqttMessage pubAck = new MqttMessage(fixedHeader, variableHeader);
+        ctx.writeAndFlush(pubAck);
+    }
+    
+    /**
+     * 发送PUBREC消息
+     */
+    private void sendPubRec(ChannelHandlerContext ctx, int messageId) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                MqttMessageType.PUBREC, false, MqttQoS.AT_MOST_ONCE, false, 2);
+        MqttMessageIdVariableHeader variableHeader = new MqttMessageIdVariableHeader(messageId);
+        MqttMessage pubRec = new MqttMessage(fixedHeader, variableHeader);
+        ctx.writeAndFlush(pubRec);
+    }
+    
+    /**
+     * 发送PUBREL消息
+     */
+    private void sendPubRel(ChannelHandlerContext ctx, int messageId) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                MqttMessageType.PUBREL, false, MqttQoS.AT_LEAST_ONCE, false, 2);
+        MqttMessageIdVariableHeader variableHeader = new MqttMessageIdVariableHeader(messageId);
+        MqttMessage pubRel = new MqttMessage(fixedHeader, variableHeader);
+        ctx.writeAndFlush(pubRel);
+    }
+    
+    /**
+     * 发送PUBCOMP消息
+     */
+    private void sendPubComp(ChannelHandlerContext ctx, int messageId) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                MqttMessageType.PUBCOMP, false, MqttQoS.AT_MOST_ONCE, false, 2);
+        MqttMessageIdVariableHeader variableHeader = new MqttMessageIdVariableHeader(messageId);
+        MqttMessage pubComp = new MqttMessage(fixedHeader, variableHeader);
+        ctx.writeAndFlush(pubComp);
+    }
+    
+    /**
+     * 发送SUBACK消息
+     */
+    private void sendSubAck(ChannelHandlerContext ctx, int messageId, MqttSubAckPayload payload) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                MqttMessageType.SUBACK, false, MqttQoS.AT_MOST_ONCE, false, 
+                2 + payload.getGrantedQosList().size());
+        MqttMessageIdVariableHeader variableHeader = new MqttMessageIdVariableHeader(messageId);
+        MqttMessage subAck = new MqttMessage(fixedHeader, variableHeader, payload);
+        ctx.writeAndFlush(subAck);
+    }
+    
+    /**
+     * 发送UNSUBACK消息
+     */
+    private void sendUnsubAck(ChannelHandlerContext ctx, int messageId) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                MqttMessageType.UNSUBACK, false, MqttQoS.AT_MOST_ONCE, false, 2);
+        MqttMessageIdVariableHeader variableHeader = new MqttMessageIdVariableHeader(messageId);
+        MqttMessage unsubAck = new MqttMessage(fixedHeader, variableHeader);
+        ctx.writeAndFlush(unsubAck);
+    }
+    
+    /**
+     * 发送PINGRESP消息
+     */
+    private void sendPingResp(ChannelHandlerContext ctx) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                MqttMessageType.PINGRESP, false, MqttQoS.AT_MOST_ONCE, false, 0);
+        MqttMessage pingResp = new MqttMessage(fixedHeader);
+        ctx.writeAndFlush(pingResp);
     }
 }

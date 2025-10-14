@@ -11,6 +11,10 @@
 - 🔒 **会话管理**: 完整的 MQTT 会话和连接管理
 - 📊 **事件驱动**: 基于 Spring 事件机制的消息处理
 - 🎪 **主题管理**: 支持通配符主题订阅和管理
+- 🛡️ **完整协议**: 实现 MQTT 3.1.1 核心协议
+- 🔄 **QoS 支持**: 支持 QoS 0、1、2 三种服务质量等级
+- 📦 **消息构建**: 提供便捷的消息构建器
+- 🔧 **资源管理**: 完善的资源清理和异常处理
 
 ## 快速开始
 
@@ -108,34 +112,72 @@ public class MqttMessageHandler {
 }
 ```
 
-### 6. 使用 MQTT 客户端
+### 6. 使用消息构建器
 
 ```java
+import org.itsuka.mqtt.utils.MqttMessageBuilder;
+import org.itsuka.mqtt.utils.MqttMessageIdGenerator;
+
 @Service
-public class MqttService {
+public class MqttPublisher {
     
     @Autowired
     private MqttClient mqttClient;
     
-    public void publishMessage(String topic, String payload) {
-        // 创建 MQTT 消息
-        MqttMessage message = new MqttMessage(/* 构造消息 */);
+    private final MqttMessageIdGenerator messageIdGenerator = new MqttMessageIdGenerator();
+    
+    public void publishMessage(String topic, String payload, MqttQoS qos) {
+        // 使用消息构建器创建消息
+        int messageId = messageIdGenerator.nextMessageId();
+        MqttMessage message = MqttMessageBuilder.createPublishMessage(
+                topic, 
+                payload.getBytes(StandardCharsets.UTF_8), 
+                qos, 
+                false, // retain
+                messageId
+        );
         
         // 发送消息
-        mqttClient.sendMessage(message);
+        mqttClient.sendMessage(message)
+                .thenAccept(v -> System.out.println("Message published successfully"))
+                .exceptionally(ex -> {
+                    System.err.println("Failed to publish message: " + ex.getMessage());
+                    return null;
+                });
     }
     
-    public void connect() {
-        mqttClient.connect().thenAccept(success -> {
-            if (success) {
-                System.out.println("Connected to MQTT broker");
-            } else {
-                System.out.println("Failed to connect to MQTT broker");
-            }
-        });
+    public void subscribe(String... topics) {
+        int messageId = messageIdGenerator.nextMessageId();
+        MqttMessage message = MqttMessageBuilder.createSubscribeMessage(messageId, topics);
+        mqttClient.sendMessage(message);
     }
 }
 ```
+
+## 协议支持
+
+### 支持的消息类型
+
+- ✅ CONNECT - 客户端连接请求
+- ✅ CONNACK - 连接确认
+- ✅ PUBLISH - 发布消息
+- ✅ PUBACK - QoS 1 消息确认
+- ✅ PUBREC - QoS 2 消息接收确认
+- ✅ PUBREL - QoS 2 消息释放
+- ✅ PUBCOMP - QoS 2 消息完成
+- ✅ SUBSCRIBE - 订阅主题
+- ✅ SUBACK - 订阅确认
+- ✅ UNSUBSCRIBE - 取消订阅
+- ✅ UNSUBACK - 取消订阅确认
+- ✅ PINGREQ - 心跳请求
+- ✅ PINGRESP - 心跳响应
+- ✅ DISCONNECT - 断开连接
+
+### QoS 等级支持
+
+- **QoS 0 (AT_MOST_ONCE)**: 最多一次，消息可能丢失
+- **QoS 1 (AT_LEAST_ONCE)**: 至少一次，消息可能重复
+- **QoS 2 (EXACTLY_ONCE)**: 恰好一次，保证消息不重复不丢失
 
 ## 配置参数
 

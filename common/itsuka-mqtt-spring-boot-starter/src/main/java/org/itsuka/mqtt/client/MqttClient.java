@@ -11,7 +11,7 @@ import org.itsuka.mqtt.codec.MqttDecoder;
 import org.itsuka.mqtt.codec.MqttEncoder;
 import org.itsuka.mqtt.event.MqttEventPublisher;
 import org.itsuka.mqtt.handler.MqttClientHandler;
-import org.itsuka.mqtt.protocol.MqttMessage;
+import org.itsuka.mqtt.protocol.*;
 import org.springframework.beans.factory.DisposableBean;
 
 import java.util.concurrent.CompletableFuture;
@@ -130,9 +130,29 @@ public class MqttClient implements DisposableBean {
      * 断开连接
      */
     public void disconnect() {
-        log.info("Disconnecting from MQTT server...");
+        if (!connected) {
+            log.debug("Client is already disconnected");
+            return;
+        }
         
+        log.info("Disconnecting from MQTT server...");
         connected = false;
+        
+        try {
+            // 发送DISCONNECT消息
+            if (clientChannel != null && clientChannel.isActive()) {
+                MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                        org.itsuka.mqtt.protocol.MqttMessageType.DISCONNECT, 
+                        false, 
+                        org.itsuka.mqtt.protocol.MqttQoS.AT_MOST_ONCE, 
+                        false, 
+                        0);
+                MqttMessage disconnectMsg = new MqttMessage(fixedHeader);
+                clientChannel.writeAndFlush(disconnectMsg).sync();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to send DISCONNECT message", e);
+        }
         
         try {
             if (clientChannel != null) {
@@ -154,8 +174,14 @@ public class MqttClient implements DisposableBean {
      * 发送消息
      */
     public CompletableFuture<Void> sendMessage(MqttMessage message) {
-        if (!connected || clientChannel == null) {
-            return CompletableFuture.failedFuture(new IllegalStateException("Client is not connected"));
+        if (!isConnected()) {
+            return CompletableFuture.failedFuture(
+                    new IllegalStateException("Client is not connected to MQTT server"));
+        }
+        
+        if (message == null) {
+            return CompletableFuture.failedFuture(
+                    new IllegalArgumentException("Message cannot be null"));
         }
         
         CompletableFuture<Void> future = new CompletableFuture<>();

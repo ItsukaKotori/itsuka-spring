@@ -4,8 +4,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import lombok.extern.slf4j.Slf4j;
-import org.itsuka.mqtt.protocol.MqttFixedHeader;
-import org.itsuka.mqtt.protocol.MqttMessage;
+import org.itsuka.mqtt.protocol.*;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * MQTT消息编码器
@@ -135,44 +136,200 @@ public class MqttEncoder extends MessageToByteEncoder<MqttMessage> {
         out.writeBytes(data);
     }
     
-    // 各种消息类型的编码方法（简化实现）
+    // 各种消息类型的编码方法
     private void encodeConnectMessage(MqttMessage message, ByteBuf out) {
-        // TODO: 实现CONNECT消息编码
-        log.debug("Encoding CONNECT message");
+        try {
+            MqttConnectVariableHeader variableHeader = (MqttConnectVariableHeader) message.getVariableHeader();
+            MqttConnectPayload payload = (MqttConnectPayload) message.getPayload();
+            
+            if (variableHeader == null || payload == null) {
+                throw new IllegalArgumentException("CONNECT message requires variableHeader and payload");
+            }
+            
+            // 编码可变头部
+            encodeString(variableHeader.getProtocolName(), out);
+            out.writeByte(variableHeader.getProtocolVersion());
+            out.writeByte(variableHeader.getConnectFlags().toByte());
+            out.writeShort(variableHeader.getKeepAlive());
+            
+            // 编码有效载荷
+            encodeString(payload.getClientId(), out);
+            
+            MqttConnectFlags flags = variableHeader.getConnectFlags();
+            if (flags.isWillFlag()) {
+                encodeString(payload.getWillTopic(), out);
+                encodeBinaryData(payload.getWillMessage(), out);
+            }
+            if (flags.isUsernameFlag()) {
+                encodeString(payload.getUsername(), out);
+            }
+            if (flags.isPasswordFlag()) {
+                encodeBinaryData(payload.getPassword(), out);
+            }
+            
+            log.debug("Encoded CONNECT message");
+        } catch (Exception e) {
+            log.error("Failed to encode CONNECT message", e);
+            throw new IllegalArgumentException("Invalid CONNECT message", e);
+        }
     }
     
     private void encodeConnAckMessage(MqttMessage message, ByteBuf out) {
-        // TODO: 实现CONNACK消息编码
-        log.debug("Encoding CONNACK message");
+        try {
+            MqttConnAckVariableHeader variableHeader = (MqttConnAckVariableHeader) message.getVariableHeader();
+            
+            if (variableHeader == null) {
+                throw new IllegalArgumentException("CONNACK message requires variableHeader");
+            }
+            
+            // 编码连接确认标志
+            byte ackFlags = (byte) (variableHeader.isSessionPresent() ? 0x01 : 0x00);
+            out.writeByte(ackFlags);
+            
+            // 编码返回码
+            out.writeByte(variableHeader.getReturnCode().getValue());
+            
+            log.debug("Encoded CONNACK message");
+        } catch (Exception e) {
+            log.error("Failed to encode CONNACK message", e);
+            throw new IllegalArgumentException("Invalid CONNACK message", e);
+        }
     }
     
     private void encodePublishMessage(MqttMessage message, ByteBuf out) {
-        // TODO: 实现PUBLISH消息编码
-        log.debug("Encoding PUBLISH message");
+        try {
+            MqttPublishVariableHeader variableHeader = (MqttPublishVariableHeader) message.getVariableHeader();
+            
+            if (variableHeader == null) {
+                throw new IllegalArgumentException("PUBLISH message requires variableHeader");
+            }
+            
+            // 编码主题名称
+            encodeString(variableHeader.getTopicName(), out);
+            
+            // 编码消息ID（仅当QoS > 0时）
+            if (message.getQosLevel().getValue() > 0) {
+                out.writeShort(variableHeader.getMessageId());
+            }
+            
+            // 编码有效载荷
+            if (message.getPayload() instanceof byte[]) {
+                out.writeBytes((byte[]) message.getPayload());
+            }
+            
+            log.debug("Encoded PUBLISH message");
+        } catch (Exception e) {
+            log.error("Failed to encode PUBLISH message", e);
+            throw new IllegalArgumentException("Invalid PUBLISH message", e);
+        }
     }
     
     private void encodePubAckMessage(MqttMessage message, ByteBuf out) {
-        // TODO: 实现PUBACK/PUBREC/PUBREL/PUBCOMP消息编码
-        log.debug("Encoding PubAck message: {}", message.getMessageType());
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.getVariableHeader();
+            
+            if (variableHeader == null) {
+                throw new IllegalArgumentException(message.getMessageType() + " message requires variableHeader");
+            }
+            
+            // 编码消息ID
+            out.writeShort(variableHeader.getMessageId());
+            
+            log.debug("Encoded {} message", message.getMessageType());
+        } catch (Exception e) {
+            log.error("Failed to encode {} message", message.getMessageType(), e);
+            throw new IllegalArgumentException("Invalid " + message.getMessageType() + " message", e);
+        }
     }
     
     private void encodeSubscribeMessage(MqttMessage message, ByteBuf out) {
-        // TODO: 实现SUBSCRIBE消息编码
-        log.debug("Encoding SUBSCRIBE message");
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.getVariableHeader();
+            MqttSubscribePayload payload = (MqttSubscribePayload) message.getPayload();
+            
+            if (variableHeader == null || payload == null) {
+                throw new IllegalArgumentException("SUBSCRIBE message requires variableHeader and payload");
+            }
+            
+            // 编码消息ID
+            out.writeShort(variableHeader.getMessageId());
+            
+            // 编码主题订阅列表
+            for (MqttTopicSubscription subscription : payload.getTopicSubscriptions()) {
+                encodeString(subscription.getTopicFilter(), out);
+                out.writeByte(subscription.getQos().getValue());
+            }
+            
+            log.debug("Encoded SUBSCRIBE message");
+        } catch (Exception e) {
+            log.error("Failed to encode SUBSCRIBE message", e);
+            throw new IllegalArgumentException("Invalid SUBSCRIBE message", e);
+        }
     }
     
     private void encodeSubAckMessage(MqttMessage message, ByteBuf out) {
-        // TODO: 实现SUBACK消息编码
-        log.debug("Encoding SUBACK message");
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.getVariableHeader();
+            MqttSubAckPayload payload = (MqttSubAckPayload) message.getPayload();
+            
+            if (variableHeader == null || payload == null) {
+                throw new IllegalArgumentException("SUBACK message requires variableHeader and payload");
+            }
+            
+            // 编码消息ID
+            out.writeShort(variableHeader.getMessageId());
+            
+            // 编码授予的QoS列表
+            for (MqttQoS qos : payload.getGrantedQosList()) {
+                out.writeByte(qos.getValue());
+            }
+            
+            log.debug("Encoded SUBACK message");
+        } catch (Exception e) {
+            log.error("Failed to encode SUBACK message", e);
+            throw new IllegalArgumentException("Invalid SUBACK message", e);
+        }
     }
     
     private void encodeUnsubscribeMessage(MqttMessage message, ByteBuf out) {
-        // TODO: 实现UNSUBSCRIBE消息编码
-        log.debug("Encoding UNSUBSCRIBE message");
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.getVariableHeader();
+            MqttUnsubscribePayload payload = (MqttUnsubscribePayload) message.getPayload();
+            
+            if (variableHeader == null || payload == null) {
+                throw new IllegalArgumentException("UNSUBSCRIBE message requires variableHeader and payload");
+            }
+            
+            // 编码消息ID
+            out.writeShort(variableHeader.getMessageId());
+            
+            // 编码主题列表
+            for (String topic : payload.getTopics()) {
+                encodeString(topic, out);
+            }
+            
+            log.debug("Encoded UNSUBSCRIBE message");
+        } catch (Exception e) {
+            log.error("Failed to encode UNSUBSCRIBE message", e);
+            throw new IllegalArgumentException("Invalid UNSUBSCRIBE message", e);
+        }
     }
     
     private void encodeUnsubAckMessage(MqttMessage message, ByteBuf out) {
-        // TODO: 实现UNSUBACK消息编码
-        log.debug("Encoding UNSUBACK message");
+        try {
+            MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.getVariableHeader();
+            
+            if (variableHeader == null) {
+                throw new IllegalArgumentException("UNSUBACK message requires variableHeader");
+            }
+            
+            // 编码消息ID
+            out.writeShort(variableHeader.getMessageId());
+            
+            log.debug("Encoded UNSUBACK message");
+        } catch (Exception e) {
+            log.error("Failed to encode UNSUBACK message", e);
+            throw new IllegalArgumentException("Invalid UNSUBACK message", e);
+        }
     }
 }

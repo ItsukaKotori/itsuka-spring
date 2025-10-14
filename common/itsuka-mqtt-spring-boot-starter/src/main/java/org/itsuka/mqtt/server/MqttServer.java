@@ -126,34 +126,36 @@ public class MqttServer implements InitializingBean, DisposableBean {
      * 停止MQTT服务器
      */
     public java.util.concurrent.CompletableFuture<Void> stop() {
+        if (serverChannel == null || !serverChannel.isActive()) {
+            log.debug("MQTT server is already stopped");
+            return java.util.concurrent.CompletableFuture.completedFuture(null);
+        }
+        
         log.info("Stopping MQTT server...");
         java.util.concurrent.CompletableFuture<Void> cf = new java.util.concurrent.CompletableFuture<>();
         
-        if (serverChannel != null) {
-            serverChannel.close().addListener((ChannelFutureListener) f -> {
+        serverChannel.close().addListener((ChannelFutureListener) f -> {
+            try {
+                if (bossGroup != null) {
+                    bossGroup.shutdownGracefully().sync();
+                }
+                if (workerGroup != null) {
+                    workerGroup.shutdownGracefully().sync();
+                }
+                
                 if (f.isSuccess()) {
-                    if (bossGroup != null) {
-                        bossGroup.shutdownGracefully();
-                    }
-                    if (workerGroup != null) {
-                        workerGroup.shutdownGracefully();
-                    }
                     log.info("MQTT server stopped successfully");
                     cf.complete(null);
                 } else {
+                    log.error("Failed to stop MQTT server", f.cause());
                     cf.completeExceptionally(f.cause());
                 }
-            });
-        } else {
-            if (bossGroup != null) {
-                bossGroup.shutdownGracefully();
+            } catch (InterruptedException e) {
+                log.warn("Interrupted while stopping MQTT server", e);
+                Thread.currentThread().interrupt();
+                cf.completeExceptionally(e);
             }
-            if (workerGroup != null) {
-                workerGroup.shutdownGracefully();
-            }
-            log.info("MQTT server stopped successfully");
-            cf.complete(null);
-        }
+        });
         
         return cf;
     }

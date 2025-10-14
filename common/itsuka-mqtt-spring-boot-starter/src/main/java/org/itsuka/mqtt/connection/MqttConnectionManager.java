@@ -6,6 +6,7 @@ import org.itsuka.mqtt.event.MqttConnectionEvent;
 import org.itsuka.mqtt.event.MqttEventPublisher;
 import org.itsuka.mqtt.session.MqttSession;
 import org.itsuka.mqtt.session.MqttSessionManager;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -21,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
-public class MqttConnectionManager {
+public class MqttConnectionManager implements DisposableBean {
     
     private final MqttSessionManager sessionManager;
     private final MqttEventPublisher eventPublisher;
@@ -196,16 +197,33 @@ public class MqttConnectionManager {
     }
     
     /**
+     * Spring Bean销毁时调用
+     */
+    @Override
+    public void destroy() throws Exception {
+        shutdown();
+    }
+    
+    /**
      * 关闭连接管理器
      */
     public void shutdown() {
+        log.info("Shutting down MQTT connection manager...");
+        
         if (scheduler != null && !scheduler.isShutdown()) {
             scheduler.shutdown();
             try {
                 if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    log.warn("Scheduler did not terminate in time, forcing shutdown");
                     scheduler.shutdownNow();
+                    
+                    if (!scheduler.awaitTermination(2, TimeUnit.SECONDS)) {
+                        log.error("Scheduler did not terminate after forced shutdown");
+                    }
                 }
+                log.info("MQTT connection manager shut down successfully");
             } catch (InterruptedException e) {
+                log.warn("Interrupted while shutting down scheduler", e);
                 scheduler.shutdownNow();
                 Thread.currentThread().interrupt();
             }
