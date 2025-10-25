@@ -17,6 +17,10 @@ import java.util.List;
 public class MqttDecoder extends ByteToMessageDecoder {
     
     private static final int MAX_REMAINING_LENGTH = 268435455; // 256MB
+    private static final int MAX_STRING_LENGTH = 65535; // 64KB
+    private static final int MAX_TOPIC_LENGTH = 65535;
+    private static final int MAX_CLIENT_ID_LENGTH = 65535;
+    private static final int MAX_MESSAGE_SIZE = 268435456; // 256MB
     
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
@@ -42,7 +46,15 @@ public class MqttDecoder extends ByteToMessageDecoder {
             }
             
             if (remainingLength > MAX_REMAINING_LENGTH) {
+                log.error("Message too large: remaining length {} exceeds maximum {}", remainingLength, MAX_REMAINING_LENGTH);
                 throw new IllegalArgumentException("Remaining length exceeds maximum: " + remainingLength);
+            }
+            
+            // 检查总消息大小
+            int totalMessageSize = remainingLength + 2; // 包括固定头部至少2字节
+            if (totalMessageSize > MAX_MESSAGE_SIZE) {
+                log.error("Total message size too large: {} exceeds maximum {}", totalMessageSize, MAX_MESSAGE_SIZE);
+                throw new IllegalArgumentException("Total message size exceeds maximum: " + totalMessageSize);
             }
             
             // 检查是否有足够的字节读取完整消息
@@ -64,6 +76,10 @@ public class MqttDecoder extends ByteToMessageDecoder {
                 log.debug("Decoded MQTT message: {}", message.getMessageType());
             }
             
+        } catch (IllegalArgumentException e) {
+            log.error("Protocol violation in MQTT message: {}", e.getMessage());
+            in.resetReaderIndex();
+            throw e;
         } catch (Exception e) {
             log.error("Failed to decode MQTT message", e);
             in.resetReaderIndex();
@@ -334,23 +350,60 @@ public class MqttDecoder extends ByteToMessageDecoder {
      * 解码UTF-8字符串
      */
     private String decodeString(ByteBuf buffer) {
+        if (buffer.readableBytes() < 2) {
+            throw new IllegalArgumentException("Insufficient bytes to read string length");
+        }
+        
         int length = buffer.readUnsignedShort();
+        if (length > MAX_STRING_LENGTH) {
+            log.error("String length too large: {} exceeds maximum {}", length, MAX_STRING_LENGTH);
+            throw new IllegalArgumentException("String length exceeds maximum: " + length);
+        }
+        
         if (length == 0) {
             return "";
         }
+        
+        if (buffer.readableBytes() < length) {
+            throw new IllegalArgumentException("Insufficient bytes to read string content");
+        }
+        
         byte[] bytes = new byte[length];
         buffer.readBytes(bytes);
-        return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+        
+        // 验证UTF-8编码有效性
+        String result;
+        try {
+            result = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid UTF-8 encoding", e);
+        }
+        
+        return result;
     }
     
     /**
      * 解码二进制数据
      */
     private byte[] decodeBinaryData(ByteBuf buffer) {
+        if (buffer.readableBytes() < 2) {
+            throw new IllegalArgumentException("Insufficient bytes to read binary data length");
+        }
+        
         int length = buffer.readUnsignedShort();
+        if (length > MAX_STRING_LENGTH) {
+            log.error("Binary data length too large: {} exceeds maximum {}", length, MAX_STRING_LENGTH);
+            throw new IllegalArgumentException("Binary data length exceeds maximum: " + length);
+        }
+        
         if (length == 0) {
             return new byte[0];
         }
+        
+        if (buffer.readableBytes() < length) {
+            throw new IllegalArgumentException("Insufficient bytes to read binary data content");
+        }
+        
         byte[] data = new byte[length];
         buffer.readBytes(data);
         return data;

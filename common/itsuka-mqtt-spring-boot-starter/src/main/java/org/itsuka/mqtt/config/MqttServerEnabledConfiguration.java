@@ -2,13 +2,17 @@ package org.itsuka.mqtt.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.mqtt.event.MqttEventPublisher;
+import org.itsuka.mqtt.security.MqttRateLimiter;
 import org.itsuka.mqtt.server.MqttServer;
 import org.itsuka.mqtt.server.MqttServerProperties;
 import org.itsuka.mqtt.session.MqttSessionManager;
+import org.itsuka.mqtt.topic.MqttTopicManager;
+import org.itsuka.mqtt.auth.MqttAuthenticator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -39,8 +43,11 @@ public class MqttServerEnabledConfiguration {
     @ConditionalOnMissingBean
     public MqttServer mqttServer(MqttServerProperties properties,
                                  MqttSessionManager sessionManager,
-                                 MqttEventPublisher eventPublisher) {
+                                 MqttEventPublisher eventPublisher,
+                                 MqttRateLimiter rateLimiter,
+                                 MqttTopicManager topicManager,
+                                 @Autowired(required = false) MqttAuthenticator authenticator) {
         log.info("[Enable] Creating MQTT server with properties: {}", properties);
-        return new MqttServer(properties, sessionManager, eventPublisher);
+        return new MqttServer(properties, sessionManager, eventPublisher, rateLimiter, topicManager);
     }
 }

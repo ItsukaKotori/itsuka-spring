@@ -33,7 +33,8 @@ import static org.junit.jupiter.api.Assertions.*;
     "itsuka.mqtt.client.enabled=true",
     "itsuka.mqtt.client.host=localhost",
     "itsuka.mqtt.client.port=1884",
-    "itsuka.mqtt.client.client-id=test-client"
+    "itsuka.mqtt.client.client-id=test-client",
+    "spring.main.allow-bean-definition-overriding=true"
 })
 public class MqttIntegrationTest {
 

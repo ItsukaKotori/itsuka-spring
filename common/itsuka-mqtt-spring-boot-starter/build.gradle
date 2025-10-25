@@ -4,6 +4,10 @@ dependencies {
 
     // Spring Boot Starter
     api 'org.springframework.boot:spring-boot-starter'
+    
+    // Spring Security (optional)
+    compileOnly 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.boot:spring-boot-starter-security'
 
     // Spring Boot Configuration Processor
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
