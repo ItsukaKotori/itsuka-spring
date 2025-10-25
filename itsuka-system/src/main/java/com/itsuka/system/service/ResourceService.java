@@ -1,6 +1,7 @@
 package com.itsuka.system.service;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.itsuka.mybatis.plus.dto.PageParam;
+import org.itsuka.mybatis.plus.dto.PageResult;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.itsuka.system.domain.Resource;
 import com.itsuka.system.dto.resource.ResourceCreateDto;
@@ -18,11 +19,11 @@ public interface ResourceService extends IService<Resource> {
     /**
      * 分页查询
      *
-     * @param page 分页条件
+     * @param pageParam 分页参数
      * @param criteria 查询条件
-     * @return 分页
+     * @return 分页结果
      */
-    Page<Resource> pageResource(Page<Resource> page, ResourceQueryCriteria criteria);
+    PageResult<Resource> pageResource(PageParam pageParam, ResourceQueryCriteria criteria);
 
     /**
      * 创建菜单

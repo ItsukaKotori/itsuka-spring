@@ -1,6 +1,8 @@
 package com.itsuka.system.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.itsuka.core.domain.Response;
+import org.itsuka.mybatis.plus.dto.PageParam;
+import org.itsuka.mybatis.plus.dto.PageResult;
 import com.itsuka.system.domain.User;
 import com.itsuka.system.dto.user.UserCreateDto;
 import com.itsuka.system.dto.user.UserQueryCriteria;
@@ -28,8 +30,8 @@ public class UserController {
 
     @GetMapping("/page")
     @Operation(summary = "用户分页", description = "用户分页")
-    public Response<Page<User>> page(Page<User> page, UserQueryCriteria criteria) {
-        return Response.success(userService.pageUser(page, criteria));
+    public Response<PageResult<User>> page(PageParam pageParam, UserQueryCriteria criteria) {
+        return Response.success(userService.pageUser(pageParam, criteria));
     }
 
     @PostMapping

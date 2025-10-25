@@ -1,7 +1,9 @@
 package com.itsuka.system.service;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.itsuka.mybatis.plus.dto.PageParam;
+import org.itsuka.mybatis.plus.dto.PageResult;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.itsuka.system.domain.User;
 import com.itsuka.system.domain.User;
 import com.itsuka.system.dto.user.UserCreateDto;
 import com.itsuka.system.dto.user.UserQueryCriteria;
@@ -16,11 +18,11 @@ public interface UserService extends IService<User> {
     /**
      * 分页查询
      *
-     * @param page 分页条件
+     * @param pageParam 分页参数
      * @param criteria 查询条件
-     * @return 分页
+     * @return 分页结果
      */
-    Page<User> pageUser(Page<User> page, UserQueryCriteria criteria);
+    PageResult<User> pageUser(PageParam pageParam, UserQueryCriteria criteria);
 
     /**
      * 创建用户

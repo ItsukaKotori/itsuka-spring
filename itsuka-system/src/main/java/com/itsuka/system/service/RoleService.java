@@ -1,6 +1,7 @@
 package com.itsuka.system.service;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.itsuka.mybatis.plus.dto.PageParam;
+import org.itsuka.mybatis.plus.dto.PageResult;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.itsuka.system.domain.Role;
 import com.itsuka.system.dto.role.RoleCreateDto;
@@ -16,11 +17,11 @@ public interface RoleService extends IService<Role> {
     /**
      * 分页查询
      *
-     * @param page 分页条件
+     * @param pageParam 分页参数
      * @param criteria 查询条件
-     * @return 分页
+     * @return 分页结果
      */
-    Page<Role> pageRole(Page<Role> page, RoleQueryCriteria criteria);
+    PageResult<Role> pageRole(PageParam pageParam, RoleQueryCriteria criteria);
 
     /**
      * 创建角色

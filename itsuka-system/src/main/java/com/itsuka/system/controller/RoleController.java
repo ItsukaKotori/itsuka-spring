@@ -1,6 +1,8 @@
 package com.itsuka.system.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.itsuka.core.domain.Response;
+import org.itsuka.mybatis.plus.dto.PageParam;
+import org.itsuka.mybatis.plus.dto.PageResult;
 import com.itsuka.system.domain.Role;
 import com.itsuka.system.dto.role.RoleCreateDto;
 import com.itsuka.system.dto.role.RoleQueryCriteria;
@@ -28,8 +30,8 @@ public class RoleController {
 
     @GetMapping("/page")
     @Operation(summary = "角色分页", description = "角色分页")
-    public Response<Page<Role>> page(Page<Role> page, RoleQueryCriteria criteria) {
-        return Response.success(roleService.pageRole(page, criteria));
+    public Response<PageResult<Role>> page(PageParam pageParam, RoleQueryCriteria criteria) {
+        return Response.success(roleService.pageRole(pageParam, criteria));
     }
 
     @GetMapping("/{id}")

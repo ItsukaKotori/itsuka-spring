@@ -15,6 +15,9 @@ import com.itsuka.system.service.UserRoleService;
 import com.itsuka.system.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.itsuka.core.exception.ServiceException;
+import org.itsuka.mybatis.plus.dto.PageParam;
+import org.itsuka.mybatis.plus.dto.PageResult;
+import org.itsuka.mybatis.plus.util.PageUtil;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,8 +38,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final UserRoleService userRoleService;
 
     @Override
-    public Page<User> pageUser(Page<User> page, UserQueryCriteria criteria) {
-        return page(page, getWrapper(criteria));
+    public PageResult<User> pageUser(PageParam pageParam, UserQueryCriteria criteria) {
+        Page<User> page = page(PageUtil.toPage(pageParam), getWrapper(criteria));
+        return PageUtil.toResult(page);
     }
 
     @Override

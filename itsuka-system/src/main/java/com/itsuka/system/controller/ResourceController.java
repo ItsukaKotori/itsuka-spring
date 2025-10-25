@@ -1,6 +1,8 @@
 package com.itsuka.system.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.itsuka.core.domain.Response;
+import org.itsuka.mybatis.plus.dto.PageParam;
+import org.itsuka.mybatis.plus.dto.PageResult;
 import com.itsuka.system.domain.Resource;
 import com.itsuka.system.dto.resource.ResourceCreateDto;
 import com.itsuka.system.dto.resource.ResourceQueryCriteria;
@@ -29,8 +31,8 @@ public class ResourceController {
 
     @GetMapping("/page")
     @Operation(summary = "资源分页", description = "资源分页")
-    public Response<Page<Resource>> page(Page<Resource> page, ResourceQueryCriteria criteria) {
-        return Response.success(resourceService.pageResource(page, criteria));
+    public Response<PageResult<Resource>> page(PageParam pageParam, ResourceQueryCriteria criteria) {
+        return Response.success(resourceService.pageResource(pageParam, criteria));
     }
 
     @GetMapping("/{id}")

@@ -14,6 +14,9 @@ import com.itsuka.system.mapper.ResourceMapper;
 import com.itsuka.system.service.ResourceRoleService;
 import com.itsuka.system.service.ResourceService;
 import lombok.RequiredArgsConstructor;
+import org.itsuka.mybatis.plus.dto.PageParam;
+import org.itsuka.mybatis.plus.dto.PageResult;
+import org.itsuka.mybatis.plus.util.PageUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -35,8 +38,9 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource>
     private final ResourceRoleService resourceRoleService;
 
     @Override
-    public Page<Resource> pageResource(Page<Resource> page, ResourceQueryCriteria criteria) {
-        return page(page, getWrapper(criteria));
+    public PageResult<Resource> pageResource(PageParam pageParam, ResourceQueryCriteria criteria) {
+        Page<Resource> page = page(PageUtil.toPage(pageParam), getWrapper(criteria));
+        return PageUtil.toResult(page);
     }
 
     @Override
