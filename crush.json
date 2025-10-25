@@ -1,0 +1,25 @@
+{
+  "mcp": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-926a2359-5550-4e90-aa4f-9f240ca93535"
+      }
+    }
+  },
+  "permissions": {
+    "allowed_tools": [
+      "view",
+      "ls",
+      "grep",
+      "edit"
+    ]
+  },
+  "options": {
+    "attribution": {
+      "co_authored_by": false,
+      "generated_with": false
+    }
+  }
+}
