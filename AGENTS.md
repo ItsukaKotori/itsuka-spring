@@ -82,6 +82,17 @@ This file provides guidance to agents when working with code in this repository.
 - `controller/`: REST controllers
 - `convert/`: MapStruct converters
 
+### Documentation Guidelines
+- DO NOT auto-generate API documentation after code changes
+- SpringDoc OpenAPI is configured but should be used manually when needed
+- API documentation should only be updated when major API changes are made
+- Avoid committing auto-generated documentation files to version control
+
+### Git Commit Guidelines
+- ALWAYS generate Chinese commit messages when pushing code
+- Use clear and descriptive Chinese commit messages that explain the changes
+- Follow conventional commit format with Chinese descriptions
+
 ### Response Pattern
 - Use `Response.success(data)` for successful responses
 - Use `Response.error(message)` for errors
