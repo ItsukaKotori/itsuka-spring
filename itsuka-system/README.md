@@ -9,6 +9,7 @@
 - 用户分页查询和条件筛选
 - 密码加密存储（BCrypt）
 - 用户状态管理
+- 用户组织机构关联
 
 ### 🔐 角色权限管理
 - 角色CRUD操作
@@ -21,6 +22,13 @@
 - 按钮权限管理
 - 资源树形结构
 - 角色资源绑定
+
+### 🏢 组织机构管理
+- 组织机构CRUD操作
+- 树形层级结构管理（公司-部门-子部门-岗位）
+- 组织机构移动和排序
+- 部门用户关联查询
+- 组织机构编码唯一性校验
 
 ### 🔑 认证授权
 - JWT令牌认证
@@ -133,6 +141,19 @@ java -jar itsuka-system/build/libs/itsuka-system-1.0.0.jar
 - `PUT /api/resource` - 更新资源
 - `DELETE /api/resource/{id}` - 删除资源
 - `GET /api/resource/role/{roleId}` - 获取角色资源
+
+#### 组织机构管理
+- `GET /api/organization/tree` - 获取组织机构树
+- `GET /api/organization/page` - 组织机构分页查询
+- `GET /api/organization/children/{parentId}` - 获取子节点
+- `GET /api/organization/type/{type}` - 根据类型查询组织机构
+- `GET /api/organization/{id}` - 获取组织机构详情
+- `POST /api/organization` - 创建组织机构
+- `PUT /api/organization` - 更新组织机构
+- `DELETE /api/organization/{id}` - 删除组织机构
+- `PUT /api/organization/move/{id}/{newParentId}` - 移动组织机构
+- `GET /api/organization/{id}/check-code/{code}` - 检查编码是否存在
+- `GET /api/organization/{id}/users` - 获取部门下的用户列表
 
 ## ⚠️ 注意事项
 

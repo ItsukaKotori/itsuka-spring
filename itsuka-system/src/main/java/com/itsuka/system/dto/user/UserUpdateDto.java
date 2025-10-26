@@ -33,4 +33,14 @@ public class UserUpdateDto {
      * 是否启用
      */
     private Boolean enable;
+
+    /**
+     * 所属部门ID
+     */
+    private Long organizationId;
+
+    /**
+     * 岗位
+     */
+    private String position;
 }

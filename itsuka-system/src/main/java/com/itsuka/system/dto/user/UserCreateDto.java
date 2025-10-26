@@ -38,4 +38,14 @@ public class UserCreateDto {
      * 角色列表
      */
     private List<Long> roleIds;
+
+    /**
+     * 所属部门ID
+     */
+    private Long organizationId;
+
+    /**
+     * 岗位
+     */
+    private String position;
 }

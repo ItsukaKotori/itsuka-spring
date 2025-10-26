@@ -74,8 +74,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 User::getUsername, criteria.getUsername());
         wrapper.like(!ObjectUtils.isEmpty(criteria.getNickname()),
                 User::getNickname, criteria.getNickname());
-        wrapper.like(!ObjectUtils.isEmpty(criteria.getEnable()),
+        wrapper.eq(!ObjectUtils.isEmpty(criteria.getEnable()),
                 User::getEnable, criteria.getEnable());
+        wrapper.eq(!ObjectUtils.isEmpty(criteria.getOrganizationId()),
+                User::getOrganizationId, criteria.getOrganizationId());
+        wrapper.like(!ObjectUtils.isEmpty(criteria.getPosition()),
+                User::getPosition, criteria.getPosition());
         return wrapper;
     }
 }

@@ -19,4 +19,10 @@ public class UserQueryCriteria {
 
     @Schema(name = "是否启用")
     private Boolean enable;
+
+    @Schema(name = "所属部门ID")
+    private Long organizationId;
+
+    @Schema(name = "岗位")
+    private String position;
 }

@@ -46,4 +46,14 @@ public class User extends AuditableDomain {
      * 是否锁定
      */
     private Boolean lock;
+
+    /**
+     * 所属部门ID
+     */
+    private Long organizationId;
+
+    /**
+     * 岗位
+     */
+    private String position;
 }
