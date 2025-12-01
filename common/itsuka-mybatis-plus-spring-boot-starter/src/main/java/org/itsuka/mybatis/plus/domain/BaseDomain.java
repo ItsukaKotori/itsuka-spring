@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 
 /**
  * 基础实体类
- * 只包含最核心的字段：主键、创建时间、更新时间
- * 
+ * 包含核心字段：主键、创建时间、更新时间、创建人、更新人
+ *
  * @author Itsuka
  */
 @Data
@@ -43,36 +43,22 @@ public abstract class BaseDomain implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime updateTime;
 
-    // ====== 便捷方法 ======
+    /**
+     * 创建人
+     */
+    @TableField(value = "create_by", fill = FieldFill.INSERT)
+    private String createBy;
 
     /**
-     * 初始化新实体的默认值
+     * 更新人
      */
-    public void initForInsert() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createTime = now;
-        this.updateTime = now;
-    }
-
-    /**
-     * 更新时间戳
-     */
-    public void updateTimestamp() {
-        this.updateTime = LocalDateTime.now();
-    }
+    @TableField(value = "update_by", fill = FieldFill.INSERT_UPDATE)
+    private String updateBy;
 
     /**
      * 获取实体的显示名称（由子类实现）
      */
     public String getDisplayName() {
         return this.getClass().getSimpleName() + "#" + this.id;
-    }
-
-    /**
-     * 获取实体的简要信息
-     */
-    public String getBriefInfo() {
-        return String.format("%s{id=%s, createTime=%s}", 
-            this.getClass().getSimpleName(), this.id, this.createTime);
     }
 }

@@ -42,6 +42,16 @@ public class LoginUser implements UserDetails {
     private String password;
 
     /**
+     * 邮箱
+     */
+    private String email;
+
+    /**
+     * 手机号
+     */
+    private String mobile;
+
+    /**
      * 是否启用
      */
     private Boolean enable;

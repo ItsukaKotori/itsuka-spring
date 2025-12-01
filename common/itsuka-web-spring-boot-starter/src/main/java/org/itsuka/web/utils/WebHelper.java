@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.core.domain.LoginUser;
+import org.itsuka.core.exception.AuthenticationException;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -39,6 +40,19 @@ public class WebHelper {
             log.error("jackson read value error", e);
         }
         return Optional.empty();
+    }
+
+    /**
+     * 获取用户信息
+     *
+     * @return 用户信息
+     */
+    public LoginUser mustGetLoginUser() {
+        Optional<LoginUser> optional = getLoginUser();
+        if (optional.isEmpty()) {
+            throw new AuthenticationException("无法获取用户信息！");
+        }
+        return optional.get();
     }
 
     /**

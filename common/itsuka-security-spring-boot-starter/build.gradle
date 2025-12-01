@@ -1,40 +1,41 @@
 dependencies {
-    // Spring Boot Starter
-    api 'org.springframework.boot:spring-boot-starter'
-    api 'org.springframework.boot:spring-boot-autoconfigure'
-    
-    // JWT dependencies - 使用根项目版本管理
-    api 'io.jsonwebtoken:jjwt-api'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson'
-    
-    // Spring Security (optional for reactive environments)
+    // Spring Boot Starter - 使用 implementation 避免传递
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+
+    // JWT dependencies
+    api 'io.jsonwebtoken:jjwt-api'  // 暴露API给使用者
+    implementation 'io.jsonwebtoken:jjwt-impl'
+    implementation 'io.jsonwebtoken:jjwt-jackson'
+
+    // Spring Security - 改为 implementation 确保运行时可用
     compileOnly 'org.springframework.security:spring-security-core'
     compileOnly 'org.springframework.security:spring-security-web'
     compileOnly 'org.springframework.security:spring-security-config'
-    
-    // Spring WebFlux (for reactive JWT support)
+
+    // 可选依赖 - 保持 compileOnly
     compileOnly 'org.springframework:spring-webflux'
-    
-    // Spring Cloud Gateway (optional for gateway filter)
     compileOnly 'org.springframework.cloud:spring-cloud-starter-gateway'
-    
-    // Jackson for JSON processing
-    api 'com.fasterxml.jackson.core:jackson-databind'
-    
+
+    // Jackson - 使用 implementation 避免版本冲突
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    
-    // Configuration processor for generating metadata
+
+    // Configuration processor
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-    
-    // Validation
+
+    // Validation - 使用 implementation
     api 'org.springframework.boot:spring-boot-starter-validation'
-    
-    // Common module dependency
+
+    // Common module dependencies
     api project(':common:itsuka-spring-boot-starter')
-    
+
+    // Redis - 使用 implementation
+    implementation project(':common:itsuka-redis-spring-boot-starter')
+
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
