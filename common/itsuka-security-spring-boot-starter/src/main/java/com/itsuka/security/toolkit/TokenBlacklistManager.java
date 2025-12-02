@@ -3,9 +3,13 @@ package com.itsuka.security.toolkit;
 import com.itsuka.security.autoconfigure.SecurityProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -58,7 +62,7 @@ public class TokenBlacklistManager {
      */
     public void removeFromBlacklist(String token) {
         if (token != null) {
-            redisTemplate.delete(token);
+            redisTemplate.delete(PREFIX + token);
             log.debug("Token removed from blacklist");
         }
     }
@@ -67,10 +71,20 @@ public class TokenBlacklistManager {
      * 清空黑名单
      */
     public void clearBlacklist() {
-        Set<String> keys = redisTemplate.keys(PREFIX);
-        for (String key : keys) {
-            removeFromBlacklist(key);
+        ScanOptions scanOptions = ScanOptions.scanOptions().match(PREFIX + "*").count(100).build();
+        Set<String> keys = new HashSet<>();
+        
+        try (Cursor<String> cursor = redisTemplate.scan(scanOptions)) {
+            while (cursor.hasNext()) {
+                keys.add(cursor.next());
+            }
         }
-        log.info("Token blacklist cleared");
+
+        if (!keys.isEmpty()) {
+            redisTemplate.delete(keys);
+            log.info("Token blacklist cleared, {} keys removed", keys.size());
+        } else {
+            log.info("Token blacklist is empty");
+        }
     }
 }
