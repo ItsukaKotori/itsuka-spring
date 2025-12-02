@@ -39,7 +39,7 @@ public class UserCacheService {
                 .cast(LoginUser.class)
                 .doOnNext(user -> log.debug("User info found in cache for user: {}", userId))
                 .doOnError(error -> log.warn("Failed to get user info from cache for user: {}", userId, error))
-                .onErrorReturn(new LoginUser(null, null, null, null, false, true, null));
+                .onErrorReturn(new LoginUser(null, null, null, null, null, null, false, true, null));
     }
     
     /**

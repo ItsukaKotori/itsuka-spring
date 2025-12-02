@@ -58,7 +58,7 @@ public class IpAddressToolkit {
 
         // 最后从远程地址获取
         InetSocketAddress remoteAddress = request.getRemoteAddress();
-        String ip = remoteAddress != null ? remoteAddress.getAddress().getHostAddress() : UNKNOWN;
+        String ip = remoteAddress.getAddress().getHostAddress();
         log.debug("Client IP obtained from remote address: {}", ip);
         return ip;
     }
@@ -122,11 +122,7 @@ public class IpAddressToolkit {
             }
 
             // 169.254.0.0/16 (链路本地地址)
-            if (firstOctet == 169 && secondOctet == 254) {
-                return true;
-            }
-
-            return false;
+            return firstOctet == 169 && secondOctet == 254;
         } catch (NumberFormatException e) {
             log.warn("Invalid IP address format: {}", ip);
             return false;

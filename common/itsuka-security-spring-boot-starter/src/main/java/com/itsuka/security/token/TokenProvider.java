@@ -1,6 +1,7 @@
 package com.itsuka.security.token;
 
 import io.jsonwebtoken.Claims;
+import org.itsuka.core.domain.LoginUser;
 
 import java.util.Map;
 
@@ -27,6 +28,22 @@ public interface TokenProvider {
      * @return JWT令牌
      */
     String generateAccessToken(String username, Map<String, Object> claims);
+    
+    /**
+     * 根据LoginUser生成访问令牌
+     *
+     * @param loginUser 登录用户信息
+     * @return JWT访问令牌
+     */
+    String generateAccessToken(LoginUser loginUser);
+    
+    /**
+     * 根据LoginUser生成刷新令牌
+     *
+     * @param loginUser 登录用户信息
+     * @return JWT刷新令牌
+     */
+    String generateRefreshToken(LoginUser loginUser);
     
     /**
      * 生成刷新令牌

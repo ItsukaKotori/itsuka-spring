@@ -1,10 +1,17 @@
 package com.itsuka.security.toolkit;
 
+import com.itsuka.security.autoconfigure.SecurityProperties;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 
-import java.util.Date;
-import java.util.concurrent.*;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 令牌黑名单管理器
@@ -13,40 +20,27 @@ import java.util.concurrent.*;
  * @author Itsuka
  */
 @Slf4j
-@Component
+@RequiredArgsConstructor
 public class TokenBlacklistManager {
-    
-    /**
-     * 黑名单缓存 - key: token, value: 过期时间
-     */
-    private final ConcurrentMap<String, Long> blacklistedTokens = new ConcurrentHashMap<>();
+    private final static String PREFIX = "blacklist:";
 
-    public TokenBlacklistManager() {
-        // 每5分钟清理一次过期的黑名单令牌
-        /*
-          定时清理器
-         */
-        ScheduledExecutorService cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "token-blacklist-cleanup");
-            t.setDaemon(true);
-            return t;
-        });
-        cleanupExecutor.scheduleWithFixedDelay(this::cleanupExpiredTokens, 5, 5, TimeUnit.MINUTES);
-    }
-    
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private final SecurityProperties.JwtProperties properties;
+
     /**
      * 将令牌添加到黑名单
      *
      * @param token 令牌
-     * @param expirationTime 令牌原始过期时间
      */
-    public void addToBlacklist(String token, Date expirationTime) {
-        if (token != null && expirationTime != null) {
-            blacklistedTokens.put(token, expirationTime.getTime());
-            log.debug("Token added to blacklist, expires at: {}", expirationTime);
+    public void addToBlacklist(String token) {
+        if (token != null) {
+            Duration expiration = properties.getExpiration();
+            redisTemplate.opsForValue().set(PREFIX + token, 1, expiration.getSeconds(), TimeUnit.SECONDS);
+            log.debug("Token added to blacklist");
         }
     }
-    
+
     /**
      * 检查令牌是否在黑名单中
      *
@@ -57,21 +51,10 @@ public class TokenBlacklistManager {
         if (token == null) {
             return false;
         }
-        
-        Long expirationTime = blacklistedTokens.get(token);
-        if (expirationTime == null) {
-            return false;
-        }
-        
-        // 如果令牌已过期，从黑名单中移除
-        if (expirationTime < System.currentTimeMillis()) {
-            blacklistedTokens.remove(token);
-            return false;
-        }
-        
-        return true;
+
+        return redisTemplate.hasKey(PREFIX + token);
     }
-    
+
     /**
      * 从黑名单中移除令牌
      *
@@ -79,47 +62,29 @@ public class TokenBlacklistManager {
      */
     public void removeFromBlacklist(String token) {
         if (token != null) {
-            blacklistedTokens.remove(token);
+            redisTemplate.delete(PREFIX + token);
             log.debug("Token removed from blacklist");
         }
     }
-    
-    /**
-     * 清理过期的黑名单令牌
-     */
-    private void cleanupExpiredTokens() {
-        long currentTime = System.currentTimeMillis();
-        
-        // 使用AtomicInteger来避免 lambda 中的变量访问问题
-        java.util.concurrent.atomic.AtomicInteger removedCount = new java.util.concurrent.atomic.AtomicInteger(0);
-        
-        blacklistedTokens.entrySet().removeIf(entry -> {
-            if (entry.getValue() < currentTime) {
-                removedCount.incrementAndGet();
-                return true;
-            }
-            return false;
-        });
-        
-        if (removedCount.get() > 0) {
-            log.debug("Cleaned up {} expired tokens from blacklist", removedCount.get());
-        }
-    }
-    
-    /**
-     * 获取黑名单大小
-     *
-     * @return 黑名单中的令牌数量
-     */
-    public int getBlacklistSize() {
-        return blacklistedTokens.size();
-    }
-    
+
     /**
      * 清空黑名单
      */
     public void clearBlacklist() {
-        blacklistedTokens.clear();
-        log.info("Token blacklist cleared");
+        ScanOptions scanOptions = ScanOptions.scanOptions().match(PREFIX + "*").count(100).build();
+        Set<String> keys = new HashSet<>();
+        
+        try (Cursor<String> cursor = redisTemplate.scan(scanOptions)) {
+            while (cursor.hasNext()) {
+                keys.add(cursor.next());
+            }
+        }
+
+        if (!keys.isEmpty()) {
+            redisTemplate.delete(keys);
+            log.info("Token blacklist cleared, {} keys removed", keys.size());
+        } else {
+            log.info("Token blacklist is empty");
+        }
     }
 }

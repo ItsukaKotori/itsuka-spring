@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.itsuka.core.domain.LoginUser;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -49,6 +50,46 @@ public class JwtTokenProvider implements TokenProvider {
         
         return Jwts.builder().claims(claims)
                 .subject(username)
+                .issuer(jwtProperties.getIssuer())
+                .audience().add(jwtProperties.getAudience()).and()
+                .issuedAt(now)
+                .expiration(expiration)
+                .signWith(getSigningKey())
+                .compact();
+    }
+    
+    /**
+     * 根据LoginUser生成访问令牌
+     *
+     * @param loginUser 登录用户信息
+     * @return JWT访问令牌
+     */
+    public String generateAccessToken(LoginUser loginUser) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", loginUser.getId().toString());
+        claims.put("nickname", loginUser.getNickname());
+        claims.put("email", loginUser.getEmail());
+        
+        return generateAccessToken(loginUser.getUsername(), claims);
+    }
+    
+    /**
+     * 根据LoginUser生成刷新令牌
+     *
+     * @param loginUser 登录用户信息
+     * @return JWT刷新令牌
+     */
+    public String generateRefreshToken(LoginUser loginUser) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "refresh");
+        claims.put("userId", loginUser.getId().toString());
+        
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + jwtProperties.getRefreshExpiration().toMillis());
+        
+        return Jwts.builder()
+                .claims(claims)
+                .subject(loginUser.getUsername())
                 .issuer(jwtProperties.getIssuer())
                 .audience().add(jwtProperties.getAudience()).and()
                 .issuedAt(now)

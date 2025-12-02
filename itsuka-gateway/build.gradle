@@ -31,7 +31,10 @@ dependencies {
     
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    
+
+    // Swagger UI (WebFlux) for API文档聚合展示
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui'
+
     // Jackson for JSON processing
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     
