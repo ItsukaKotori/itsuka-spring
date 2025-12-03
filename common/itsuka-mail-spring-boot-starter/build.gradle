@@ -1,0 +1,38 @@
+dependencies {
+    // Spring Boot Mail Starter
+    api 'org.springframework.boot:spring-boot-starter-mail'
+    
+    // Spring Boot Configuration Processor
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // Spring Boot AutoConfiguration
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    
+    // Spring Boot Actuator (for monitoring endpoints)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
+    // Validation API (Spring Boot starter includes it)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // JavaMail API (Spring Boot mail starter includes it)
+    // FreeMarker Template Engine (Spring Boot includes it)
+    
+    // 本项目依赖
+    api project(':common:itsuka-spring-boot-starter')
+    
+    // 测试依赖
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation 'org.junit.platform:junit-platform-launcher'
+}
+
+// 配置测试任务
+test {
+    useJUnitPlatform()
+}
