@@ -3,9 +3,10 @@ package org.itsuka.mail;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.itsuka.mail.core.Protocol;
 import org.itsuka.mail.provider.MailProviderConfiguration;
 import org.itsuka.mail.core.MailSender;
-import org.itsuka.mail.core.MailSenderImpl;
+import org.itsuka.mail.core.DefaultMailSender;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -18,6 +19,8 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.util.StringUtils;
 
+import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -58,19 +61,32 @@ public class MailAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean(MailSender.class)
+    @ConditionalOnClass(name = "freemarker.template.Configuration")
     public MailSender mailSender(JavaMailSender javaMailSender, MailProperties mailProperties,
                                  Configuration freemarkerConfiguration) {
-        log.info("初始化MailSender");
-        return new MailSenderImpl(javaMailSender, mailProperties, freemarkerConfiguration);
+        log.info("初始化MailSender（带FreeMarker支持）");
+        return new DefaultMailSender(javaMailSender, mailProperties, freemarkerConfiguration);
     }
     
     /**
-     * 配置FreeMarker模板引擎
+     * 配置邮件发送器（无模板引擎）
+     */
+    @Bean
+    @ConditionalOnMissingBean(MailSender.class)
+    public MailSender mailSenderWithoutTemplate(JavaMailSender javaMailSender, MailProperties mailProperties) {
+        log.info("初始化MailSender（无模板引擎）");
+        return new DefaultMailSender(javaMailSender, mailProperties, null);
+    }
+    
+    /**
+     * 配置FreeMarker模板引擎（可选）
      */
     @Bean
     @ConditionalOnMissingBean(Configuration.class)
+    @ConditionalOnClass(name = "freemarker.template.Configuration")
+    @ConditionalOnProperty(prefix = "itsuka.mail.template", name = "enabled", havingValue = "true")
     public Configuration freemarkerConfiguration(MailProperties mailProperties) {
-        log.info("初始化FreeMarker配置");
+        log.info("初始化 FreeMarker 配置");
         
         Configuration configuration = new Configuration(Configuration.VERSION_2_3_31);
         configuration.setDefaultEncoding(mailProperties.getTemplate().getEncoding());
@@ -80,12 +96,9 @@ public class MailAutoConfiguration {
         configuration.setFallbackOnNullLoopVariable(false);
         
         try {
-            configuration.setDirectoryForTemplateLoading(
-                new java.io.File(mailProperties.getTemplate().getPrefix().replace("classpath:/", ""))
-            );
+            configuration.setClassForTemplateLoading(this.getClass(), mailProperties.getTemplate().getPrefix());
         } catch (Exception e) {
-            log.warn("无法设置模板目录，将使用类路径模板: {}", e.getMessage());
-            configuration.setClassForTemplateLoading(this.getClass(), "/");
+            log.warn("无法设置模板目录: {}", e.getMessage());
         }
         
         return configuration;
@@ -109,17 +122,24 @@ public class MailAutoConfiguration {
         }
         
         // 协议配置
-        mailSender.setProtocol("smtp");
+        mailSender.setProtocol(Protocol.SMTP.name().toLowerCase(Locale.ROOT));
         
         // 编码配置
         mailSender.setDefaultEncoding(mailProperties.getTemplate().getEncoding());
         
-        // JavaMail属性配置
-        Properties javaMailProperties = new Properties();
+        // JavaMail 属性配置
+        mailSender.setJavaMailProperties(mailProperties(smtp, mailProperties.getCustomProperties()));
         
+        log.info("JavaMailSender配置完成: host={}, port={}, ssl={}, tls={}",
+            smtp.getHost(), smtp.getPort(), smtp.isSsl(), smtp.isTls());
+    }
+
+    private Properties mailProperties(MailProperties.SmtpProperties smtp, Map<String, String> customProperties) {
+        Properties javaMailProperties = new Properties();
+
         // 认证配置
         javaMailProperties.put("mail.smtp.auth", "true");
-        
+
         // SSL/TLS配置
         if (smtp.isSsl()) {
             javaMailProperties.put("mail.smtp.ssl.enable", "true");
@@ -129,25 +149,22 @@ public class MailAutoConfiguration {
             javaMailProperties.put("mail.smtp.starttls.enable", "true");
             javaMailProperties.put("mail.smtp.starttls.required", "true");
         }
-        
+
         // 超时配置
         javaMailProperties.put("mail.smtp.connectiontimeout", smtp.getConnectionTimeout());
         javaMailProperties.put("mail.smtp.timeout", smtp.getTimeout());
         javaMailProperties.put("mail.smtp.writetimeout", smtp.getWriteTimeout());
-        
+
         // 调试配置
         if (log.isDebugEnabled()) {
             javaMailProperties.put("mail.debug", "true");
         }
-        
+
         // 自定义属性
-        if (mailProperties.getCustomProperties() != null) {
-            javaMailProperties.putAll(mailProperties.getCustomProperties());
+        if (customProperties != null) {
+            javaMailProperties.putAll(customProperties);
         }
-        
-        mailSender.setJavaMailProperties(javaMailProperties);
-        
-        log.info("JavaMailSender配置完成: host={}, port={}, ssl={}, tls={}",
-            smtp.getHost(), smtp.getPort(), smtp.isSsl(), smtp.isTls());
+
+        return javaMailProperties;
     }
 }

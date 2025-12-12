@@ -11,15 +11,15 @@ dependencies {
     
     // Spring Boot AutoConfiguration
     implementation 'org.springframework.boot:spring-boot-autoconfigure'
+
+    // JavaMail API
+    api 'com.sun.mail:jakarta.mail:2.0.1'
     
-    // Spring Boot Actuator (for monitoring endpoints)
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // Jakarta Activation API
+    implementation 'jakarta.activation:jakarta.activation-api:2.1.0'
     
-    // Validation API (Spring Boot starter includes it)
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-    
-    // JavaMail API (Spring Boot mail starter includes it)
-    // FreeMarker Template Engine (Spring Boot includes it)
+    // FreeMarker Template Engine (可选)
+    compileOnly 'org.freemarker:freemarker:2.3.32'
     
     // 本项目依赖
     api project(':common:itsuka-spring-boot-starter')

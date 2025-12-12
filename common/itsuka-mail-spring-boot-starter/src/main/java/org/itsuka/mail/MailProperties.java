@@ -165,14 +165,14 @@ public class MailProperties {
     @Data
     public static class TemplateProperties {
         /**
-         * 模板引擎类型
+         * 是否启用模板功能
          */
-        private TemplateEngine engine = TemplateEngine.FREEMARKER;
+        private boolean enabled = false;
         
         /**
          * 模板文件路径前缀
          */
-        private String prefix = "classpath:/templates/mail/";
+        private String prefix = "/templates/mail/";
         
         /**
          * 模板文件后缀
@@ -183,13 +183,6 @@ public class MailProperties {
          * 模板编码
          */
         private String encoding = "UTF-8";
-        
-        /**
-         * 模板引擎类型枚举
-         */
-        public enum TemplateEngine {
-            FREEMARKER, THYMELEAF, VELOCITY
-        }
     }
     
     /**

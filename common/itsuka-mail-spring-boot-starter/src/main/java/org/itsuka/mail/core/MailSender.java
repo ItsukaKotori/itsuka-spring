@@ -1,7 +1,5 @@
 package org.itsuka.mail.core;
 
-import org.itsuka.mail.model.MailMessage;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 

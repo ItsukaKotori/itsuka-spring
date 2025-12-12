@@ -1,10 +1,15 @@
-package org.itsuka.mail.model;
+package org.itsuka.mail.core;
 
 import lombok.Data;
 import lombok.Builder;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.mail.util.ByteArrayDataSource;
+import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -100,6 +105,42 @@ public class MailMessage {
      */
     private Map<String, String> headers;
     
+    /**
+     * 邮件ID（可选）
+     */
+    private String messageId;
+    
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+    
+    /**
+     * 创建HTML格式邮件
+     */
+    public static MailMessage createHtml(String to, String subject, String content) {
+        return MailMessage.builder()
+                .to(Collections.singletonList(to))
+                .subject(subject)
+                .content(content)
+                .contentType(ContentType.TEXT_HTML)
+                .createTime(LocalDateTime.now())
+                .build();
+    }
+    
+    /**
+     * 创建纯文本格式邮件
+     */
+    public static MailMessage createText(String to, String subject, String content) {
+        return MailMessage.builder()
+                .to(Collections.singletonList(to))
+                .subject(subject)
+                .content(content)
+                .contentType(ContentType.TEXT_PLAIN)
+                .createTime(LocalDateTime.now())
+                .build();
+    }
+    
     
     /**
      * 邮件附件类
@@ -128,6 +169,21 @@ public class MailMessage {
          * 附件输入流（与data二选一）
          */
         private InputStream inputStream;
+        
+        /**
+         * 转换为DataHandler
+         */
+        public DataHandler toDataHandler() throws Exception {
+            DataSource dataSource;
+            if (data != null) {
+                dataSource = new ByteArrayDataSource(data, contentType != null ? contentType : "application/octet-stream");
+            } else if (inputStream != null) {
+                dataSource = new ByteArrayDataSource(inputStream, contentType != null ? contentType : "application/octet-stream");
+            } else {
+                throw new IllegalArgumentException("附件数据为空");
+            }
+            return new DataHandler(dataSource);
+        }
     }
     
     /**
@@ -157,6 +213,21 @@ public class MailMessage {
          * 资源输入流（与data二选一）
          */
         private InputStream inputStream;
+        
+        /**
+         * 转换为DataHandler
+         */
+        public DataHandler toDataHandler() throws Exception {
+            DataSource dataSource;
+            if (data != null) {
+                dataSource = new ByteArrayDataSource(data, contentType != null ? contentType : "application/octet-stream");
+            } else if (inputStream != null) {
+                dataSource = new ByteArrayDataSource(inputStream, contentType != null ? contentType : "application/octet-stream");
+            } else {
+                throw new IllegalArgumentException("内嵌资源数据为空");
+            }
+            return new DataHandler(dataSource);
+        }
     }
     
     /**

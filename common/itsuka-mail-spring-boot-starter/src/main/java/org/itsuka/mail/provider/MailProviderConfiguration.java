@@ -1,5 +1,8 @@
 package org.itsuka.mail.provider;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.mail.MailProperties;
 import org.springframework.util.StringUtils;
@@ -64,56 +67,19 @@ public class MailProviderConfiguration {
          * @param properties 邮件属性
          */
         void configure(MailProperties properties);
-        
-        /**
-         * 获取SMTP服务器配置
-         */
-        default ServerConfig getSmtpConfig() {
-            return new ServerConfig();
-        }
-        
-        /**
-         * 获取POP3服务器配置
-         */
-        default ServerConfig getPop3Config() {
-            return new ServerConfig();
-        }
-        
-        /**
-         * 获取IMAP服务器配置
-         */
-        default ServerConfig getImapConfig() {
-            return new ServerConfig();
-        }
     }
     
     /**
      * 服务器配置类
      */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class ServerConfig {
         private String host;
         private int port;
         private boolean ssl;
         private boolean tls;
-        
-        public ServerConfig() {}
-        
-        public ServerConfig(String host, int port, boolean ssl, boolean tls) {
-            this.host = host;
-            this.port = port;
-            this.ssl = ssl;
-            this.tls = tls;
-        }
-        
-        // Getters and Setters
-        public String getHost() { return host; }
-        public void setHost(String host) { this.host = host; }
-        public int getPort() { return port; }
-        public void setPort(int port) { this.port = port; }
-        public boolean isSsl() { return ssl; }
-        public void setSsl(boolean ssl) { this.ssl = ssl; }
-        public boolean isTls() { return tls; }
-        public void setTls(boolean tls) { this.tls = tls; }
     }
     
     /**
@@ -135,34 +101,6 @@ public class MailProviderConfiguration {
             smtp.setSsl(config.isSsl());
             smtp.setTls(config.isTls());
         }
-        
-        /**
-         * 配置POP3服务器属性
-         */
-        protected void configurePop3(MailProperties properties, ServerConfig config) {
-            MailProperties.Pop3Properties pop3 = properties.getPop3();
-            if (!StringUtils.hasText(pop3.getHost())) {
-                pop3.setHost(config.getHost());
-            }
-            if (pop3.getPort() == 995) {
-                pop3.setPort(config.getPort());
-            }
-            pop3.setSsl(config.isSsl());
-        }
-        
-        /**
-         * 配置IMAP服务器属性
-         */
-        protected void configureImap(MailProperties properties, ServerConfig config) {
-            MailProperties.ImapProperties imap = properties.getImap();
-            if (!StringUtils.hasText(imap.getHost())) {
-                imap.setHost(config.getHost());
-            }
-            if (imap.getPort() == 993) {
-                imap.setPort(config.getPort());
-            }
-            imap.setSsl(config.isSsl());
-        }
     }
     
     /**
@@ -172,8 +110,6 @@ public class MailProviderConfiguration {
         @Override
         public void configure(MailProperties properties) {
             configureSmtp(properties, new ServerConfig("smtp.gmail.com", 587, false, true));
-            configurePop3(properties, new ServerConfig("pop.gmail.com", 995, true, false));
-            configureImap(properties, new ServerConfig("imap.gmail.com", 993, true, false));
         }
     }
     
@@ -184,8 +120,6 @@ public class MailProviderConfiguration {
         @Override
         public void configure(MailProperties properties) {
             configureSmtp(properties, new ServerConfig("smtp-mail.outlook.com", 587, false, true));
-            configurePop3(properties, new ServerConfig("pop-mail.outlook.com", 995, true, false));
-            configureImap(properties, new ServerConfig("imap-mail.outlook.com", 993, true, false));
         }
     }
     
@@ -196,8 +130,6 @@ public class MailProviderConfiguration {
         @Override
         public void configure(MailProperties properties) {
             configureSmtp(properties, new ServerConfig("smtp.qq.com", 587, false, true));
-            configurePop3(properties, new ServerConfig("pop.qq.com", 995, true, false));
-            configureImap(properties, new ServerConfig("imap.qq.com", 993, true, false));
         }
     }
     
@@ -208,8 +140,6 @@ public class MailProviderConfiguration {
         @Override
         public void configure(MailProperties properties) {
             configureSmtp(properties, new ServerConfig("smtp.163.com", 465, true, false));
-            configurePop3(properties, new ServerConfig("pop.163.com", 995, true, false));
-            configureImap(properties, new ServerConfig("imap.163.com", 993, true, false));
         }
     }
     
@@ -220,8 +150,6 @@ public class MailProviderConfiguration {
         @Override
         public void configure(MailProperties properties) {
             configureSmtp(properties, new ServerConfig("smtp.126.com", 465, true, false));
-            configurePop3(properties, new ServerConfig("pop.126.com", 995, true, false));
-            configureImap(properties, new ServerConfig("imap.126.com", 993, true, false));
         }
     }
     
@@ -232,8 +160,6 @@ public class MailProviderConfiguration {
         @Override
         public void configure(MailProperties properties) {
             configureSmtp(properties, new ServerConfig("smtp.exmail.qq.com", 587, false, true));
-            configurePop3(properties, new ServerConfig("pop.exmail.qq.com", 995, true, false));
-            configureImap(properties, new ServerConfig("imap.exmail.qq.com", 993, true, false));
         }
     }
     
@@ -244,8 +170,6 @@ public class MailProviderConfiguration {
         @Override
         public void configure(MailProperties properties) {
             configureSmtp(properties, new ServerConfig("smtp.mxhichina.com", 587, false, true));
-            configurePop3(properties, new ServerConfig("pop.mxhichina.com", 995, true, false));
-            configureImap(properties, new ServerConfig("imap.mxhichina.com", 993, true, false));
         }
     }
 }

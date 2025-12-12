@@ -6,7 +6,6 @@ import freemarker.template.TemplateException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.mail.MailProperties;
-import org.itsuka.mail.model.MailMessage;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -18,7 +17,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMessage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MailSenderImpl implements MailSender {
+public class DefaultMailSender implements MailSender {
     
     private final JavaMailSender mailSender;
     private final MailProperties mailProperties;
@@ -106,6 +106,10 @@ public class MailSenderImpl implements MailSender {
     
     @Override
     public boolean sendTemplate(String to, String subject, String templateName, Object variables) {
+        if (freemarkerConfiguration == null) {
+            log.warn("模板引擎未初始化，无法发送模板邮件");
+            return false;
+        }
         try {
             String content = processTemplate(templateName, variables instanceof Map ? (Map<String, Object>) variables : Map.of("data", variables));
             return sendHtml(to, subject, content);
@@ -220,7 +224,7 @@ public class MailSenderImpl implements MailSender {
      * 处理模板邮件（如果需要）
      */
     private MailMessage processTemplateIfNeeded(MailMessage mailMessage) throws Exception {
-        if (mailMessage.getTemplateName() != null && !mailMessage.getTemplateName().trim().isEmpty()) {
+        if (freemarkerConfiguration != null && mailMessage.getTemplateName() != null && !mailMessage.getTemplateName().trim().isEmpty()) {
             String content = processTemplate(mailMessage.getTemplateName(), mailMessage.getTemplateVariables());
             
             // 创建新的邮件消息，保留其他属性但替换内容
@@ -282,7 +286,7 @@ public class MailSenderImpl implements MailSender {
         
         // 设置回执
         if (Boolean.TRUE.equals(mailMessage.getRequestReceipt())) {
-            helper.setReturnTo(getFromAddress());
+            mimeMessage.setHeader("Disposition-Notification-To", getFromAddress());
         }
         
         // 设置自定义头
@@ -299,14 +303,28 @@ public class MailSenderImpl implements MailSender {
         // 添加附件
         if (!CollectionUtils.isEmpty(mailMessage.getAttachments())) {
             for (MailMessage.Attachment attachment : mailMessage.getAttachments()) {
-                helper.addAttachment(attachment.getName(), attachment.toDataHandler());
+                if (attachment.getData() != null) {
+                    helper.addAttachment(attachment.getName(), 
+                        () -> new ByteArrayInputStream(attachment.getData()),
+                        attachment.getContentType() != null ? attachment.getContentType() : "application/octet-stream");
+                } else if (attachment.getInputStream() != null) {
+                    helper.addAttachment(attachment.getName(), attachment::getInputStream,
+                        attachment.getContentType() != null ? attachment.getContentType() : "application/octet-stream");
+                }
             }
         }
         
         // 添加内嵌资源
         if (!CollectionUtils.isEmpty(mailMessage.getInlineResources())) {
             for (MailMessage.InlineResource resource : mailMessage.getInlineResources()) {
-                helper.addInline(resource.getContentId(), resource.toDataHandler());
+                if (resource.getData() != null) {
+                    helper.addInline(resource.getContentId(),
+                        () -> new ByteArrayInputStream(resource.getData()),
+                        resource.getContentType() != null ? resource.getContentType() : "application/octet-stream");
+                } else if (resource.getInputStream() != null) {
+                    helper.addInline(resource.getContentId(), resource::getInputStream,
+                        resource.getContentType() != null ? resource.getContentType() : "application/octet-stream");
+                }
             }
         }
         
@@ -317,6 +335,10 @@ public class MailSenderImpl implements MailSender {
      * 处理模板
      */
     private String processTemplate(String templateName, Map<String, Object> variables) throws IOException, TemplateException {
+        if (freemarkerConfiguration == null) {
+            throw new IllegalStateException("模板引擎未初始化");
+        }
+        
         String fullTemplateName = templateName.endsWith(mailProperties.getTemplate().getSuffix()) ? 
             templateName : templateName + mailProperties.getTemplate().getSuffix();
         

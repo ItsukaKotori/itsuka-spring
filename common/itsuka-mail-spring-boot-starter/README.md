@@ -1,17 +1,17 @@
 # Itsuka Mail Spring Boot Starter
 
-一个简洁高效的Spring Boot邮件发送Starter，支持主流邮箱服务提供商，提供简单易用的邮件发送API。
+一个简洁高效的Spring Boot邮件发送Starter，专注于核心邮件发送功能，支持主流邮箱服务提供商。
 
 ## 功能特性
 
 - 🚀 **开箱即用**：基于Spring Boot自动配置，简单配置即可使用
 - 📧 **主流邮箱支持**：预配置Gmail、Outlook、QQ邮箱、163邮箱等主流邮箱服务
 - 🔄 **异步发送**：支持异步邮件发送，提升应用性能
-- 📝 **模板支持**：集成FreeMarker模板引擎，支持邮件模板
+- 📝 **模板支持**：可选集成FreeMarker模板引擎（需要时启用）
 - 📎 **附件支持**：支持发送附件和内嵌资源
 - 🛡️ **SSL/TLS安全**：支持SSL和TLS加密传输
 - 📊 **批量发送**：支持批量邮件发送
-- 🔧 **高度可扩展**：支持自定义邮件服务提供商和配置
+- 💡 **核心功能**：专注SMTP发送，移除非必需依赖
 
 ## 快速开始
 
@@ -47,11 +47,11 @@ itsuka:
 
 ```java
 @Autowired
-private MailService mailService;
+private MailSender mailSender;
 
-mailService.sendText("recipient@example.com", "测试主题", "测试内容");
-mailService.sendHtml("recipient@example.com", "HTML测试", "<h1>Hello</h1><p>这是一封HTML邮件</p>");
-mailService.sendTextAsync("recipient@example.com", "异步测试", "异步发送内容");
+mailSender.sendText("recipient@example.com", "测试主题", "测试内容");
+mailSender.sendHtml("recipient@example.com", "HTML测试", "<h1>Hello</h1><p>这是一封HTML邮件</p>");
+mailSender.sendTextAsync("recipient@example.com", "异步测试", "异步发送内容");
 ```
 
 ## 配置说明
@@ -85,30 +85,34 @@ itsuka:
       write-timeout: 10000
 ```
 
-### 模板配置
+### 模板配置（可选）
+
+如果需要使用模板功能，需要：
+1. 添加FreeMarker依赖到项目中
+2. 启用模板配置
 
 ```yaml
 itsuka:
   mail:
     template:
-      engine: FREEMARKER
-      prefix: classpath:/templates/mail/
+      enabled: true
+      prefix: /templates/mail/
       suffix: .ftl
       encoding: UTF-8
 ```
 
 ## 支持的邮箱服务提供商
 
-| 提供商 | 代码 | 说明 |
-|--------|------|------|
-| 通用SMTP | GENERIC | 自定义SMTP配置 |
-| Gmail | GMAIL | Google Gmail |
-| Outlook | OUTLOOK | Microsoft Outlook/Hotmail |
-| QQ邮箱 | QQ | 腾讯QQ邮箱 |
-| 163邮箱 | NETEASE_163 | 网易163邮箱 |
-| 126邮箱 | NETEASE_126 | 网易126邮箱 |
-| 企业微信邮箱 | WECHAT_WORK | 腾讯企业微信邮箱 |
-| 阿里云邮箱 | ALIYUN | 阿里云邮箱 |
+| 提供商 | 代码 | SMTP配置 |
+|--------|------|----------|
+| 通用SMTP | GENERIC | 自定义配置 |
+| Gmail | GMAIL | smtp.gmail.com:587 (TLS) |
+| Outlook | OUTLOOK | smtp-mail.outlook.com:587 (TLS) |
+| QQ邮箱 | QQ | smtp.qq.com:587 (TLS) |
+| 163邮箱 | NETEASE_163 | smtp.163.com:465 (SSL) |
+| 126邮箱 | NETEASE_126 | smtp.126.com:465 (SSL) |
+| 企业微信邮箱 | WECHAT_WORK | smtp.exmail.qq.com:587 (TLS) |
+| 阿里云邮箱 | ALIYUN | smtp.mxhichina.com:587 (TLS) |
 
 ## 使用示例
 
@@ -116,7 +120,7 @@ itsuka:
 
 ```java
 @Autowired
-private MailService mailService;
+private MailSender mailSender;
 
 MailMessage message = MailMessage.builder()
     .to(List.of("recipient@example.com"))
@@ -132,17 +136,32 @@ MailMessage message = MailMessage.builder()
     ))
     .build();
 
-mailService.send(message);
+mailSender.send(message);
 ```
 
 ### 发送模板邮件
 
+> **注意**：模板功能需要添加FreeMarker依赖并启用模板配置
+
+```groovy
+// build.gradle
+implementation 'org.freemarker:freemarker:2.3.32'
+```
+
+```yaml
+# application.yml
+itsuka:
+  mail:
+    template:
+      enabled: true
+```
+
 ```java
 @Autowired
-private MailService mailService;
+private MailSender mailSender;
 
 Map<String, Object> variables = Map.of("username", "张三");
-mailService.sendTemplate("user@example.com", "欢迎注册", "welcome", variables);
+mailSender.sendTemplate("user@example.com", "欢迎注册", "welcome", variables);
 ```
 
 ### 批量发送邮件
@@ -161,7 +180,7 @@ List<MailMessage> messages = List.of(
         .build()
 );
 
-List<Boolean> results = mailService.sendBatch(messages);
+List<Boolean> results = mailSender.sendBatch(messages);
 ```
 
 ### 高级邮件配置
@@ -223,43 +242,41 @@ itsuka:
       authorization-code: your-authorization-code
 ```
 
-## 扩展开发
+## 核心优化
 
-### 自定义邮件服务提供商
+### v2.0 优化说明
 
-```java
-@Component
-public class CustomMailProvider implements MailProvider {
-    
-    @Override
-    public void configure(MailProperties properties) {
-        properties.getSmtp().setHost("custom.smtp.com");
-        properties.getSmtp().setPort(587);
-    }
-}
-```
+本版本专注核心邮件发送功能，进行了以下优化：
 
-### 自定义邮件服务
+1. **移除非核心依赖**
+   - 移除 `spring-boot-starter-actuator`（监控功能）
+   - 移除 `spring-boot-starter-validation`（验证功能）
+   - FreeMarker改为可选依赖（按需引入）
 
-```java
-@Service
-@Primary
-public class CustomMailService implements MailService {
-    
-    @Override
-    public boolean send(MailMessage mailMessage) {
-        return true;
-    }
-}
-```
+2. **简化配置项**
+   - 移除POP3/IMAP配置（专注SMTP发送）
+   - 简化模板引擎配置
+   - 保留核心SMTP配置
+
+3. **模板引擎可选化**
+   - FreeMarker作为可选依赖
+   - 需要时通过配置启用
+   - 无模板需求时零依赖
+
+4. **核心功能保留**
+   - 文本/HTML邮件发送
+   - 异步发送支持
+   - 附件和内嵌资源
+   - 批量发送
+   - 主流邮箱预配置
 
 ## 注意事项
 
 1. **安全性**：不要在代码中硬编码密码，使用配置文件或环境变量
 2. **授权码**：QQ邮箱、163邮箱等需要使用授权码而不是密码
 3. **SSL/TLS**：根据邮箱服务提供商的要求配置SSL或TLS
-4. **异步发送**：启用异步发送时，注意线程池配置
-5. **模板路径**：确保模板文件路径正确，文件存在
+4. **模板功能**：需要时添加FreeMarker依赖并启用配置
+5. **专注发送**：本Starter专注SMTP发送，不提供收件功能
 
 ## 问题排查
 
@@ -283,7 +300,11 @@ logging:
 
 ## 版本历史
 
-- v2.0.0: 简化版本，移除复杂功能，保留核心邮件发送能力
+- v2.0.0: 优化版本
+  - 移除非核心依赖（actuator、validation）
+  - FreeMarker改为可选依赖
+  - 移除POP3/IMAP配置（专注SMTP发送）
+  - 简化配置项和代码结构
 - v1.3.0: 添加更多邮箱服务提供商预配置
 - v1.2.0: 添加批量发送和附件支持
 - v1.1.0: 添加异步发送和模板支持
