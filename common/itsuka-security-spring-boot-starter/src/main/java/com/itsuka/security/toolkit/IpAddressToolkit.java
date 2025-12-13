@@ -58,9 +58,14 @@ public class IpAddressToolkit {
 
         // 最后从远程地址获取
         InetSocketAddress remoteAddress = request.getRemoteAddress();
-        String ip = remoteAddress.getAddress().getHostAddress();
-        log.debug("Client IP obtained from remote address: {}", ip);
-        return ip;
+        if (remoteAddress != null && remoteAddress.getAddress() != null) {
+            String ip = remoteAddress.getAddress().getHostAddress();
+            log.debug("Client IP obtained from remote address: {}", ip);
+            return ip;
+        }
+        
+        log.debug("Unable to obtain client IP, returning unknown");
+        return UNKNOWN;
     }
 
     /**

@@ -49,6 +49,7 @@ subprojects {
             dependency 'com.baomidou:mybatis-plus-boot-starter:3.5.7'
             dependency 'org.mybatis:mybatis-spring:3.0.3'
             dependency 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+            dependency 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.13'
             dependency 'io.minio:minio:8.5.2'
             dependency 'io.jsonwebtoken:jjwt-api:0.12.3'
             dependency 'io.jsonwebtoken:jjwt-impl:0.12.3'
