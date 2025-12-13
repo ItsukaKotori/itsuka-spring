@@ -99,7 +99,7 @@ public class DefaultMailSender implements MailSender {
         
         log.info("开始批量发送邮件，数量: {}", mailMessages.size());
         
-        return mailMessages.stream()
+        return mailMessages.parallelStream()
                 .map(this::send)
                 .collect(Collectors.toList());
     }
@@ -295,7 +295,7 @@ public class DefaultMailSender implements MailSender {
                 try {
                     mimeMessage.setHeader(key, value);
                 } catch (Exception e) {
-                    log.warn("设置邮件头失败: {} = {}", key, value, e);
+                    log.error("设置邮件头失败: {} = {}", key, value, e);
                 }
             });
         }
@@ -343,10 +343,9 @@ public class DefaultMailSender implements MailSender {
             templateName : templateName + mailProperties.getTemplate().getSuffix();
         
         Template template = freemarkerConfiguration.getTemplate(fullTemplateName);
-        StringWriter writer = new StringWriter();
-        
-        template.process(variables, writer);
-        
-        return writer.toString();
+        try (StringWriter writer = new StringWriter()) {
+            template.process(variables, writer);
+            return writer.toString();
+        }
     }
 }
