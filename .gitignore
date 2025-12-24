@@ -33,3 +33,6 @@ hs_err_pid*
 
 build/
 bin/
+
+# Nexus配置文件（包含敏感信息）
+nexus.properties

@@ -3,7 +3,13 @@ plugins {
     id 'java-library'
     id 'org.springframework.boot' version '3.5.6' apply false
     id 'io.spring.dependency-management' version '1.1.6' apply false
+    id 'maven-publish'
+    id 'signing'
 }
+
+// 加载Nexus配置文件
+def nexusConfig = new Properties()
+file('nexus.properties').withInputStream { nexusConfig.load(it) }
 
 // 全局配置
 allprojects {
@@ -44,7 +50,7 @@ subprojects {
             dependency 'org.mapstruct:mapstruct:1.5.3.Final'
             dependency 'org.mapstruct:mapstruct-processor:1.5.3.Final'
             dependency 'com.mysql:mysql-connector-j:8.0.33'
-            dependency 'org.projectlombok:lombok:1.18.26'
+            dependency 'org.projectlombok:lombok:1.18.30'
             dependency 'jakarta.validation:jakarta.validation-api:3.0.2'
             dependency 'com.baomidou:mybatis-plus-boot-starter:3.5.7'
             dependency 'org.mybatis:mybatis-spring:3.0.3'
@@ -64,6 +70,106 @@ subprojects {
     // 测试配置
     test {
         useJUnitPlatform()
+    }
+    
+    // 为所有子项目添加源码和javadoc任务
+    task sourcesJar(type: Jar) {
+        from sourceSets.main.allJava
+        archiveClassifier = 'sources'
+    }
+    
+    task javadocJar(type: Jar) {
+        from javadoc
+        archiveClassifier = 'javadoc'
+    }
+    
+    // 配置javadoc
+    javadoc {
+        if(JavaVersion.current().isJava9Compatible()) {
+            options.addBooleanOption('html5', true)
+        }
+        
+        // 忽略Javadoc警告和错误
+        options.addStringOption('Xdoclint:none', '-quiet')
+        options.addStringOption('encoding', 'UTF-8')
+        options.addStringOption('charSet', 'UTF-8')
+        failOnError = false
+    }
+}
+
+// 为itsuka-开头的子项目添加发布配置
+subprojects {
+    if (project.name.startsWith('itsuka-')) {
+        apply plugin: 'maven-publish'
+        
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    from components.java
+                    
+                    // 添加源码jar
+                    artifact project.tasks.sourcesJar
+                    
+                    // 添加javadoc jar
+                    artifact project.tasks.javadocJar
+                    
+                    // 解析依赖版本
+                    versionMapping {
+                        usage('java-api') {
+                            fromResolutionOf('runtimeClasspath')
+                        }
+                        usage('java-runtime') {
+                            fromResolutionResult()
+                        }
+                    }
+                    
+                    // POM文件配置
+                    pom {
+                        name = project.name
+                        description = "Itsuka Spring Boot Starter - ${project.name}"
+                        url = 'https://github.com/itsuka/itsuka-spring'
+                        
+                        licenses {
+                            license {
+                                name = 'The Apache License, Version 2.0'
+                                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            }
+                        }
+                        
+                        developers {
+                            developer {
+                                id = 'itsuka'
+                                name = 'Itsuka Team'
+                                email = 'support@itsuka.com'
+                            }
+                        }
+                        
+                        scm {
+                            connection = 'scm:git:git://github.com/itsuka/itsuka-spring.git'
+                            developerConnection = 'scm:git:ssh://github.com:itsuka/itsuka-spring.git'
+                            url = 'https://github.com/itsuka/itsuka-spring/tree/main'
+                        }
+                    }
+                }
+            }
+            
+            repositories {
+                maven {
+                    name = 'nexus'
+                    url = version.endsWith('SNAPSHOT') ?
+                        nexusConfig['nexus.repository.snapshots'] :
+                        nexusConfig['nexus.repository.releases']
+                    
+                    credentials {
+                        username = nexusConfig['nexus.username']
+                        password = nexusConfig['nexus.password']
+                    }
+                    
+                    // 允许不安全的协议（仅用于开发环境）
+                    allowInsecureProtocol = true
+                }
+            }
+        }
     }
 }
 
