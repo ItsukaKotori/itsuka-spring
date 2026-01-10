@@ -1,335 +1,204 @@
 package org.itsuka.web.desensitization;
 
-import java.util.regex.Pattern;
-
 /**
  * 脱敏工具类
- * 提供各种类型的脱敏处理方法
+ * 提供各种脱敏规则的具体实现
  *
  * @author Itsuka
- * @since 2023/12/7
+ * @since 2023/12/10
  */
 public class DesensitizationUtils {
 
     /**
-     * 邮箱正则表达式
-     */
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^(.+)@(.+)$");
-
-    /**
-     * 手机号正则表达式
-     */
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^1[3-9]\\d{9}$");
-
-    /**
-     * 身份证号正则表达式
-     */
-    private static final Pattern ID_CARD_PATTERN = Pattern
-            .compile("^[1-9]\\d{5}(19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])\\d{3}[\\dXx]$");
-
-    /**
-     * 银行卡号正则表达式
-     */
-    private static final Pattern BANK_CARD_PATTERN = Pattern.compile("^\\d{16,19}$");
-
-    /**
-     * 固定电话正则表达式
-     */
-    private static final Pattern FIXED_PHONE_PATTERN = Pattern.compile("^0\\d{2,3}-?\\d{7,8}$");
-
-    /**
-     * 根据脱敏类型处理字符串
+     * 对字符串进行脱敏处理
      *
-     * @param origin     原始字符串
+     * @param value      原始字符串
      * @param type       脱敏类型
-     * @param prefixKeep 保留前缀长度
-     * @param suffixKeep 保留后缀长度
+     * @param prefixKeep 保留前几位
+     * @param suffixKeep 保留后几位
      * @param replacer   替换字符
      * @return 脱敏后的字符串
      */
-    public static String desensitize(String origin, DesensitizationType type, int prefixKeep, int suffixKeep,
+    public static String desensitize(String value, DesensitizeType type, int prefixKeep, int suffixKeep,
             char replacer) {
-        if (origin == null || origin.isEmpty()) {
-            return origin;
+        if (value == null || value.isEmpty()) {
+            return value;
         }
 
         switch (type) {
             case USERNAME:
-                return usernameDesensitization(origin, replacer);
-            case CHINESE_NAME:
-                return chineseNameDesensitization(origin, replacer);
-            case ID_CARD:
-                return idCardDesensitization(origin, replacer);
+                return desensitizeUsername(value);
             case PHONE:
-                return phoneDesensitization(origin, replacer);
-            case FIXED_PHONE:
-                return fixedPhoneDesensitization(origin, replacer);
+                return desensitizePhone(value);
             case EMAIL:
-                return emailDesensitization(origin, replacer);
+                return desensitizeEmail(value);
+            case ID_CARD:
+                return desensitizeIdCard(value);
             case BANK_CARD:
-                return bankCardDesensitization(origin, replacer);
+                return desensitizeBankCard(value);
             case PASSWORD:
-                return passwordDesensitization(origin, replacer);
+                return desensitizePassword(value, replacer);
             case ADDRESS:
-                return addressDesensitization(origin, replacer);
+                return desensitizeAddress(value);
             case CUSTOM:
-                return customDesensitization(origin, prefixKeep, suffixKeep, replacer);
+                return desensitizeCustom(value, prefixKeep, suffixKeep, replacer);
             default:
-                return origin;
+                return value;
         }
     }
 
     /**
      * 用户名脱敏
+     * 规则：保留第一个字符，其余用*代替
      *
      * @param username 用户名
-     * @param replacer 替换字符
      * @return 脱敏后的用户名
      */
-    public static String usernameDesensitization(String username, char replacer) {
-        if (username == null || username.length() <= 3) {
+    private static String desensitizeUsername(String username) {
+        if (username == null || username.isEmpty()) {
             return username;
         }
-        int prefixKeep = 2;
-        int suffixKeep = 1;
-        return customDesensitization(username, prefixKeep, suffixKeep, replacer);
-    }
-
-    /**
-     * 中文姓名脱敏
-     *
-     * @param name     姓名
-     * @param replacer 替换字符
-     * @return 脱敏后的姓名
-     */
-    public static String chineseNameDesensitization(String name, char replacer) {
-        if (name == null || name.length() <= 1) {
-            return name;
+        if (username.length() == 1) {
+            return username;
         }
-        int prefixKeep = 1;
-        int suffixKeep = 0;
-        return customDesensitization(name, prefixKeep, suffixKeep, replacer);
-    }
-
-    /**
-     * 身份证号脱敏
-     *
-     * @param idCard   身份证号
-     * @param replacer 替换字符
-     * @return 脱敏后的身份证号
-     */
-    public static String idCardDesensitization(String idCard, char replacer) {
-        if (idCard == null || idCard.length() <= 10) {
-            return idCard;
-        }
-        int prefixKeep = 6;
-        int suffixKeep = 4;
-        return customDesensitization(idCard, prefixKeep, suffixKeep, replacer);
+        return username.charAt(0) + "*".repeat(username.length() - 1);
     }
 
     /**
      * 手机号脱敏
+     * 规则：保留前3位和后4位，中间用*代替
      *
-     * @param phone    手机号
-     * @param replacer 替换字符
+     * @param phone 手机号
      * @return 脱敏后的手机号
      */
-    public static String phoneDesensitization(String phone, char replacer) {
+    private static String desensitizePhone(String phone) {
         if (phone == null || phone.length() <= 7) {
             return phone;
         }
-        int prefixKeep = 3;
-        int suffixKeep = 4;
-        return customDesensitization(phone, prefixKeep, suffixKeep, replacer);
-    }
-
-    /**
-     * 固定电话脱敏
-     *
-     * @param phone    固定电话
-     * @param replacer 替换字符
-     * @return 脱敏后的固定电话
-     */
-    public static String fixedPhoneDesensitization(String phone, char replacer) {
-        if (phone == null || phone.length() <= 6) {
-            return phone;
-        }
-        int prefixKeep = 4;
-        int suffixKeep = 2;
-        return customDesensitization(phone, prefixKeep, suffixKeep, replacer);
+        return phone.substring(0, 3) + "*".repeat(phone.length() - 7) + phone.substring(phone.length() - 4);
     }
 
     /**
      * 邮箱脱敏
+     * 规则：邮箱前缀仅显示第一个字母，@前及后续域名显示
      *
-     * @param email    邮箱
-     * @param replacer 替换字符
+     * @param email 邮箱
      * @return 脱敏后的邮箱
      */
-    public static String emailDesensitization(String email, char replacer) {
-        if (email == null) {
+    private static String desensitizeEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return email;
+        }
+        String[] parts = email.split("@");
+        if (parts.length != 2) {
             return email;
         }
 
-        java.util.regex.Matcher matcher = EMAIL_PATTERN.matcher(email);
-        if (!matcher.matches()) {
+        String prefix = parts[0];
+        String suffix = parts[1];
+
+        if (prefix.isEmpty()) {
             return email;
         }
 
-        String prefix = matcher.group(1);
-        String suffix = matcher.group(2);
+        return prefix.charAt(0) + "*".repeat(Math.max(0, prefix.length() - 1)) + "@" + suffix;
+    }
 
-        if (prefix.length() <= 2) {
-            return email;
+    /**
+     * 身份证号脱敏
+     * 规则：保留前6位和后4位，中间用*代替
+     *
+     * @param idCard 身份证号
+     * @return 脱敏后的身份证号
+     */
+    private static String desensitizeIdCard(String idCard) {
+        if (idCard == null || idCard.length() <= 10) {
+            return idCard;
         }
-
-        String desensitizedPrefix = customDesensitization(prefix, 2, 0, replacer);
-        return desensitizedPrefix + "@" + suffix;
+        return idCard.substring(0, 6) + "*".repeat(idCard.length() - 10) + idCard.substring(idCard.length() - 4);
     }
 
     /**
      * 银行卡号脱敏
+     * 规则：保留前6位和后4位，中间用*代替
      *
      * @param bankCard 银行卡号
-     * @param replacer 替换字符
      * @return 脱敏后的银行卡号
      */
-    public static String bankCardDesensitization(String bankCard, char replacer) {
-        if (bankCard == null || bankCard.length() <= 8) {
+    private static String desensitizeBankCard(String bankCard) {
+        if (bankCard == null || bankCard.length() <= 10) {
             return bankCard;
         }
-        int prefixKeep = 4;
-        int suffixKeep = 4;
-        return customDesensitization(bankCard, prefixKeep, suffixKeep, replacer);
+        return bankCard.substring(0, 6) + "*".repeat(bankCard.length() - 10)
+                + bankCard.substring(bankCard.length() - 4);
     }
 
     /**
      * 密码脱敏
+     * 规则：全部用*代替
      *
      * @param password 密码
      * @param replacer 替换字符
      * @return 脱敏后的密码
      */
-    public static String passwordDesensitization(String password, char replacer) {
+    private static String desensitizePassword(String password, char replacer) {
         if (password == null) {
             return password;
         }
-
-        if (password.isEmpty()) {
-            return password;
-        }
-
         return String.valueOf(replacer).repeat(password.length());
     }
 
     /**
      * 地址脱敏
+     * 规则：从第6位开始隐藏
      *
-     * @param address  地址
-     * @param replacer 替换字符
+     * @param address 地址
      * @return 脱敏后的地址
      */
-    public static String addressDesensitization(String address, char replacer) {
+    private static String desensitizeAddress(String address) {
         if (address == null || address.length() <= 6) {
             return address;
         }
-        int prefixKeep = 6;
-        int suffixKeep = 0;
-        return customDesensitization(address, prefixKeep, suffixKeep, replacer);
+        return address.substring(0, 6) + "*".repeat(address.length() - 6);
     }
 
     /**
      * 自定义脱敏
+     * 规则：保留前几位和后几位，中间用指定字符代替
      *
-     * @param origin     原始字符串
-     * @param prefixKeep 保留前缀长度
-     * @param suffixKeep 保留后缀长度
+     * @param value      原始字符串
+     * @param prefixKeep 保留前几位
+     * @param suffixKeep 保留后几位
      * @param replacer   替换字符
      * @return 脱敏后的字符串
      */
-    public static String customDesensitization(String origin, int prefixKeep, int suffixKeep, char replacer) {
-        if (origin == null || origin.isEmpty()) {
-            return origin;
+    private static String desensitizeCustom(String value, int prefixKeep, int suffixKeep, char replacer) {
+        if (value == null) {
+            return value;
         }
 
-        int length = origin.length();
+        int length = value.length();
 
-        // 如果保留的前后长度之和大于等于字符串长度，则不做处理
+        // 如果保留的位数总和大于等于字符串长度，则不进行脱敏
         if (prefixKeep + suffixKeep >= length) {
-            return origin;
+            return value;
         }
 
-        // 计算需要替换的字符数
+        // 确保保留位数不为负数
+        prefixKeep = Math.max(0, prefixKeep);
+        suffixKeep = Math.max(0, suffixKeep);
+
+        // 如果保留的位数总和大于等于字符串长度，则不进行脱敏
+        if (prefixKeep + suffixKeep >= length) {
+            return value;
+        }
+
+        String prefix = prefixKeep > 0 ? value.substring(0, prefixKeep) : "";
+        String suffix = suffixKeep > 0 ? value.substring(length - suffixKeep) : "";
+
         int replaceCount = length - prefixKeep - suffixKeep;
+        String middle = String.valueOf(replacer).repeat(replaceCount);
 
-        // 构建脱敏后的字符串
-        StringBuilder sb = new StringBuilder();
-
-        // 添加前缀
-        if (prefixKeep > 0) {
-            sb.append(origin, 0, prefixKeep);
-        }
-
-        // 添加替换字符
-        for (int i = 0; i < replaceCount; i++) {
-            sb.append(replacer);
-        }
-
-        // 添加后缀
-        if (suffixKeep > 0) {
-            sb.append(origin, length - suffixKeep, length);
-        }
-
-        return sb.toString();
-    }
-
-    /**
-     * 检查是否为邮箱
-     *
-     * @param email 待检查的字符串
-     * @return 是否为邮箱
-     */
-    public static boolean isEmail(String email) {
-        return email != null && EMAIL_PATTERN.matcher(email).matches();
-    }
-
-    /**
-     * 检查是否为手机号
-     *
-     * @param phone 待检查的字符串
-     * @return 是否为手机号
-     */
-    public static boolean isPhone(String phone) {
-        return phone != null && PHONE_PATTERN.matcher(phone).matches();
-    }
-
-    /**
-     * 检查是否为身份证号
-     *
-     * @param idCard 待检查的字符串
-     * @return 是否为身份证号
-     */
-    public static boolean isIdCard(String idCard) {
-        return idCard != null && ID_CARD_PATTERN.matcher(idCard).matches();
-    }
-
-    /**
-     * 检查是否为银行卡号
-     *
-     * @param bankCard 待检查的字符串
-     * @return 是否为银行卡号
-     */
-    public static boolean isBankCard(String bankCard) {
-        return bankCard != null && BANK_CARD_PATTERN.matcher(bankCard).matches();
-    }
-
-    /**
-     * 检查是否为固定电话
-     *
-     * @param fixedPhone 待检查的字符串
-     * @return 是否为固定电话
-     */
-    public static boolean isFixedPhone(String fixedPhone) {
-        return fixedPhone != null && FIXED_PHONE_PATTERN.matcher(fixedPhone).matches();
+        return prefix + middle + suffix;
     }
 }
