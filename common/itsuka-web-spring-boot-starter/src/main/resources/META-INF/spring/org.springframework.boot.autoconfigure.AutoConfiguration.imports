@@ -1,1 +1,2 @@
 org.itsuka.web.WebAutoConfiguration
+org.itsuka.web.desensitization.DesensitizationAutoConfiguration

@@ -1,181 +1,157 @@
 # itsuka-web-spring-boot-starter
 
-基于Spring Boot的Web增强Starter，提供统一的异常处理、请求响应日志、性能监控等Web开发常用功能。
+Web 相关的 Spring Boot Starter，提供了 Web 开发中常用的功能组件，包括脱敏、异常处理、性能监控等。
 
-## 🎯 核心功能
+## 功能特性
 
-### 全局异常处理
-- 统一处理业务异常、验证异常、HTTP异常
-- 支持Spring Security异常处理
-- 自动返回标准化响应格式
-- 支持多语言错误消息
+- 数据脱敏：基于 Jackson 序列化实现的数据脱敏功能
+- 全局异常处理：统一的异常处理机制
+- 性能监控：API 性能监控和统计
+- 请求响应日志：请求和响应日志记录
+- RestTemplate 增强：增强的 RestTemplate 功能
 
-### 📊 请求响应监控
-- 自动记录请求响应日志
-- 性能监控和统计
-- 支持自定义拦截器
-
-### ⚙️ Web配置增强
-- Jackson序列化配置优化
-- RestTemplate自动配置
-- WebMvcConfigurer增强
-
-## 🚀 快速开始
+## 快速开始
 
 ### 1. 添加依赖
 
-```gradle
-dependencies {
-    implementation 'org.itsuka:itsuka-web-spring-boot-starter:1.0.0'
-}
+```xml
+<dependency>
+    <groupId>org.itsuka</groupId>
+    <artifactId>itsuka-web-spring-boot-starter</artifactId>
+    <version>${itsuka.version}</version>
+</dependency>
 ```
 
-### 2. 自动配置
+### 2. 配置文件
 
-Starter会自动配置以下组件：
-- `GlobalExceptionHandler` - 全局异常处理器
-- `ObjectMapper` - Jackson配置
-- `RestTemplate` - HTTP客户端
-- 请求响应拦截器
+在`application.yml`中添加配置：
 
-### 3. 使用示例
-
-#### 业务异常处理
-
-```java
-@RestController
-public class UserController {
-    
-    @GetMapping("/users/{id}")
-    public Response<User> getUser(@PathVariable Long id) {
-        // 抛出业务异常，会被全局异常处理器捕获
-        if (id <= 0) {
-            throw new BusinessException("用户ID无效");
-        }
-        
-        User user = userService.findById(id);
-        if (user == null) {
-            throw new BusinessException("用户不存在");
-        }
-        
-        return Response.success(user);
-    }
-}
+```yaml
+itsuka:
+  web:
+    # Web功能总开关
+    enable: true
+    # 脱敏配置
+    desensitization:
+      enabled: true
+      replacer: "*"
+      default-prefix-keep: 0
+      default-suffix-keep: 0
+      log-desensitization: false
+      error-desensitization: false
+    # 日志配置
+    logging:
+      enabled: false
+    # 性能监控配置
+    performance:
+      enabled: false
 ```
 
-#### 参数验证异常处理
+## 数据脱敏功能
+
+### 概述
+
+数据脱敏功能基于 Jackson 序列化实现，当对象被序列化为 JSON 时，会自动对带有`@Desensitization`注解的字段进行脱敏处理。
+
+### 使用方式
+
+1. 在需要脱敏的字段上添加`@Desensitization`注解：
 
 ```java
-@RestController
-@Validated
-public class UserController {
-    
-    @PostMapping("/users")
-    public Response<User> createUser(@Valid @RequestBody CreateUserRequest request) {
-        // 验证失败会自动返回标准错误响应
-        return Response.success(userService.create(request));
-    }
-}
+public class UserInfo {
+    @Desensitization(type = DesensitizationType.CHINESE_NAME)
+    private String name;
 
-@Data
-public class CreateUserRequest {
-    @NotBlank(message = "用户名不能为空")
-    private String username;
-    
-    @Email(message = "邮箱格式不正确")
+    @Desensitization(type = DesensitizationType.PHONE)
+    private String phone;
+
+    @Desensitization(type = DesensitizationType.EMAIL)
     private String email;
+
+    @Desensitization(type = DesensitizationType.CUSTOM, prefixKeep = 3, suffixKeep = 4)
+    private String idCard;
+
+    // getters and setters
 }
 ```
 
-## 🔍 异常处理详解
-
-### 支持的异常类型
-
-| 异常类型 | 处理方式 | HTTP状态码 |
-|---------|---------|----------|
-| `BusinessException` | 返回业务错误信息 | 400 |
-| `MethodArgumentNotValidException` | 返回验证错误详情 | 400 |
-| `ConstraintViolationException` | 返回约束验证错误 | 400 |
-| `HttpRequestMethodNotSupportedException` | 返回方法不支持错误 | 405 |
-| `HttpMediaTypeNotSupportedException` | 返回媒体类型不支持错误 | 415 |
-| `AccessDeniedException` | 返回访问拒绝错误 | 403 |
-| `AuthenticationException` | 返回认证失败错误 | 401 |
-| `Exception` | 返回通用服务器错误 | 500 |
-
-### 响应格式
-
-```json
-{
-  "code": 400,
-  "message": "用户名不能为空",
-  "data": null,
-  "timestamp": "2023-12-07T10:30:00",
-  "path": "/api/users"
-}
-```
-
-## ⚙️ 配置说明
-
-### Jackson配置
-
-```yaml
-spring:
-  jackson:
-    # 以下配置由starter自动应用
-    default-property-inclusion: non_null
-    serialization:
-      write-dates-as-timestamps: false
-    deserialization:
-      fail-on-unknown-properties: false
-```
-
-### 日志配置
-
-```yaml
-logging:
-  level:
-    org.itsuka.web.interceptor: DEBUG  # 开启请求日志
-```
-
-## 🔧 自定义配置
-
-### 自定义异常处理
+2. 在 Controller 中返回对象：
 
 ```java
-@Component
-public class CustomExceptionHandler {
-    
-    @EventListener
-    public void handleCustomException(CustomException ex) {
-        // 自定义异常处理逻辑
-        log.error("Custom exception occurred", ex);
+@RestController
+public class UserController {
+
+    @GetMapping("/user/{id}")
+    public UserInfo getUser(@PathVariable Long id) {
+        UserInfo user = userService.getById(id);
+        return user; // 自动进行脱敏处理
     }
 }
 ```
 
-### 自定义拦截器
+### 脱敏类型
 
-```java
-@Configuration
-public class WebConfig implements WebMvcConfigurer {
-    
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new CustomInterceptor())
-                .addPathPatterns("/api/**");
-    }
-}
+系统内置了多种脱敏类型：
+
+| 类型         | 说明                               | 示例                                                 |
+| ------------ | ---------------------------------- | ---------------------------------------------------- |
+| USERNAME     | 用户名脱敏，保留前 2 位和后 1 位   | 张三 -> 张\*                                         |
+| CHINESE_NAME | 中文姓名脱敏，保留前 1 位          | 张三 -> 张\*                                         |
+| ID_CARD      | 身份证号脱敏，保留前 6 位和后 4 位 | 110101199001011234 -> 110101**\*\*\*\***1234         |
+| PHONE        | 手机号脱敏，保留前 3 位和后 4 位   | 13812345678 -> 138\*\*\*\*5678                       |
+| FIXED_PHONE  | 固定电话脱敏，保留前 4 位和后 2 位 | 010-12345678 -> 010-**\***78                         |
+| EMAIL        | 邮箱脱敏，保留前 2 位和@后内容     | zhangsan@example.com -> zh**\*\***@example.com       |
+| BANK_CARD    | 银行卡号脱敏，保留前 4 位和后 4 位 | 6222020200012345678 -> 6222****\*\*\*\*****5678      |
+| PASSWORD     | 密码脱敏，全部用\*代替             | password -> **\*\*\*\***                             |
+| ADDRESS      | 地址脱敏，保留前 6 位              | 北京市朝阳区建国路 88 号 -> 北京市朝阳区**\*\*\*\*** |
+| CUSTOM       | 自定义脱敏，需要指定保留的前后位数 | 根据参数自定义                                       |
+
+### 注解参数
+
+`@Desensitization`注解支持以下参数：
+
+- `type`: 脱敏类型，默认为`CUSTOM`
+- `prefixKeep`: 自定义脱敏时保留的前缀长度，默认为 0
+- `suffixKeep`: 自定义脱敏时保留的后缀长度，默认为 0
+- `replacer`: 脱敏替换字符，默认为`*`
+- `enabled`: 是否启用脱敏，默认为`true`
+
+### 配置参数
+
+脱敏功能支持以下全局配置：
+
+```yaml
+itsuka:
+  web:
+    desensitization:
+      enabled: true # 是否启用脱敏功能
+      replacer: "*" # 默认替换字符
+      default-prefix-keep: 0 # 默认保留前缀长度
+      default-suffix-keep: 0 # 默认保留后缀长度
+      log-desensitization: false # 是否对日志输出也进行脱敏
+      error-desensitization: false # 是否对错误信息中的敏感数据进行脱敏
 ```
 
-## 📚 依赖模块
+## 实现原理
 
-- `itsuka-spring-boot-starter` - 核心工具类和响应模型
-- `spring-boot-starter-web` - Spring Boot Web支持
-- `spring-boot-starter-validation` - 参数验证支持
+脱敏功能基于 Jackson 的`ContextualSerializer`实现：
 
-## ⚠️ 注意事项
+1. 当 Spring Boot 启动时，`DesensitizationAutoConfiguration`会自动注册`DesensitizationModule`
+2. `DesensitizationModule`向 Jackson 注册`DesensitizationSerializer`
+3. 当序列化带有`@Desensitization`注解的字段时，`DesensitizationSerializer.createContextual()`方法会被调用
+4. 该方法会检查字段的注解，并根据注解参数创建相应的序列化器实例
+5. 在序列化时，会调用`DesensitizationUtils.desensitize()`方法进行实际的脱敏处理
 
-1. **异常处理优先级**：自定义异常处理器会覆盖全局异常处理器的相同异常类型处理
-2. **日志级别**：生产环境建议将拦截器日志级别设置为INFO或以上
-3. **性能考虑**：请求响应日志会增加一定的性能开销，可根据需要开启或关闭
-4. **安全考虑**：异常信息中避免暴露敏感信息，如数据库连接信息等
+相比之前的 AOP 实现，序列化方式有以下优势：
+
+1. 性能更好：只在序列化时进行处理，避免了反射操作
+2. 更精确：只对需要序列化的字段进行脱敏
+3. 更灵活：支持嵌套对象的脱敏
+4. 更简单：无需配置 AOP，只需添加注解即可
+
+## 注意事项
+
+1. 脱敏功能仅在 JSON 序列化时生效，不会修改原始对象
+2. 如果需要在日志中也进行脱敏，请配置`log-desensitization: true`
+3. 脱敏功能只对 String 类型的字段有效
+4. 自定义脱敏类型时，请确保`prefixKeep + suffixKeep < 字符串长度`
