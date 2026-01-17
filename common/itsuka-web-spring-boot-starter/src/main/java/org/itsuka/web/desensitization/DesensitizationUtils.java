@@ -25,26 +25,16 @@ public class DesensitizationUtils {
             return value;
         }
 
-        switch (type) {
-            case USERNAME:
-                return desensitizeUsername(value);
-            case PHONE:
-                return desensitizePhone(value);
-            case EMAIL:
-                return desensitizeEmail(value);
-            case ID_CARD:
-                return desensitizeIdCard(value);
-            case BANK_CARD:
-                return desensitizeBankCard(value);
-            case PASSWORD:
-                return desensitizePassword(value, replacer);
-            case ADDRESS:
-                return desensitizeAddress(value);
-            case CUSTOM:
-                return desensitizeCustom(value, prefixKeep, suffixKeep, replacer);
-            default:
-                return value;
-        }
+        return switch (type) {
+            case USERNAME -> desensitizeUsername(value);
+            case PHONE -> desensitizePhone(value);
+            case EMAIL -> desensitizeEmail(value);
+            case ID_CARD -> desensitizeIdCard(value);
+            case BANK_CARD -> desensitizeBankCard(value);
+            case PASSWORD -> desensitizePassword(value, replacer);
+            case ADDRESS -> desensitizeAddress(value);
+            case CUSTOM -> desensitizeCustom(value, prefixKeep, suffixKeep, replacer);
+        };
     }
 
     /**
@@ -143,7 +133,7 @@ public class DesensitizationUtils {
      */
     private static String desensitizePassword(String password, char replacer) {
         if (password == null) {
-            return password;
+            return null;
         }
         return String.valueOf(replacer).repeat(password.length());
     }
@@ -174,7 +164,7 @@ public class DesensitizationUtils {
      */
     private static String desensitizeCustom(String value, int prefixKeep, int suffixKeep, char replacer) {
         if (value == null) {
-            return value;
+            return null;
         }
 
         int length = value.length();
