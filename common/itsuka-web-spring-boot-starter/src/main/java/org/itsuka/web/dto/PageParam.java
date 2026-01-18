@@ -1,4 +1,4 @@
-package org.itsuka.mybatis.plus.dto;
+package org.itsuka.web.dto;
 
 import lombok.Data;
 

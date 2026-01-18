@@ -1,4 +1,4 @@
-package org.itsuka.mybatis.plus.dto;
+package org.itsuka.web.dto;
 
 import lombok.Data;
 
@@ -47,23 +47,6 @@ public class PageResult<T> {
         this.size = size;
         this.total = total;
         this.pages = size != null && size > 0 ? (total + size - 1) / size : 0L;
-    }
-    
-    /**
-     * 从MyBatis Plus的Page对象转换
-     *
-     * @param page MyBatis Plus的Page对象
-     * @param <T>  数据类型
-     * @return PageResult
-     */
-    public static <T> PageResult<T> from(com.baomidou.mybatisplus.extension.plugins.pagination.Page<T> page) {
-        PageResult<T> result = new PageResult<>();
-        result.setRecords(page.getRecords());
-        result.setCurrent(page.getCurrent());
-        result.setSize(page.getSize());
-        result.setTotal(page.getTotal());
-        result.setPages(page.getPages());
-        return result;
     }
     
     /**

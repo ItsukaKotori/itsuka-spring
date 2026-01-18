@@ -2,8 +2,8 @@ package org.itsuka.mybatis.plus.util;
 
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.itsuka.mybatis.plus.dto.PageParam;
-import org.itsuka.mybatis.plus.dto.PageResult;
+import org.itsuka.web.dto.PageParam;
+import org.itsuka.web.dto.PageResult;
 
 /**
  * 分页工具类
@@ -52,6 +52,12 @@ public class PageUtil {
      * @return PageResult
      */
     public static <T> PageResult<T> toResult(Page<T> page) {
-        return PageResult.from(page);
+        PageResult<T> result = new PageResult<>();
+        result.setRecords(page.getRecords());
+        result.setCurrent(page.getCurrent());
+        result.setSize(page.getSize());
+        result.setTotal(page.getTotal());
+        result.setPages(page.getPages());
+        return result;
     }
 }
