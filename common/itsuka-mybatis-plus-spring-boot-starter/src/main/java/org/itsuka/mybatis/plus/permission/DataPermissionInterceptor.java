@@ -34,6 +34,9 @@ public class DataPermissionInterceptor implements InnerInterceptor {
 
     @Override
     public boolean willDoUpdate(Executor executor, MappedStatement ms, Object parameter) throws SQLException {
+        if (!property.isEnable()) {
+            return true;
+        }
         // 只拦截更新与删除
         if (SqlCommandType.INSERT == ms.getSqlCommandType()) {
             return true;

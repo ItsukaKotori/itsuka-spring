@@ -12,7 +12,7 @@ public class DataPermissionEscaper {
     /**
      * 用于存储本次执行SQL是否要逃离权限控制的标志位
      */
-    private final ThreadLocal<Boolean> ESCAPE_THREAD_LOCAL = new ThreadLocal<Boolean>();
+    private final ThreadLocal<Boolean> ESCAPE_THREAD_LOCAL = ThreadLocal.withInitial(() -> false);
 
     /**
      * 逃离权限控制 执行SQL

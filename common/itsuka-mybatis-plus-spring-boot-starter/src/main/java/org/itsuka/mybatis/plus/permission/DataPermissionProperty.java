@@ -13,6 +13,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Data
 public class DataPermissionProperty {
     /**
+     * 是否开启
+     */
+    private boolean enable = false;
+
+    /**
      * 无需进行数据权限校验的表
      */
     private String[] excludeTables;
