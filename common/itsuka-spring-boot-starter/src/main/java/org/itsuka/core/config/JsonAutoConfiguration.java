@@ -3,6 +3,8 @@ package org.itsuka.core.config;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.itsuka.core.utils.JacksonDeepCopyer;
@@ -36,20 +38,23 @@ public class JsonAutoConfiguration {
     @ConditionalOnMissingBean(ObjectMapper.class)
     public ObjectMapper objectMapper() {
         log.info("Initializing unified ObjectMapper configuration");
-        
+
         ObjectMapper objectMapper = new ObjectMapper();
-        
+
         // 设置可见性
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        
-        // 启用默认类型信息
-//        objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL);
-        
+
         // 注册Java8时间模块
         objectMapper.registerModule(new JavaTimeModule());
-        
-        log.info("ObjectMapper configuration completed with JavaTimeModule and default typing");
-        
+
+        // Long类型转字符串，避免前端JS精度丢失
+        SimpleModule simpleModule = new SimpleModule();
+        simpleModule.addSerializer(Long.class, ToStringSerializer.instance);
+        simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
+        objectMapper.registerModule(simpleModule);
+
+        log.info("ObjectMapper configuration completed with JavaTimeModule and Long to String serialization");
+
         return objectMapper;
     }
 
