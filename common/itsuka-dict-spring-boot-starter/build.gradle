@@ -1,9 +1,9 @@
 dependencies {
     // Spring Boot AOP
-    api 'org.springframework.boot:spring-boot-starter-aop'
+    api 'org.springframework.boot:spring-boot-starter-aspectj'
     
     // Spring Boot Web (需要用于ResponseBodyAdvice等)
-    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-webmvc'
     
     // Lombok
     compileOnly 'org.projectlombok:lombok'

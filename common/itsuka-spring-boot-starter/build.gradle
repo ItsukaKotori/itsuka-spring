@@ -3,15 +3,12 @@ dependencies {
     implementation 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     
-    // SLF4J API
-    implementation 'org.slf4j:slf4j-api'
-    
     // Spring Security Core
     implementation 'org.springframework.security:spring-security-core'
     
-    // Jackson
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    // Jackson (Jackson 3.x for Spring Boot 4.x)
+    // JavaTimeModule 已内置到 jackson-databind 3.x，无需额外依赖
+    implementation 'org.springframework.boot:spring-boot-starter-jackson'
     
     // Apache Commons Lang3
     implementation 'org.apache.commons:commons-lang3'

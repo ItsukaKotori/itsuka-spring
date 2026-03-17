@@ -7,10 +7,10 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.itsuka.core.utils.JacksonDeepCopyer;
+import org.itsuka.core.utils.JacksonDeepCopier;
 import org.itsuka.redis.ConnectionFactoryHolder;
 import org.itsuka.redis.annotation.DbSwitch;
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisSentinelConfiguration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
@@ -22,9 +22,9 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 public class DbSwitchAspect {
     private final RedisConnectionFactory redisConnectionFactory;
 
-    private final RedisProperties redisProperties;
+    private final DataRedisProperties redisProperties;
 
-    private final JacksonDeepCopyer deepCopyer;
+    private final JacksonDeepCopier deepCopier;
 
     @Pointcut("@annotation(org.itsuka.redis.annotation.DbSwitch)")
     public void dbSwitchAspect() {}
@@ -47,7 +47,7 @@ public class DbSwitchAspect {
     }
 
     private RedisConnectionFactory connectionFactoryWithSpecifiedDb(int database) {
-        RedisProperties.ClientType clientType = redisProperties.getClientType();
+        DataRedisProperties.ClientType clientType = redisProperties.getClientType();
         switch (clientType) {
             case LETTUCE:
                 if (redisConnectionFactory instanceof LettuceConnectionFactory lettuceConnectionFactory) {
@@ -106,7 +106,7 @@ public class DbSwitchAspect {
 
     private JedisConnectionFactory createJedisConnectionFactory(JedisConnectionFactory original, int database) {
         // 对于Jedis，创建新的连接工厂副本
-        JedisConnectionFactory newFactory = deepCopyer.copy(original);
+        JedisConnectionFactory newFactory = deepCopier.copy(original);
         
         // 检查是否为集群配置
         if (newFactory.getClusterConfiguration() != null) {

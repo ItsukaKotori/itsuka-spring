@@ -1,12 +1,11 @@
 package org.itsuka.core.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
+import tools.jackson.databind.json.JsonMapper;
 
 @RequiredArgsConstructor
-public class JacksonDeepCopyer {
-    private final ObjectMapper mapper ;
+public class JacksonDeepCopier {
+    private final JsonMapper mapper ;
 
     /**
      * 深拷贝对象

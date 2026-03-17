@@ -10,7 +10,8 @@ dependencies {
     
     // MyBatis Plus
     api 'com.baomidou:mybatis-plus-spring-boot4-starter'
-    
+    api 'com.baomidou:mybatis-plus-jsqlparser'
+
     // Jackson (for JSON annotations)
     api 'com.fasterxml.jackson.core:jackson-annotations'
     

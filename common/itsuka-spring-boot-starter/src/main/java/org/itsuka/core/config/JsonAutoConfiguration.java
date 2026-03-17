@@ -2,22 +2,23 @@ package org.itsuka.core.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
-import org.itsuka.core.utils.JacksonDeepCopyer;
+import org.itsuka.core.utils.JacksonDeepCopier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.ser.std.ToStringSerializer;
 
 /**
  * JSON自动配置类
  * 提供统一的ObjectMapper配置，适用于所有模块（包括WebFlux）
- * 
+ *
  * @author Itsuka
  * @since 2023/12/07
  */
@@ -31,44 +32,33 @@ public class JsonAutoConfiguration {
      * 强制所有项目使用相同的JSON序列化配置，确保数据一致性
      * 适用于Spring MVC和Spring WebFlux
      *
-     * @return 自定义ObjectMapper
+     * @return JsonMapperBuilderCustomizer
      */
-    @Bean("objectMapper")
-    @Primary
-    @ConditionalOnMissingBean(ObjectMapper.class)
-    public ObjectMapper objectMapper() {
-        log.info("Initializing unified ObjectMapper configuration");
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        // 设置可见性
-        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-
-        // 注册Java8时间模块
-        objectMapper.registerModule(new JavaTimeModule());
-
-        // Long类型转字符串，避免前端JS精度丢失
+    @Bean
+    JsonMapperBuilderCustomizer jacksonCustomizer() {
         SimpleModule simpleModule = new SimpleModule();
         simpleModule.addSerializer(Long.class, ToStringSerializer.instance);
         simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
-        objectMapper.registerModule(simpleModule);
 
-        log.info("ObjectMapper configuration completed with JavaTimeModule and Long to String serialization");
-
-        return objectMapper;
+        return builder -> builder
+                .changeDefaultVisibility(visibilityChecker -> {
+                    visibilityChecker.withVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+                    return visibilityChecker;
+                })
+                .addModules(simpleModule);
     }
 
     /**
      * 自定义的Jackson深拷贝器
      * 提供类型安全的深拷贝功能，避免类型转换问题
      *
-     * @param objectMapper 用于序列化和反序列化的ObjectMapper
+     * @param jsonMapper 用于序列化和反序列化的JsonMapper
      * @return 自定义的JacksonDeepCopyer实例
      */
-    @Bean("jacksonDeepCopyer")
+    @Bean
     @Primary
-    @ConditionalOnMissingBean(JacksonDeepCopyer.class)
-    public JacksonDeepCopyer jacksonDeepCopyer(ObjectMapper objectMapper) {
-        return new JacksonDeepCopyer(objectMapper);
+    @ConditionalOnMissingBean(JacksonDeepCopier.class)
+    public JacksonDeepCopier jacksonDeepCopier(JsonMapper jsonMapper) {
+        return new JacksonDeepCopier(jsonMapper);
     }
 }

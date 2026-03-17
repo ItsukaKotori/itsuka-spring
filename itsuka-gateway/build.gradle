@@ -12,7 +12,7 @@ dependencies {
     implementation project(':common:itsuka-redis-spring-boot-starter')
 
     // Spring Cloud Gateway
-    implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
     
     // Spring Security (for UserDetails interfaces)
     implementation 'org.springframework.boot:spring-boot-starter-security'

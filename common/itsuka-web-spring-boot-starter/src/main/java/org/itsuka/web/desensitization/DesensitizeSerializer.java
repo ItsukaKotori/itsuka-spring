@@ -1,13 +1,12 @@
 package org.itsuka.web.desensitization;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.BeanProperty;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.ContextualSerializer;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.BeanProperty;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+
 import java.util.Objects;
 
 /**
@@ -17,7 +16,7 @@ import java.util.Objects;
  * @author Itsuka
  * @since 2023/12/10
  */
-public class DesensitizeSerializer extends JsonSerializer<String> implements ContextualSerializer {
+public class DesensitizeSerializer extends ValueSerializer<String> {
 
     /**
      * 脱敏类型
@@ -45,6 +44,17 @@ public class DesensitizeSerializer extends JsonSerializer<String> implements Con
     public DesensitizeSerializer() {
     }
 
+    @Override
+    public void serialize(String value, JsonGenerator gen, SerializationContext ctxt) throws JacksonException {
+        if (value == null || value.isEmpty()) {
+            gen.writeString(value);
+            return;
+        }
+
+        String desensitizedValue = DesensitizationUtils.desensitize(value, type, prefixKeep, suffixKeep, replacer);
+        gen.writeString(desensitizedValue);
+    }
+
     /**
      * 有参构造器
      *
@@ -60,20 +70,10 @@ public class DesensitizeSerializer extends JsonSerializer<String> implements Con
         this.replacer = replacer;
     }
 
-    @Override
-    public void serialize(String value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-        if (value == null || value.isEmpty()) {
-            gen.writeString(value);
-            return;
-        }
-
-        String desensitizedValue = DesensitizationUtils.desensitize(value, type, prefixKeep, suffixKeep, replacer);
-        gen.writeString(desensitizedValue);
-    }
 
     @Override
-    public JsonSerializer<?> createContextual(SerializerProvider prov, BeanProperty property)
-            throws JsonMappingException {
+    public ValueSerializer<?> createContextual(SerializationContext ctxt,
+                                               BeanProperty property) {
         if (property == null) {
             return this;
         }
