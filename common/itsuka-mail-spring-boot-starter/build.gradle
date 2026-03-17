@@ -16,7 +16,7 @@ dependencies {
     api 'com.sun.mail:jakarta.mail:2.0.1'
     
     // Jakarta Activation API
-    implementation 'jakarta.activation:jakarta.activation-api:2.1.0'
+    implementation 'jakarta.activation:jakarta.activation-api'
     
     // FreeMarker Template Engine (可选)
     compileOnly 'org.freemarker:freemarker:2.3.32'

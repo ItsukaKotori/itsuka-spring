@@ -8,13 +8,8 @@ dependencies {
     // Spring Security Core (for UserDetails)
     compileOnly 'org.springframework.security:spring-security-core'
     
-    // MyBatis Plus (排除原有的 mybatis-spring)
-    api('com.baomidou:mybatis-plus-boot-starter') {
-        exclude group: 'org.mybatis', module: 'mybatis-spring'
-    }
-    
-    // 使用指定版本的 MyBatis Spring
-    api 'org.mybatis:mybatis-spring'
+    // MyBatis Plus
+    api 'com.baomidou:mybatis-plus-spring-boot4-starter'
     
     // Jackson (for JSON annotations)
     api 'com.fasterxml.jackson.core:jackson-annotations'
