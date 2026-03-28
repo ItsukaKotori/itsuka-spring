@@ -53,6 +53,7 @@ public class MailMessage {
     /**
      * 邮件类型：text纯文本，htmlHTML格式
      */
+    @Builder.Default
     private String contentType = ContentType.TEXT_HTML;
     
     /**
@@ -93,11 +94,13 @@ public class MailMessage {
     /**
      * 邮件优先级：1=高，3=普通，5=低
      */
+    @Builder.Default
     private Integer priority = 3;
     
     /**
      * 是否需要回执
      */
+    @Builder.Default
     private Boolean requestReceipt = false;
     
     /**
