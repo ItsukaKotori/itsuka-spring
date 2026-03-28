@@ -14,16 +14,8 @@ dependencies {
     // Spring Boot AOP
     api("org.springframework.boot:spring-boot-starter-aspectj")
 
-    // Spring Security Core (for UserDetails)
-    compileOnly("org.springframework.security:spring-security-core")
-    
-    // Lombok
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-    
-    // 测试依赖
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    // Spring Security Core (for SecurityException in GlobalExceptionHandler)
+    implementation("org.springframework.security:spring-security-core")
     
     // 本项目依赖
     api(project(":common:itsuka-spring-boot-starter"))

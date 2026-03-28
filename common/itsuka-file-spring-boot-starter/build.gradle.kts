@@ -1,21 +1,7 @@
 dependencies {
-    // Spring Boot Starter
-    implementation("org.springframework.boot:spring-boot-starter")
-    
-    // Spring Boot Auto Configuration
-    implementation("org.springframework.boot:spring-boot-autoconfigure")
-    
-    // Spring Boot Configuration Processor (optional)
-    compileOnly("org.springframework.boot:spring-boot-configuration-processor")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-    
     // Spring Boot Web (optional)
-    compileOnly("org.springframework.boot:spring-boot-starter-web")
-    
-    // Lombok (optional)
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-    
+    compileOnly("org.springframework:spring-web")
+
     // MinIO - 使用api确保消费者能访问MinIO类
     api("io.minio:minio")
     

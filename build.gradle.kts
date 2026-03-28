@@ -30,6 +30,7 @@ allprojects {
 subprojects {
     apply(plugin = "java-library")
     apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "io.freefair.lombok")
     
     java {
         sourceCompatibility = JavaVersion.VERSION_21

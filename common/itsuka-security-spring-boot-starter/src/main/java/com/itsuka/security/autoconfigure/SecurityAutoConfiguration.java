@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.util.AntPathMatcher;
@@ -61,11 +62,11 @@ public class SecurityAutoConfiguration {
      * 令牌黑名单管理器Bean - Reactive环境
      */
     @Bean
-    @ConditionalOnBean(RedisTemplate.class)
+    @ConditionalOnBean(ReactiveRedisTemplate.class)
     @ConditionalOnProperty(prefix = "spring.main", name = "web-application-type", havingValue = "reactive")
-    public TokenBlacklistManager reactiveTokenBlacklistManager(RedisTemplate<String, Object> redisTemplate) {
+    public TokenBlacklistManager reactiveTokenBlacklistManager(ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         log.info("Initializing token blacklist manager for reactive environment");
-        return new TokenBlacklistManager(redisTemplate, securityProperties.getJwt());
+        return new TokenBlacklistManager(reactiveRedisTemplate, securityProperties.getJwt());
     }
 
     /**

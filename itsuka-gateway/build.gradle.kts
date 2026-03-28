@@ -12,39 +12,24 @@ dependencies {
 
     // Spring Cloud Gateway
     implementation("org.springframework.cloud:spring-cloud-starter-gateway-server-webflux")
-    
+
     // Spring Security (for UserDetails interfaces)
     implementation("org.springframework.boot:spring-boot-starter-security")
-    
+
     // Circuit Breaker
     implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j")
-    
-    // Spring Boot Actuator for health check
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    
+
     // LoadBalancer for service discovery
     implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
-    
+
     // Itsuka Security Starter
     implementation(project(":common:itsuka-security-spring-boot-starter"))
-    
+
     // Validation
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
     // Swagger UI (WebFlux) for API文档聚合展示
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui")
-
-    // Jackson for JSON processing
-    implementation("com.fasterxml.jackson.core:jackson-databind")
-    
-    // Lombok
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-    
-    // Test dependencies
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.mockito:mockito-core")
-    testImplementation("org.mockito:mockito-junit-jupiter")
 }
 
 tasks.test {

@@ -12,12 +12,5 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter-cache")
     
     // Spring Boot AOP
-    implementation("org.springframework.boot:spring-boot-starter-aspectj")
-    
-    // Spring Boot Auto Configuration
-    implementation("org.springframework.boot:spring-boot-autoconfigure")
-    
-    // Lombok
-    implementation("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
+    api("org.springframework.boot:spring-boot-starter-aspectj")
 }

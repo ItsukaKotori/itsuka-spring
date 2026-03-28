@@ -3,29 +3,18 @@ plugins {
 }
 
 dependencies {
-    // Lombok
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-    
-    // Spring Security Core
-    implementation("org.springframework.security:spring-security-core")
-    
+    // Spring Security Core (compileOnly - only used in LoginUser interface)
+    compileOnly("org.springframework.security:spring-security-core")
+
     // Jackson (Jackson 3.x for Spring Boot 4.x)
     // JavaTimeModule 已内置到 jackson-databind 3.x，无需额外依赖
     api("org.springframework.boot:spring-boot-starter-jackson")
-    
-    // Apache Commons Lang3
-    implementation("org.apache.commons:commons-lang3")
 
     // Spring Web
     implementation("org.springframework:spring-web")
 
     // Spring Boot AutoConfiguration
-    implementation("org.springframework.boot:spring-boot-autoconfigure")
-    
-    // 测试依赖
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.junit.platform:junit-platform-launcher")
+    api("org.springframework.boot:spring-boot-autoconfigure")
 }
 
 // 配置测试任务
