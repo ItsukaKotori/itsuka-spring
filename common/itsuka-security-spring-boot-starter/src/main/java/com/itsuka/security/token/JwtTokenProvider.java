@@ -3,19 +3,19 @@ package com.itsuka.security.token;
 import com.itsuka.security.autoconfigure.SecurityProperties;
 import com.itsuka.security.toolkit.TokenBlacklistManager;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.itsuka.core.domain.LoginUser;
-import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.crypto.SecretKey;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.itsuka.core.domain.LoginUser;
+import org.springframework.stereotype.Component;
 
 /**
  * JWT管理器默认实现
@@ -26,38 +26,48 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider implements TokenProvider {
-    
+
     private final SecurityProperties.JwtProperties jwtProperties;
     private final TokenBlacklistManager tokenBlacklistManager;
-    
+
     /**
      * 获取签名密钥
      */
     private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
+        byte[] keyBytes = jwtProperties
+            .getSecret()
+            .getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
-    
+
     @Override
     public String generateAccessToken(String username) {
         return generateAccessToken(username, new HashMap<>());
     }
-    
+
     @Override
-    public String generateAccessToken(String username, Map<String, Object> claims) {
+    public String generateAccessToken(
+        String username,
+        Map<String, Object> claims
+    ) {
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + jwtProperties.getExpiration().toMillis());
-        
-        return Jwts.builder().claims(claims)
-                .subject(username)
-                .issuer(jwtProperties.getIssuer())
-                .audience().add(jwtProperties.getAudience()).and()
-                .issuedAt(now)
-                .expiration(expiration)
-                .signWith(getSigningKey())
-                .compact();
+        Date expiration = new Date(
+            now.getTime() + jwtProperties.getExpiration().toMillis()
+        );
+
+        return Jwts.builder()
+            .claims(claims)
+            .subject(username)
+            .issuer(jwtProperties.getIssuer())
+            .audience()
+            .add(jwtProperties.getAudience())
+            .and()
+            .issuedAt(now)
+            .expiration(expiration)
+            .signWith(getSigningKey())
+            .compact();
     }
-    
+
     /**
      * 根据LoginUser生成访问令牌
      *
@@ -69,10 +79,10 @@ public class JwtTokenProvider implements TokenProvider {
         claims.put("userId", loginUser.getId().toString());
         claims.put("nickname", loginUser.getNickname());
         claims.put("email", loginUser.getEmail());
-        
+
         return generateAccessToken(loginUser.getUsername(), claims);
     }
-    
+
     /**
      * 根据LoginUser生成刷新令牌
      *
@@ -83,40 +93,48 @@ public class JwtTokenProvider implements TokenProvider {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "refresh");
         claims.put("userId", loginUser.getId().toString());
-        
+
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + jwtProperties.getRefreshExpiration().toMillis());
-        
+        Date expiration = new Date(
+            now.getTime() + jwtProperties.getRefreshExpiration().toMillis()
+        );
+
         return Jwts.builder()
-                .claims(claims)
-                .subject(loginUser.getUsername())
-                .issuer(jwtProperties.getIssuer())
-                .audience().add(jwtProperties.getAudience()).and()
-                .issuedAt(now)
-                .expiration(expiration)
-                .signWith(getSigningKey())
-                .compact();
+            .claims(claims)
+            .subject(loginUser.getUsername())
+            .issuer(jwtProperties.getIssuer())
+            .audience()
+            .add(jwtProperties.getAudience())
+            .and()
+            .issuedAt(now)
+            .expiration(expiration)
+            .signWith(getSigningKey())
+            .compact();
     }
-    
+
     @Override
     public String generateRefreshToken(String username) {
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + jwtProperties.getRefreshExpiration().toMillis());
-        
+        Date expiration = new Date(
+            now.getTime() + jwtProperties.getRefreshExpiration().toMillis()
+        );
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "refresh");
-        
+
         return Jwts.builder()
-                .claims(claims)
-                .subject(username)
-                .issuer(jwtProperties.getIssuer())
-                .audience().add(jwtProperties.getAudience()).and()
-                .issuedAt(now)
-                .expiration(expiration)
-                .signWith(getSigningKey())
-                .compact();
+            .claims(claims)
+            .subject(username)
+            .issuer(jwtProperties.getIssuer())
+            .audience()
+            .add(jwtProperties.getAudience())
+            .and()
+            .issuedAt(now)
+            .expiration(expiration)
+            .signWith(getSigningKey())
+            .compact();
     }
-    
+
     @Override
     public boolean validateToken(String token) {
         try {
@@ -125,21 +143,16 @@ public class JwtTokenProvider implements TokenProvider {
                 log.debug("Token is blacklisted");
                 return false;
             }
-            
+
+            // getClaimsFromToken 已处理过期异常并返回 null，无需重复判断
             Claims claims = getClaimsFromToken(token);
-            if (claims == null) {
-                return false;
-            }
-            
-            // 检查过期时间
-            Date expiration = claims.getExpiration();
-            return expiration != null && !expiration.before(new Date());
+            return claims != null;
         } catch (Exception e) {
             log.debug("Token validation failed: {}", e.getMessage());
             return false;
         }
     }
-    
+
     @Override
     public String getUsernameFromToken(String token) {
         try {
@@ -150,7 +163,7 @@ public class JwtTokenProvider implements TokenProvider {
             return null;
         }
     }
-    
+
     @Override
     public String getUserIdFromToken(String token) {
         try {
@@ -161,44 +174,53 @@ public class JwtTokenProvider implements TokenProvider {
             return null;
         }
     }
-    
+
     @Override
     public Claims getClaimsFromToken(String token) {
         try {
             return Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        } catch (ExpiredJwtException e) {
+            log.warn("Token已过期: {}", e.getMessage());
+            return null;
         } catch (Exception e) {
             log.debug("Failed to parse token claims: {}", e.getMessage());
             return null;
         }
     }
-    
+
     @Override
-    public boolean isTokenExpiringSoon(String token, long refreshThresholdMinutes) {
+    public boolean isTokenExpiringSoon(
+        String token,
+        long refreshThresholdMinutes
+    ) {
         try {
             Claims claims = getClaimsFromToken(token);
             if (claims == null) {
                 return true;
             }
-            
+
             Date expiration = claims.getExpiration();
             if (expiration == null) {
                 return true;
             }
-            
-            long thresholdMillis = TimeUnit.MINUTES.toMillis(refreshThresholdMinutes);
-            long timeUntilExpiration = expiration.getTime() - System.currentTimeMillis();
-            
+
+            long thresholdMillis = TimeUnit.MINUTES.toMillis(
+                refreshThresholdMinutes
+            );
+            long timeUntilExpiration =
+                expiration.getTime() - System.currentTimeMillis();
+
             return timeUntilExpiration <= thresholdMillis;
         } catch (Exception e) {
             log.debug("Failed to check token expiration: {}", e.getMessage());
             return true;
         }
     }
-    
+
     @Override
     public String refreshAccessToken(String refreshToken) {
         try {
@@ -206,23 +228,27 @@ public class JwtTokenProvider implements TokenProvider {
             if (claims == null) {
                 throw new IllegalArgumentException("Invalid refresh token");
             }
-            
+
             // 验证是否为刷新令牌
             String tokenType = claims.get("type", String.class);
             if (!"refresh".equals(tokenType)) {
-                throw new IllegalArgumentException("Token is not a refresh token");
+                throw new IllegalArgumentException(
+                    "Token is not a refresh token"
+                );
             }
-            
+
             String username = claims.getSubject();
             if (username == null) {
-                throw new IllegalArgumentException("Invalid refresh token: no subject");
+                throw new IllegalArgumentException(
+                    "Invalid refresh token: no subject"
+                );
             }
-            
+
             // 验证刷新令牌是否过期
             if (!validateToken(refreshToken)) {
                 throw new IllegalArgumentException("Refresh token has expired");
             }
-            
+
             // 生成新的访问令牌
             return generateAccessToken(username);
         } catch (Exception e) {
@@ -230,7 +256,7 @@ public class JwtTokenProvider implements TokenProvider {
             throw new IllegalArgumentException("Failed to refresh token", e);
         }
     }
-    
+
     @Override
     public boolean isTokenBlacklisted(String token) {
         return tokenBlacklistManager.isBlacklisted(token);
