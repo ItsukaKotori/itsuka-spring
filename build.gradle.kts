@@ -16,7 +16,7 @@ file("nexus.properties").inputStream().use { nexusConfig.load(it) }
 // 全局配置
 allprojects {
     group = "org.itsuka"
-    version = if (project.hasProperty("version")) project.version else "1.0.0"
+    version = if (project.hasProperty("version")) project.version else "1.0.0-SNAPSHOT"
     
     repositories {
         maven { url = uri("https://maven.aliyun.com/repository/public") }
