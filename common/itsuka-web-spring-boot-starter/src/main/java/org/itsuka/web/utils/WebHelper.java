@@ -41,7 +41,8 @@ public class WebHelper {
         }
 
         // 2. 兜底：从请求头 login_user 中解析（用于网关透传场景）
-        Optional<String> optional = getHeader(LOGIN_HEADER);
+        // 注意：WebSocket、异步任务等场景下可能没有 HTTP 请求上下文
+        Optional<String> optional = getHeaderSafe(LOGIN_HEADER);
         if (optional.isEmpty() || ObjectUtils.isEmpty(optional.get())) {
             return Optional.empty();
         }
@@ -78,6 +79,20 @@ public class WebHelper {
     public Optional<String> getHeader(String headerName) {
         HttpServletRequest request = getRequest();
         return Optional.ofNullable(request.getHeader(headerName));
+    }
+
+    /**
+     * 安全获取请求头，无HTTP上下文时不抛异常
+     *
+     * @param headerName 请求头Key
+     * @return 请求头Value
+     */
+    private Optional<String> getHeaderSafe(String headerName) {
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        if (requestAttributes instanceof ServletRequestAttributes servletAttr) {
+            return Optional.ofNullable(servletAttr.getRequest().getHeader(headerName));
+        }
+        return Optional.empty();
     }
 
     /**

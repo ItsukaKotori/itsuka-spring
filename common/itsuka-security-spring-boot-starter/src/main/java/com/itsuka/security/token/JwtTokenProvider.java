@@ -168,7 +168,9 @@ public class JwtTokenProvider implements TokenProvider {
     public String getUserIdFromToken(String token) {
         try {
             Claims claims = getClaimsFromToken(token);
-            return claims != null ? claims.get("userId", String.class) : null;
+            if (claims == null) return null;
+            Object userId = claims.get("userId");
+            return userId != null ? userId.toString() : null;
         } catch (Exception e) {
             log.debug("Failed to get user ID from token: {}", e.getMessage());
             return null;
