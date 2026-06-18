@@ -1,6 +1,7 @@
 package org.itsuka.web.exception.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -83,10 +84,12 @@ public class GlobalExceptionHandler {
 
     /**
      * 处理业务异常
+     * 根据异常中携带的 HttpStatus 动态设置 HTTP 状态码。
      */
     @ExceptionHandler(ServiceException.class)
-    public Response<?> handleServiceException(ServiceException serviceException, HttpServletRequest request) {
+    public Response<?> handleServiceException(ServiceException serviceException, HttpServletRequest request, HttpServletResponse response) {
         log.error("Business exception for request: {} - code: {}, message: {}", request.getRequestURI(), serviceException.getStatus(), serviceException.getMessage(), serviceException);
+        response.setStatus(serviceException.getStatus().value());
         return Response.error(serviceException).withRequestId(getRequestId(request));
     }
 

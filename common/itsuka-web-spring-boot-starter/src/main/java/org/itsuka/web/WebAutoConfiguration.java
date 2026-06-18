@@ -1,5 +1,6 @@
 package org.itsuka.web;
 
+import org.itsuka.web.exception.handler.GlobalExceptionHandler;
 import org.itsuka.web.interceptor.PerformanceMonitorInterceptor;
 import org.itsuka.web.interceptor.RequestResponseLoggingInterceptor;
 import org.itsuka.web.rest.CustomRestTemplate;
@@ -9,6 +10,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -22,6 +24,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @AutoConfiguration
 @ConditionalOnProperty(prefix = "itsuka.web", value = "enable", matchIfMissing = true)
+@Import(GlobalExceptionHandler.class)
 public class WebAutoConfiguration implements WebMvcConfigurer {
 
     /**
