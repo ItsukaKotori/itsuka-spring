@@ -75,6 +75,30 @@ public class MinioStorageClient {
     }
 
     /**
+     * 上传原始数据流（不需要 MultipartFile）。
+     * 适用于从外部 URL 下载字节后直接存入 MinIO 的场景。
+     *
+     * @param bucketName  存储桶名称
+     * @param objectName  对象名称/路径
+     * @param inputStream 数据流（调用方负责关闭）
+     * @param size        总字节数（-1 表示未知，MinIO 分块流式上传）
+     * @param contentType MIME 类型（如 "audio/mpeg"）
+     */
+    public void uploadStream(String bucketName, String objectName,
+                             InputStream inputStream, long size,
+                             String contentType) throws Exception {
+        createBucket(bucketName);
+        client.putObject(
+                PutObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .stream(inputStream, size, -1)
+                        .contentType(contentType)
+                        .build()
+        );
+    }
+
+    /**
      * 获取文件流
      *
      * @param bucketName 存储桶名称
