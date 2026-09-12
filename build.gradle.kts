@@ -126,7 +126,7 @@ configure(subprojects.filter { it.name.startsWith("itsuka-") }) {
                 pom {
                     name.set(project.name)
                     description.set("Itsuka Spring Boot Starter - ${project.name}")
-                    url.set("https://github.com/itsuka/itsuka-spring")
+                    url.set("https://github.com/ItsukaKotori/itsuka-spring")
                     
                     licenses {
                         license {
@@ -144,9 +144,9 @@ configure(subprojects.filter { it.name.startsWith("itsuka-") }) {
                     }
                     
                     scm {
-                        connection.set("scm:git:git://github.com/itsuka/itsuka-spring.git")
-                        developerConnection.set("scm:git:ssh://github.com:itsuka/itsuka-spring.git")
-                        url.set("https://github.com/itsuka/itsuka-spring/tree/main")
+                        connection.set("scm:git:git://github.com/ItsukaKotori/itsuka-spring.git")
+                        developerConnection.set("scm:git:ssh://git@github.com/ItsukaKotori/itsuka-spring.git")
+                        url.set("https://github.com/ItsukaKotori/itsuka-spring")
                     }
                 }
             }
@@ -168,6 +168,17 @@ configure(subprojects.filter { it.name.startsWith("itsuka-") }) {
                 
                 // 允许不安全的协议（仅用于开发环境）
                 isAllowInsecureProtocol = true
+            }
+            
+            // GitHub Packages发布仓库
+            maven {
+                name = "githubPackages"
+                url = uri("https://maven.pkg.github.com/ItsukaKotori/itsuka-spring")
+                
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
             }
         }
     }
