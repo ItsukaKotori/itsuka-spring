@@ -13,6 +13,19 @@ plugins {
 val nexusConfig = Properties()
 file("nexus.properties").inputStream().use { nexusConfig.load(it) }
 
+// 各模块POM描述（GitHub Packages的"About this package"取自此处）
+val moduleDescriptions = mapOf(
+    "itsuka-spring-boot-starter" to "Itsuka 基础 starter：统一响应体、JSON 配置与通用工具类",
+    "itsuka-web-spring-boot-starter" to "Web 层增强：分页 DTO、全局异常处理、脱敏序列化与 Web 工具类",
+    "itsuka-mybatis-plus-spring-boot-starter" to "MyBatis-Plus 集成：分页工具、公共字段自动填充与数据权限拦截",
+    "itsuka-redis-spring-boot-starter" to "Redis 集成：响应式/阻塞式模板、多库切换与缓存配置",
+    "itsuka-dict-spring-boot-starter" to "数据字典：本地/Redis 缓存与字典模型装配",
+    "itsuka-file-spring-boot-starter" to "文件存储：MinIO 客户端封装与自动配置",
+    "itsuka-mail-spring-boot-starter" to "邮件发送：多协议 MailSender 与自动配置",
+    "itsuka-security-spring-boot-starter" to "安全：JWT 令牌、黑名单与访问控制管理",
+    "itsuka-gateway" to "GeekWaves 网关：鉴权、限流与访问控制过滤器"
+)
+
 // 全局配置
 allprojects {
     group = "org.itsuka"
@@ -125,7 +138,7 @@ configure(subprojects.filter { it.name.startsWith("itsuka-") }) {
                 // POM文件配置
                 pom {
                     name.set(project.name)
-                    description.set("Itsuka Spring Boot Starter - ${project.name}")
+                    description.set(moduleDescriptions[project.name] ?: "Itsuka Spring Boot Starter - ${project.name}")
                     url.set("https://github.com/ItsukaKotori/itsuka-spring")
                     
                     licenses {
