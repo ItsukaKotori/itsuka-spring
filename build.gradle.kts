@@ -23,6 +23,7 @@ val moduleDescriptions = mapOf(
     "itsuka-file-spring-boot-starter" to "文件存储：MinIO 客户端封装与自动配置",
     "itsuka-mail-spring-boot-starter" to "邮件发送：多协议 MailSender 与自动配置",
     "itsuka-security-spring-boot-starter" to "安全：JWT 令牌、黑名单与访问控制管理",
+    "itsuka-log-spring-boot-starter" to "操作日志：注解式记录、SpEL 模板、MySQL 存储与分页查询",
     "itsuka-gateway" to "GeekWaves 网关：鉴权、限流与访问控制过滤器"
 )
 
