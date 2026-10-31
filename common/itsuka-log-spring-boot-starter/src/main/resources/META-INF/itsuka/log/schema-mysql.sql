@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS `${tableName}` (
+    `id`             BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `type`           VARCHAR(64)  DEFAULT NULL COMMENT '业务类型',
+    `category`       VARCHAR(64)  DEFAULT NULL COMMENT '业务子类型',
+    `biz_no`         VARCHAR(128) NOT NULL COMMENT '业务对象标识',
+    `success`        TINYINT(1)   NOT NULL DEFAULT 1 COMMENT '是否成功',
+    `content`        VARCHAR(2000) NOT NULL COMMENT '操作内容',
+    `detail`         TEXT         COMMENT '扩展详情',
+    `operator_id`    VARCHAR(64)  DEFAULT NULL COMMENT '操作人ID',
+    `operator_name`  VARCHAR(128) DEFAULT NULL COMMENT '操作人名称',
+    `error_msg`      VARCHAR(2000) DEFAULT NULL COMMENT '错误信息',
+    `method`         VARCHAR(255) DEFAULT NULL COMMENT '执行方法',
+    `request_ip`     VARCHAR(64)  DEFAULT NULL COMMENT '请求IP',
+    `user_agent`     VARCHAR(512) DEFAULT NULL COMMENT 'User-Agent',
+    `request_params` TEXT         COMMENT '请求参数快照',
+    `created_at`     DATETIME(3)  NOT NULL COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_biz_no_created_at` (`biz_no`, `created_at`),
+    KEY `idx_type_category_created_at` (`type`, `category`, `created_at`),
+    KEY `idx_operator_created_at` (`operator_id`, `created_at`),
+    KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志表';
