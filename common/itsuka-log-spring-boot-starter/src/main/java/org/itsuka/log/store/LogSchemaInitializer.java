@@ -1,5 +1,6 @@
 package org.itsuka.log.store;
 
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import javax.sql.DataSource;
@@ -51,8 +52,11 @@ public class LogSchemaInitializer implements InitializingBean {
         }
         try {
             Resource resource = this.resourceLoader.getResource(this.properties.getSchemaLocation());
-            String script = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8)
-                    .replace(TABLE_NAME_PLACEHOLDER, this.properties.getTableName());
+            String script;
+            try (InputStream in = resource.getInputStream()) {
+                script = new String(in.readAllBytes(), StandardCharsets.UTF_8)
+                        .replace(TABLE_NAME_PLACEHOLDER, this.properties.getTableName());
+            }
             ResourceDatabasePopulator populator = new ResourceDatabasePopulator(
                     new ByteArrayResource(script.getBytes(StandardCharsets.UTF_8)));
             populator.setContinueOnError(false);

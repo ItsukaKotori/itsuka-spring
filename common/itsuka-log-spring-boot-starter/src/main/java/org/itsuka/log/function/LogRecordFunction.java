@@ -3,7 +3,7 @@ package org.itsuka.log.function;
 /**
  * SPI for customizing values rendered by operation log templates.
  *
- * <p>Functions are referenced from templates as {@code {NAME{{#expression}}}}.
+ * <p>Functions are referenced from templates as {@code {NAME{#expression}}}.
  * A function whose {@link #executeBefore()} returns {@code true} is evaluated before the
  * target method runs, which is useful for capturing state that the method mutates.</p>
  */

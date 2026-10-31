@@ -89,4 +89,25 @@ class AsyncLogRecordStoreTest {
         return OperationLog.builder()
             .bizNo(bizNo).success(true).content("x").createdAt(LocalDateTime.now()).build();
     }
+
+    @Test
+    void logsRejectionAfterExecutorShutdown() {
+        Logger logger = (Logger) LoggerFactory.getLogger(AsyncLogRecordStore.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            ThreadPoolTaskExecutor executor = LogRecordAsyncExecutor.create(new LogRecordProperties.Async());
+            executor.initialize();
+            executor.shutdown();
+            AsyncLogRecordStore store = new AsyncLogRecordStore(log -> {}, executor);
+
+            assertThatCode(() -> store.save(newLog("NO1"))).doesNotThrowAnyException();
+            assertThat(appender.list)
+                .filteredOn(event -> event.getLevel() == Level.ERROR)
+                .anySatisfy(event -> assertThat(event.getFormattedMessage()).contains("rejected"));
+        } finally {
+            logger.detachAppender(appender);
+        }
+    }
 }

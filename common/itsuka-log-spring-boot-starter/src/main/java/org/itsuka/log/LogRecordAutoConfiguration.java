@@ -46,21 +46,25 @@ public class LogRecordAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     LogRecordOperationParser logRecordOperationParser() {
         return new LogRecordOperationParser();
     }
 
     @Bean
+    @ConditionalOnMissingBean
     LogRecordExpressionEvaluator logRecordExpressionEvaluator() {
         return new LogRecordExpressionEvaluator();
     }
 
     @Bean
+    @ConditionalOnMissingBean
     LogRecordFunctionFactory logRecordFunctionFactory(List<LogRecordFunction> functions) {
         return new LogRecordFunctionFactory(functions);
     }
 
     @Bean
+    @ConditionalOnMissingBean
     LogRecordValueParser logRecordValueParser(LogRecordExpressionEvaluator evaluator,
             LogRecordFunctionFactory functionFactory) {
         return new LogRecordValueParser(evaluator, functionFactory);
@@ -85,6 +89,7 @@ public class LogRecordAutoConfiguration {
     }
 
     @Bean(name = "itsukaLogExecutor")
+    @ConditionalOnMissingBean(name = "itsukaLogExecutor")
     @ConditionalOnProperty(prefix = "itsuka.log.async", name = "enabled", havingValue = "true")
     ThreadPoolTaskExecutor itsukaLogExecutor(LogRecordProperties properties) {
         return LogRecordAsyncExecutor.create(properties.getAsync());

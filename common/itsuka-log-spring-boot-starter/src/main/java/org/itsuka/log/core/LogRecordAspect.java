@@ -170,7 +170,7 @@ public class LogRecordAspect implements Ordered {
             return;
         }
 
-        LogOperator operator = resolveOperator(operation, context, key);
+        LogOperator operator = resolveOperator(operation, context, key, beforeValues);
 
         String requestIp = null;
         String userAgent = null;
@@ -212,9 +212,10 @@ public class LogRecordAspect implements Ordered {
     }
 
     private LogOperator resolveOperator(LogRecordOperation operation, EvaluationContext context,
-            AnnotatedElementKey key) {
+            AnnotatedElementKey key, Map<String, String> beforeValues) {
         if (StringUtils.hasText(operation.operator())) {
-            Object value = this.valueParser.parseSingleExpression(operation.operator(), context, key);
+            Object value = this.valueParser.parseSingleExpression(
+                    operation.operator(), context, key, beforeValues);
             if (value instanceof LogOperator logOperator) {
                 return logOperator;
             }

@@ -19,7 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class JdbcLogRecordStore implements LogRecordStore {
 
     private static final String INSERT_SQL = """
-            insert into %s
+            insert into `%s`
                 (type, category, biz_no, success, content, detail, operator_id, operator_name,
                  error_msg, method, request_ip, user_agent, request_params, created_at)
             values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -45,6 +45,7 @@ public class JdbcLogRecordStore implements LogRecordStore {
         this.jdbcTemplate = jdbcTemplate;
         this.properties = properties;
         this.transactionTemplate = transactionTemplate;
+        this.properties.validateTableName();
     }
 
     @Override
@@ -64,16 +65,20 @@ public class JdbcLogRecordStore implements LogRecordStore {
                 LogRecordTextUtils.truncate(log.getCategory(), 64),
                 LogRecordTextUtils.truncate(log.getBizNo(), 128),
                 log.isSuccess(),
-                LogRecordTextUtils.truncate(log.getContent(), this.properties.getContentMaxLength()),
-                LogRecordTextUtils.truncate(log.getDetail(), this.properties.getDetailMaxLength()),
+                LogRecordTextUtils.truncate(log.getContent(),
+                        Math.min(this.properties.getContentMaxLength(), LogRecordProperties.MAX_CONTENT_LENGTH)),
+                LogRecordTextUtils.truncate(log.getDetail(),
+                        Math.min(this.properties.getDetailMaxLength(), LogRecordProperties.MAX_DETAIL_LENGTH)),
                 LogRecordTextUtils.truncate(log.getOperatorId(), 64),
                 LogRecordTextUtils.truncate(log.getOperatorName(), 128),
-                LogRecordTextUtils.truncate(log.getErrorMsg(), this.properties.getErrorMaxLength()),
+                LogRecordTextUtils.truncate(log.getErrorMsg(),
+                        Math.min(this.properties.getErrorMaxLength(), LogRecordProperties.MAX_ERROR_LENGTH)),
                 LogRecordTextUtils.truncate(log.getMethod(), 255),
                 LogRecordTextUtils.truncate(log.getRequestIp(), 64),
                 LogRecordTextUtils.truncate(log.getUserAgent(), 512),
                 LogRecordTextUtils.truncate(log.getRequestParams(),
-                        this.properties.getRequest().getParamsMaxLength()),
+                        Math.min(this.properties.getRequest().getParamsMaxLength(),
+                                LogRecordProperties.MAX_REQUEST_PARAMS_LENGTH)),
                 log.getCreatedAt()
         };
     }

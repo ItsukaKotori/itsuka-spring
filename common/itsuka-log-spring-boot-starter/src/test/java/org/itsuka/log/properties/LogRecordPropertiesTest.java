@@ -1,6 +1,7 @@
 package org.itsuka.log.properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
@@ -44,5 +45,51 @@ class LogRecordPropertiesTest {
         assertThatThrownBy(props::validate)
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("maxPoolSize");
+    }
+
+    @Test
+    void rejectsContentLengthOverColumnLimit() {
+        LogRecordProperties props = new LogRecordProperties();
+        props.setContentMaxLength(2001);
+        assertThatThrownBy(props::validate)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("contentMaxLength");
+    }
+
+    @Test
+    void rejectsErrorLengthOverColumnLimit() {
+        LogRecordProperties props = new LogRecordProperties();
+        props.setErrorMaxLength(2001);
+        assertThatThrownBy(props::validate)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("errorMaxLength");
+    }
+
+    @Test
+    void rejectsDetailLengthOverColumnLimit() {
+        LogRecordProperties props = new LogRecordProperties();
+        props.setDetailMaxLength(16001);
+        assertThatThrownBy(props::validate)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("detailMaxLength");
+    }
+
+    @Test
+    void rejectsRequestParamsLengthOverColumnLimit() {
+        LogRecordProperties props = new LogRecordProperties();
+        props.getRequest().setParamsMaxLength(16001);
+        assertThatThrownBy(props::validate)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("paramsMaxLength");
+    }
+
+    @Test
+    void acceptsLengthsAtColumnLimits() {
+        LogRecordProperties props = new LogRecordProperties();
+        props.setContentMaxLength(2000);
+        props.setErrorMaxLength(2000);
+        props.setDetailMaxLength(16000);
+        props.getRequest().setParamsMaxLength(16000);
+        assertThatCode(props::validate).doesNotThrowAnyException();
     }
 }

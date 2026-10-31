@@ -64,4 +64,54 @@ class JdbcLogRecordStoreTest {
             .queryForObject("select count(*) from information_schema.tables where table_name = 'itsuka_operation_log'", Integer.class);
         assertThat(count).isZero();
     }
+
+    @Test
+    void defensivelyCapsOverConfiguredLengths() {
+        JdbcDataSource ds = new JdbcDataSource();
+        ds.setURL("jdbc:h2:mem:capstore;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
+        JdbcTemplate jdbc = new JdbcTemplate(ds);
+        LogRecordProperties initProps = new LogRecordProperties();
+        initProps.setSchemaLocation("classpath:schema-h2.sql");
+        new LogSchemaInitializer(ds, initProps, new DefaultResourceLoader()).afterPropertiesSet();
+
+        LogRecordProperties props = new LogRecordProperties();
+        props.setContentMaxLength(5000);
+        props.setErrorMaxLength(5000);
+        props.setDetailMaxLength(50000);
+        props.getRequest().setParamsMaxLength(50000);
+        JdbcLogRecordStore store = new JdbcLogRecordStore(jdbc, props, null);
+
+        store.save(OperationLog.builder()
+            .bizNo("B1").success(true)
+            .content("C".repeat(3000))
+            .errorMsg("E".repeat(3000))
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        String content = jdbc.queryForObject(
+            "select content from itsuka_operation_log where biz_no = 'B1'", String.class);
+        String errorMsg = jdbc.queryForObject(
+            "select error_msg from itsuka_operation_log where biz_no = 'B1'", String.class);
+        assertThat(content).hasSize(2000);
+        assertThat(errorMsg).hasSize(2000);
+    }
+
+    @Test
+    void quotesReservedTableNameInDml() {
+        JdbcDataSource ds = new JdbcDataSource();
+        ds.setURL("jdbc:h2:mem:orderstore;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
+        JdbcTemplate jdbc = new JdbcTemplate(ds);
+        LogRecordProperties props = new LogRecordProperties();
+        props.setTableName("order");
+        props.setSchemaLocation("classpath:schema-h2.sql");
+        new LogSchemaInitializer(ds, props, new DefaultResourceLoader()).afterPropertiesSet();
+
+        JdbcLogRecordStore orderStore = new JdbcLogRecordStore(jdbc, props, null);
+        orderStore.save(OperationLog.builder()
+            .bizNo("B1").type("ORDER").success(true).content("x")
+            .createdAt(LocalDateTime.now()).build());
+
+        Integer count = jdbc.queryForObject("select count(*) from `order`", Integer.class);
+        assertThat(count).isEqualTo(1);
+    }
 }

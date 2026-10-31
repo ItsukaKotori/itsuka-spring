@@ -18,6 +18,26 @@ public class LogRecordProperties {
     private static final Pattern TABLE_NAME_PATTERN = Pattern.compile("^[A-Za-z_][A-Za-z0-9_]{0,63}$");
 
     /**
+     * 物理列 {@code content} 的最大长度（VARCHAR(2000)）。
+     */
+    public static final int MAX_CONTENT_LENGTH = 2000;
+
+    /**
+     * 物理列 {@code error_msg} 的最大长度（VARCHAR(2000)）。
+     */
+    public static final int MAX_ERROR_LENGTH = 2000;
+
+    /**
+     * 物理列 {@code detail} 的最大长度（TEXT，utf8mb4 下安全上限）。
+     */
+    public static final int MAX_DETAIL_LENGTH = 16000;
+
+    /**
+     * 物理列 {@code request_params} 的最大长度（TEXT，utf8mb4 下安全上限）。
+     */
+    public static final int MAX_REQUEST_PARAMS_LENGTH = 16000;
+
+    /**
      * 是否启用操作日志
      */
     private boolean enabled = true;
@@ -88,21 +108,40 @@ public class LogRecordProperties {
     private Query query = new Query();
 
     /**
-     * 校验配置，非法时抛出 {@link IllegalArgumentException}。
+     * 校验表名，非法时抛出 {@link IllegalArgumentException}。
      */
-    public void validate() {
+    public void validateTableName() {
         if (tableName == null || !TABLE_NAME_PATTERN.matcher(tableName).matches()) {
             throw new IllegalArgumentException(
                 "itsuka.log.tableName 只能包含字母、数字、下划线，且长度为 1~64: " + tableName);
         }
+    }
+
+    /**
+     * 校验配置，非法时抛出 {@link IllegalArgumentException}。
+     */
+    public void validate() {
+        validateTableName();
         if (contentMaxLength <= 0) {
             throw new IllegalArgumentException("itsuka.log.contentMaxLength 必须大于 0: " + contentMaxLength);
+        }
+        if (contentMaxLength > MAX_CONTENT_LENGTH) {
+            throw new IllegalArgumentException(
+                "itsuka.log.contentMaxLength 不能超过 " + MAX_CONTENT_LENGTH + ": " + contentMaxLength);
         }
         if (detailMaxLength <= 0) {
             throw new IllegalArgumentException("itsuka.log.detailMaxLength 必须大于 0: " + detailMaxLength);
         }
+        if (detailMaxLength > MAX_DETAIL_LENGTH) {
+            throw new IllegalArgumentException(
+                "itsuka.log.detailMaxLength 不能超过 " + MAX_DETAIL_LENGTH + ": " + detailMaxLength);
+        }
         if (errorMaxLength <= 0) {
             throw new IllegalArgumentException("itsuka.log.errorMaxLength 必须大于 0: " + errorMaxLength);
+        }
+        if (errorMaxLength > MAX_ERROR_LENGTH) {
+            throw new IllegalArgumentException(
+                "itsuka.log.errorMaxLength 不能超过 " + MAX_ERROR_LENGTH + ": " + errorMaxLength);
         }
         if (async == null) {
             throw new IllegalArgumentException("itsuka.log.async 不能为空");
@@ -126,6 +165,11 @@ public class LogRecordProperties {
         if (request.getParamsMaxLength() <= 0) {
             throw new IllegalArgumentException(
                 "itsuka.log.request.paramsMaxLength 必须大于 0: " + request.getParamsMaxLength());
+        }
+        if (request.getParamsMaxLength() > MAX_REQUEST_PARAMS_LENGTH) {
+            throw new IllegalArgumentException(
+                "itsuka.log.request.paramsMaxLength 不能超过 " + MAX_REQUEST_PARAMS_LENGTH + ": "
+                    + request.getParamsMaxLength());
         }
         if (query == null) {
             throw new IllegalArgumentException("itsuka.log.query 不能为空");

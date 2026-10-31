@@ -80,4 +80,36 @@ class JdbcOperationLogQueryServiceTest {
         Long id = queryService.page(query).getRecords().get(0).getId();
         assertThat(queryService.findById(id)).isPresent();
     }
+
+    @Test
+    void pageOffsetOverflowReturnsEmptyPage() {
+        OperationLogQuery query = new OperationLogQuery();
+        query.setCurrent(Long.MAX_VALUE);
+        OperationLogPage page = queryService.page(query);
+        assertThat(page.getRecords()).isEmpty();
+        assertThat(page.getCurrent()).isEqualTo(Long.MAX_VALUE);
+        assertThat(page.getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void queriesReservedTableName() {
+        JdbcDataSource ds = new JdbcDataSource();
+        ds.setURL("jdbc:h2:mem:orderquery;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
+        JdbcTemplate jdbc = new JdbcTemplate(ds);
+        LogRecordProperties props = new LogRecordProperties();
+        props.setTableName("order");
+        props.setSchemaLocation("classpath:schema-h2.sql");
+        new LogSchemaInitializer(ds, props, new DefaultResourceLoader()).afterPropertiesSet();
+
+        JdbcLogRecordStore orderStore = new JdbcLogRecordStore(jdbc, props, null);
+        orderStore.save(log("NO1", "ORDER", true, LocalDateTime.now()));
+
+        JdbcOperationLogQueryService orderQuery =
+            new JdbcOperationLogQueryService(new NamedParameterJdbcTemplate(ds), props);
+        OperationLogQuery query = new OperationLogQuery();
+        query.setBizNo("NO1");
+        OperationLogPage page = orderQuery.page(query);
+        assertThat(page.getTotal()).isEqualTo(1);
+        assertThat(page.getRecords().get(0).getBizNo()).isEqualTo("NO1");
+    }
 }

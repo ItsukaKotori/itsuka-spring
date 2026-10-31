@@ -59,6 +59,34 @@ class LogRecordAspectTest {
         }
     }
 
+    static class Holder {
+        private String name;
+
+        Holder(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+    static class OperatorService {
+        @LogRecord(
+            operator = "{OLD{#holder.name}}",
+            success = "操作人更新成功",
+            bizNo = "{{#orderNo}}"
+        )
+        public String mutate(Holder holder, String orderNo) {
+            holder.setName("new");
+            return "OK";
+        }
+    }
+
     private final List<OperationLog> saved = new ArrayList<>();
 
     private <T> T proxy(T target, LogRecordProperties props, LogRecordStore store) {
@@ -156,5 +184,31 @@ class LogRecordAspectTest {
             new BeforeFunctionFailingService(), new LogRecordProperties(), saved::add, List.of(boom));
         assertThat(service.create("NO1")).isEqualTo("OK");
         assertThat(saved).isEmpty();
+    }
+
+    @Test
+    void beforeFunctionValueIsUsedForOperator() {
+        LogRecordFunction old = new LogRecordFunction() {
+            @Override
+            public String functionName() {
+                return "OLD";
+            }
+
+            @Override
+            public boolean executeBefore() {
+                return true;
+            }
+
+            @Override
+            public String apply(Object value) {
+                return value == null ? null : value.toString();
+            }
+        };
+        OperatorService service = proxy(
+            new OperatorService(), new LogRecordProperties(), saved::add, List.of(old));
+        Holder holder = new Holder("old");
+        assertThat(service.mutate(holder, "NO1")).isEqualTo("OK");
+        assertThat(saved).hasSize(1);
+        assertThat(saved.get(0).getOperatorId()).isEqualTo("old");
     }
 }

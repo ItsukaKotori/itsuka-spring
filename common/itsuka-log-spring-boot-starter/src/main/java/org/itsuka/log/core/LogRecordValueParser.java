@@ -133,14 +133,33 @@ public class LogRecordValueParser {
      * @return the raw evaluated value when the whole template is one match, otherwise the rendered text
      */
     public Object parseSingleExpression(String template, EvaluationContext context, AnnotatedElementKey key) {
+        return parseSingleExpression(template, context, key, Map.of());
+    }
+
+    /**
+     * Evaluates a template expected to contain a single expression, honoring cached before-function
+     * values keyed by the full template match.
+     *
+     * @param template     the template text
+     * @param context      the evaluation context
+     * @param key          the annotated element key used for expression caching
+     * @param beforeValues values captured by {@link #parseBeforeFunctions}, keyed by full match
+     * @return the raw evaluated value when the whole template is one match, otherwise the rendered text
+     */
+    public Object parseSingleExpression(String template, EvaluationContext context, AnnotatedElementKey key,
+            Map<String, String> beforeValues) {
         if (!StringUtils.hasLength(template)) {
             return template;
         }
         Matcher matcher = TEMPLATE_PATTERN.matcher(template);
         if (matcher.matches()) {
+            String match = matcher.group();
+            if (beforeValues != null && beforeValues.containsKey(match)) {
+                return nullToEmpty(beforeValues.get(match));
+            }
             return renderValue(matcher.group(1), matcher.group(2), context, key);
         }
-        return parse(template, context, key, Map.of());
+        return parse(template, context, key, beforeValues);
     }
 
     private String render(String name, String expression, EvaluationContext context, AnnotatedElementKey key) {

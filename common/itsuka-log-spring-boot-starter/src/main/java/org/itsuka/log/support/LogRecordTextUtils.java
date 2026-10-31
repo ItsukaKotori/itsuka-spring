@@ -11,13 +11,14 @@ public final class LogRecordTextUtils {
     }
 
     /**
-     * Truncates the given text to at most {@code maxLength} characters.
+     * Truncates the given text to at most {@code maxLength} code points.
      *
      * <p>When truncation is needed the last three characters are replaced by {@code ...};
-     * for lengths below four the text is cut without an ellipsis.</p>
+     * for lengths below four the text is cut without an ellipsis. Truncation always lands on a
+     * code-point boundary so a surrogate pair (e.g. an emoji) is never split.</p>
      *
      * @param value     the text to truncate, may be {@code null}
-     * @param maxLength the maximum length, non-positive values yield an empty string
+     * @param maxLength the maximum number of code points, non-positive values yield an empty string
      * @return the truncated text, or {@code null} when {@code value} is {@code null}
      */
     public static String truncate(String value, int maxLength) {
@@ -27,12 +28,13 @@ public final class LogRecordTextUtils {
         if (maxLength <= 0) {
             return "";
         }
-        if (value.length() <= maxLength) {
+        int codePointCount = value.codePointCount(0, value.length());
+        if (codePointCount <= maxLength) {
             return value;
         }
         if (maxLength < 4) {
-            return value.substring(0, maxLength);
+            return value.substring(0, value.offsetByCodePoints(0, maxLength));
         }
-        return value.substring(0, maxLength - ELLIPSIS.length()) + ELLIPSIS;
+        return value.substring(0, value.offsetByCodePoints(0, maxLength - ELLIPSIS.length())) + ELLIPSIS;
     }
 }

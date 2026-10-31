@@ -14,8 +14,8 @@ import tools.jackson.databind.json.JsonMapper;
  * {@link LogParameterSerializer} serializing method arguments to JSON via Jackson 3.
  *
  * <p>Non-serializable arguments ({@link HttpServletRequest}, {@link HttpServletResponse},
- * {@link MultipartFile}) are skipped. When serialization fails the arguments fall back to
- * {@link Arrays#deepToString(Object[])}. The result is truncated to
+ * {@link MultipartFile}) are skipped through {@link LogArgumentFilter}. When serialization fails
+ * the arguments fall back to {@link Arrays#deepToString(Object[])}. The result is truncated to
  * {@code itsuka.log.request.paramsMaxLength}.</p>
  */
 public class JacksonLogParameterSerializer implements LogParameterSerializer {
@@ -42,7 +42,7 @@ public class JacksonLogParameterSerializer implements LogParameterSerializer {
         }
         List<Object> serializable = new ArrayList<>(args.length);
         for (Object arg : args) {
-            if (arg == null || isIgnored(arg)) {
+            if (LogArgumentFilter.isIgnored(arg)) {
                 continue;
             }
             serializable.add(arg);
@@ -57,12 +57,6 @@ public class JacksonLogParameterSerializer implements LogParameterSerializer {
             result = Arrays.deepToString(serializable.toArray());
         }
         return truncate(result);
-    }
-
-    private boolean isIgnored(Object arg) {
-        return arg instanceof HttpServletRequest
-                || arg instanceof HttpServletResponse
-                || arg instanceof MultipartFile;
     }
 
     private String truncate(String value) {

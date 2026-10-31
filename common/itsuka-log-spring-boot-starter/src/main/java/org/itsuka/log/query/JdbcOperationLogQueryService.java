@@ -59,7 +59,7 @@ public class JdbcOperationLogQueryService implements OperationLogQueryService {
             LogRecordProperties properties) {
         this.jdbcTemplate = jdbcTemplate;
         this.properties = properties;
-        this.properties.validate();
+        this.properties.validateTableName();
     }
 
     @Override
@@ -73,10 +73,17 @@ public class JdbcOperationLogQueryService implements OperationLogQueryService {
 
         Long total = this.jdbcTemplate.queryForObject("select count(*) " + from, params, Long.class);
 
+        long offset;
+        try {
+            offset = Math.multiplyExact(current - 1, size);
+        } catch (ArithmeticException ex) {
+            return OperationLogPage.of(List.of(), current, size, total == null ? 0 : total);
+        }
+
         String sql = "select " + COLUMNS + " " + from
                 + " order by created_at desc, id desc limit :limit offset :offset";
         params.addValue("limit", size);
-        params.addValue("offset", (current - 1) * size);
+        params.addValue("offset", offset);
         List<OperationLog> records = this.jdbcTemplate.query(sql, params, ROW_MAPPER);
 
         return OperationLogPage.of(records, current, size, total == null ? 0 : total);
@@ -131,7 +138,7 @@ public class JdbcOperationLogQueryService implements OperationLogQueryService {
     }
 
     private String tableName() {
-        return this.properties.getTableName();
+        return "`" + this.properties.getTableName() + "`";
     }
 
     private static boolean hasText(String value) {
