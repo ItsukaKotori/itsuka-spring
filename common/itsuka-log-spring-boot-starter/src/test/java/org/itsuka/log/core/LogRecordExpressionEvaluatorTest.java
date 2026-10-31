@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import org.itsuka.log.context.LogRecordContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.expression.AnnotatedElementKey;
 import org.springframework.expression.EvaluationContext;
 
@@ -17,6 +18,16 @@ class LogRecordExpressionEvaluatorTest {
     static class SampleService {
         public String update(Param param, int count) {
             return "NO1";
+        }
+    }
+
+    static class OrderBean {
+        public String getNo() {
+            return "NO1";
+        }
+
+        public String format(String prefix) {
+            return prefix + "-NO1";
         }
     }
 
@@ -70,5 +81,24 @@ class LogRecordExpressionEvaluatorTest {
 
         assertThat(evaluator.evaluate("#a0.orderNo", key, ctx)).isEqualTo("NO1");
         assertThat(evaluator.evaluate("#p1", key, ctx)).isEqualTo(3);
+    }
+
+    @Test
+    void evaluatesBeanReference() throws Exception {
+        Method method = SampleService.class.getMethod("update", Param.class, int.class);
+        AnnotatedElementKey key = new AnnotatedElementKey(method, SampleService.class);
+        DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+        beanFactory.registerSingleton("myBean", new OrderBean());
+        EvaluationContext ctx = evaluator.createContext(
+            method,
+            new Object[]{new Param("NO1", new Address("上海")), 3},
+            SampleService.class,
+            null,
+            null,
+            beanFactory
+        );
+
+        assertThat(evaluator.evaluate("@myBean.no", key, ctx)).isEqualTo("NO1");
+        assertThat(evaluator.evaluate("@myBean.format('A')", key, ctx)).isEqualTo("A-NO1");
     }
 }
