@@ -28,6 +28,12 @@ class LogRecordPropertiesTest {
         assertThatThrownBy(props::validate)
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("tableName");
+
+        LogRecordProperties leadingDigit = new LogRecordProperties();
+        leadingDigit.setTableName("1table");
+        assertThatThrownBy(leadingDigit::validate)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("tableName");
     }
 
     @Test

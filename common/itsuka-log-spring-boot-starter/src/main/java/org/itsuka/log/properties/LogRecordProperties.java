@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 @ConfigurationProperties(prefix = "itsuka.log")
 public class LogRecordProperties {
 
-    private static final Pattern TABLE_NAME_PATTERN = Pattern.compile("^[A-Za-z0-9_]{1,64}$");
+    private static final Pattern TABLE_NAME_PATTERN = Pattern.compile("^[A-Za-z_][A-Za-z0-9_]{0,63}$");
 
     /**
      * 是否启用操作日志
