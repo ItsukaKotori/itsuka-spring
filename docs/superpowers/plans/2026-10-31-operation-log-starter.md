@@ -170,8 +170,9 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("com.h2database:h2")
-    testImplementation("org.testcontainers:mysql")
-    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers-mysql")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc")
     testImplementation("org.springframework.security:spring-security-core")
     testImplementation("org.springframework.boot:spring-boot-starter-jackson")
@@ -577,14 +578,23 @@ class LogRecordValueParserTest {
             new Object[]{new Param("no1", new Request("A"), "张三")},
             SampleService.class, null, null, null);
 
-        assertThat(parser.parse("{UPPER{{#param.orderNo}}}", ctx, key, Map.of()))
+        assertThat(parser.parse("{UPPER{#param.orderNo}}", ctx, key, Map.of()))
             .isEqualTo("NO1");
-        assertThat(parser.parse("{OLD{{#param.orderNo}}}", ctx, key, Map.of("{OLD{{#param.orderNo}}}", "旧值")))
+        assertThat(parser.parse("{OLD{#param.orderNo}}", ctx, key, Map.of("{OLD{#param.orderNo}}", "旧值")))
             .isEqualTo("旧值");
 
         Map<String, String> before = parser.parseBeforeFunctions(
-            List.of("{OLD{{#param.orderNo}}}"), ctx, key);
-        assertThat(before).containsEntry("{OLD{{#param.orderNo}}}", "OLD:no1");
+            List.of("{OLD{#param.orderNo}}"), ctx, key);
+        assertThat(before).containsEntry("{OLD{#param.orderNo}}", "OLD:no1");
+    }
+
+    @Test
+    void keepsLiteralBraceAfterExpression() throws Exception {
+        Method method = SampleService.class.getMethod("update", Param.class);
+        AnnotatedElementKey key = new AnnotatedElementKey(method, SampleService.class);
+        assertThat(parser(List.of()).parse("结果{{#param.orderNo}}}",
+            context(method, null, null), key, Map.of()))
+            .isEqualTo("结果NO1}");
     }
 
     @Test
@@ -600,7 +610,7 @@ class LogRecordValueParserTest {
     void unknownFunctionReturnsValue() throws Exception {
         Method method = SampleService.class.getMethod("update", Param.class);
         AnnotatedElementKey key = new AnnotatedElementKey(method, SampleService.class);
-        assertThat(parser(List.of()).parse("{MISSING{{#param.orderNo}}}",
+        assertThat(parser(List.of()).parse("{MISSING{#param.orderNo}}",
             context(method, null, null), key, Map.of()))
             .isEqualTo("NO1");
     }
@@ -1671,7 +1681,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 

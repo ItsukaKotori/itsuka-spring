@@ -119,7 +119,7 @@ public void updateAddress(UpdateAddressRequest request) {
   - 上下文变量：`{{#oldAddress}}`
   - 返回值：`{{#_ret}}`
   - 异常信息：`{{#_errorMsg}}`
-- 自定义函数：`{FUNC{{#表达式}}}`
+- 自定义函数：`{FUNC{#表达式}}`
   - 函数名大小写敏感，建议全大写。
   - 函数参数是 SpEL 求值后的对象，不再强制转 String。
 - 不匹配上述模式的 `{`、`}` 原样保留。
@@ -550,8 +550,9 @@ org.itsuka.log
 
        testImplementation("org.springframework.boot:spring-boot-starter-test")
        testImplementation("com.h2database:h2")
-       testImplementation("org.testcontainers:mysql")
-       testImplementation("org.testcontainers:junit-jupiter")
+       testImplementation("org.testcontainers:testcontainers-mysql")
+       testImplementation("org.testcontainers:testcontainers-junit-jupiter")
+       testRuntimeOnly("org.junit.platform:junit-platform-launcher")
        testRuntimeOnly("com.mysql:mysql-connector-j")
    }
 
@@ -569,7 +570,7 @@ org.itsuka.log
 - `LogRecordContextTest`：压栈/弹栈、嵌套方法变量隔离。
 - `LogRecordValueParserTest`：
   - `{{#arg}}`、`{{#request.address}}`
-  - `{FUNC{{#arg}}}` 前后函数
+  - `{FUNC{#arg}}` 前后函数
   - `_ret`、`_errorMsg`
   - 未知函数
   - 不匹配的 `{` 原样保留
@@ -619,7 +620,7 @@ org.itsuka.log
 
 1. 默认存储用 `JdbcTemplate`，不引入 MyBatis-Plus，保持 starter 轻量。
 2. 查询分页 DTO 自带，不复用 `org.itsuka.web.dto.PageResult`，避免强制依赖 Web starter。
-3. 模板语法采用 `{{#expr}}` / `{FUNC{{#expr}}}`，与参考实现一致，而不是文章里简写的 `#expr`。
+3. 模板语法采用 `{{#expr}}` / `{FUNC{#expr}}`，与参考实现一致，而不是文章里简写的 `#expr`。
 4. 除 JDBC 外附带 `slf4j` 存储，作为“配置其他存储方式”的开箱示例。
 5. 异步默认关闭，优先保证日志不丢。
 6. `bizNo` 必填；渲染后为空则跳过并 WARN。
