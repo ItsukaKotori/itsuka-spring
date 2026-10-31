@@ -10,8 +10,9 @@ import org.springframework.core.task.TaskRejectedException;
 /**
  * {@link LogRecordStore} decorator submitting writes to an {@link AsyncTaskExecutor}.
  *
- * <p>Rejections and runtime failures raised while submitting the task are logged and never
- * propagated to the caller, so asynchronous logging cannot affect the business result.</p>
+ * <p>Failures raised while submitting the task and failures raised by the delegate on the
+ * worker thread are logged and never propagated to the caller, so asynchronous logging cannot
+ * affect the business result.</p>
  */
 public class AsyncLogRecordStore implements LogRecordStore {
 
@@ -35,7 +36,13 @@ public class AsyncLogRecordStore implements LogRecordStore {
     @Override
     public void save(OperationLog operationLog) {
         try {
-            this.executor.execute(() -> this.delegate.save(operationLog));
+            this.executor.execute(() -> {
+                try {
+                    this.delegate.save(operationLog);
+                } catch (RuntimeException ex) {
+                    log.error("operation log async write failed, bizNo={}", operationLog.getBizNo(), ex);
+                }
+            });
         } catch (TaskRejectedException ex) {
             log.error("operation log rejected by async executor, bizNo={}", operationLog.getBizNo(), ex);
         } catch (RuntimeException ex) {
