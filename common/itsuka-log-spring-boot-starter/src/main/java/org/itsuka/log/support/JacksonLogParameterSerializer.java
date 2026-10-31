@@ -54,7 +54,7 @@ public class JacksonLogParameterSerializer implements LogParameterSerializer {
         try {
             result = mapper.writeValueAsString(serializable);
         } catch (Exception ex) {
-            result = Arrays.deepToString(args);
+            result = Arrays.deepToString(serializable.toArray());
         }
         return truncate(result);
     }

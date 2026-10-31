@@ -37,4 +37,14 @@ class SecurityLogOperatorProviderTest {
         LogOperator operator = new SecurityLogOperatorProvider(new LogRecordProperties()).getOperator();
         assertThat(operator.id()).isEqualTo("system");
     }
+
+    @Test
+    void usesAuthenticationNameForOtherPrincipal() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken("itsuka", null, List.of()));
+
+        LogOperator operator = new SecurityLogOperatorProvider(new LogRecordProperties()).getOperator();
+        assertThat(operator.id()).isEqualTo("itsuka");
+        assertThat(operator.name()).isEqualTo("itsuka");
+    }
 }

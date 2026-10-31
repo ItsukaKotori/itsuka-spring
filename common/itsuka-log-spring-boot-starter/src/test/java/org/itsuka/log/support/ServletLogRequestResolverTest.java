@@ -39,4 +39,34 @@ class ServletLogRequestResolverTest {
         props.getRequest().setTrustForwardedHeaders(true);
         assertThat(new ServletLogRequestResolver(props).getClientIp()).isEqualTo("1.2.3.4");
     }
+
+    @Test
+    void usesRealIpWhenForwardedForAbsent() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.0.0.1");
+        request.addHeader("X-Real-IP", "9.9.9.9");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        LogRecordProperties props = new LogRecordProperties();
+        props.getRequest().setTrustForwardedHeaders(true);
+        assertThat(new ServletLogRequestResolver(props).getClientIp()).isEqualTo("9.9.9.9");
+    }
+
+    @Test
+    void ignoresForwardedHeadersWhenDisabled() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.0.0.1");
+        request.addHeader("X-Forwarded-For", "1.2.3.4, 5.6.7.8");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        ServletLogRequestResolver resolver = new ServletLogRequestResolver(new LogRecordProperties());
+        assertThat(resolver.getClientIp()).isEqualTo("10.0.0.1");
+    }
+
+    @Test
+    void returnsNullWithoutRequest() {
+        ServletLogRequestResolver resolver = new ServletLogRequestResolver(new LogRecordProperties());
+        assertThat(resolver.getClientIp()).isNull();
+        assertThat(resolver.getUserAgent()).isNull();
+    }
 }
