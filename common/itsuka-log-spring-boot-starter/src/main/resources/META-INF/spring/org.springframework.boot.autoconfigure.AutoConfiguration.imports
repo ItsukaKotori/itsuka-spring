@@ -1,0 +1,5 @@
+org.itsuka.log.LogRecordSecurityAutoConfiguration
+org.itsuka.log.LogRecordWebAutoConfiguration
+org.itsuka.log.LogRecordJdbcAutoConfiguration
+org.itsuka.log.LogRecordSlf4jAutoConfiguration
+org.itsuka.log.LogRecordAutoConfiguration
