@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
  * Renders operation log templates such as {@code "订单{{#param.orderNo}}"}.
  *
  * <p>A template may reference an expression directly ({@code {{#expr}}}) or pass it through a
- * custom function ({@code {UPPER{{#expr}}}}). Functions opting into
+ * custom function ({@code {UPPER{#expr}}}). Functions opting into
  * {@link LogRecordFunction#executeBefore()} can be evaluated before the target method runs and
  * cached, keyed by the full template match.</p>
  */
@@ -26,8 +26,7 @@ public class LogRecordValueParser {
 
     private static final Logger log = LoggerFactory.getLogger(LogRecordValueParser.class);
 
-    private static final Pattern TEMPLATE_PATTERN =
-        Pattern.compile("\\{\\s*(\\w*)\\s*\\{\\{?\\s*([^{}]*?)\\s*\\}\\}\\}?");
+    private static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{\\s*(\\w*)\\s*\\{([^{}]*?)}}");
 
     private static final String RESULT_EXPRESSION = "#_ret";
 

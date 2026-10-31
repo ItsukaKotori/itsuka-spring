@@ -64,14 +64,23 @@ class LogRecordValueParserTest {
             new Object[]{new Param("no1", new Request("A"), "张三")},
             SampleService.class, null, null, null);
 
-        assertThat(parser.parse("{UPPER{{#param.orderNo}}}", ctx, key, Map.of()))
+        assertThat(parser.parse("{UPPER{#param.orderNo}}", ctx, key, Map.of()))
             .isEqualTo("NO1");
-        assertThat(parser.parse("{OLD{{#param.orderNo}}}", ctx, key, Map.of("{OLD{{#param.orderNo}}}", "旧值")))
+        assertThat(parser.parse("{OLD{#param.orderNo}}", ctx, key, Map.of("{OLD{#param.orderNo}}", "旧值")))
             .isEqualTo("旧值");
 
         Map<String, String> before = parser.parseBeforeFunctions(
-            List.of("{OLD{{#param.orderNo}}}"), ctx, key);
-        assertThat(before).containsEntry("{OLD{{#param.orderNo}}}", "OLD:no1");
+            List.of("{OLD{#param.orderNo}}"), ctx, key);
+        assertThat(before).containsEntry("{OLD{#param.orderNo}}", "OLD:no1");
+    }
+
+    @Test
+    void keepsLiteralBraceAfterExpression() throws Exception {
+        Method method = SampleService.class.getMethod("update", Param.class);
+        AnnotatedElementKey key = new AnnotatedElementKey(method, SampleService.class);
+        assertThat(parser(List.of()).parse("结果{{#param.orderNo}}}",
+            context(method, null, null), key, Map.of()))
+            .isEqualTo("结果NO1}");
     }
 
     @Test
@@ -87,7 +96,7 @@ class LogRecordValueParserTest {
     void unknownFunctionReturnsValue() throws Exception {
         Method method = SampleService.class.getMethod("update", Param.class);
         AnnotatedElementKey key = new AnnotatedElementKey(method, SampleService.class);
-        assertThat(parser(List.of()).parse("{MISSING{{#param.orderNo}}}",
+        assertThat(parser(List.of()).parse("{MISSING{#param.orderNo}}",
             context(method, null, null), key, Map.of()))
             .isEqualTo("NO1");
     }
