@@ -80,24 +80,39 @@ public class LogRecordAspect implements Ordered {
     @Around("@annotation(org.itsuka.log.annotation.LogRecord)")
     public Object around(ProceedingJoinPoint pjp) throws Throwable {
         MethodSignature signature = (MethodSignature) pjp.getSignature();
-        Method method = AopUtils.getMostSpecificMethod(signature.getMethod(), pjp.getTarget().getClass());
-        Optional<LogRecordOperation> parsed = this.operationParser.parse(method);
+        Class<?> targetClass = pjp.getTarget().getClass();
+        Method method = AopUtils.getMostSpecificMethod(signature.getMethod(), targetClass);
+
+        Optional<LogRecordOperation> parsed;
+        try {
+            parsed = this.operationParser.parse(method);
+        } catch (Exception e) {
+            log.warn("Failed to parse operation log annotation for method [{}#{}]: {}",
+                    targetClass.getSimpleName(), method.getName(), e.getMessage(), e);
+            return pjp.proceed();
+        }
         if (parsed.isEmpty()) {
             return pjp.proceed();
         }
         LogRecordOperation operation = parsed.get();
         Object[] args = pjp.getArgs();
-        Class<?> targetClass = pjp.getTarget().getClass();
         AnnotatedElementKey key = new AnnotatedElementKey(method, targetClass);
 
         LogRecordContext.pushSpan();
         try {
-            EvaluationContext beforeContext = this.expressionEvaluator.createContext(
-                    method, args, targetClass, null, null, null);
-            Map<String, String> beforeValues = this.valueParser.parseBeforeFunctions(
-                    List.of(operation.success(), operation.fail(), operation.bizNo(),
-                            operation.detail(), operation.operator()),
-                    beforeContext, key);
+            Map<String, String> beforeValues;
+            try {
+                EvaluationContext beforeContext = this.expressionEvaluator.createContext(
+                        method, args, targetClass, null, null, null);
+                beforeValues = this.valueParser.parseBeforeFunctions(
+                        List.of(operation.success(), operation.fail(), operation.bizNo(),
+                                operation.detail(), operation.operator()),
+                        beforeContext, key);
+            } catch (Exception e) {
+                log.warn("Failed to evaluate before-functions for method [{}#{}]: {}",
+                        targetClass.getSimpleName(), method.getName(), e.getMessage(), e);
+                beforeValues = Map.of();
+            }
 
             MethodExecuteResult executeResult;
             try {

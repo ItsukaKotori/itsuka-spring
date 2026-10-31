@@ -8,6 +8,7 @@ import java.util.List;
 import org.itsuka.log.annotation.LogRecord;
 import org.itsuka.log.context.LogRecordContext;
 import org.itsuka.log.domain.OperationLog;
+import org.itsuka.log.function.LogRecordFunction;
 import org.itsuka.log.properties.LogRecordProperties;
 import org.itsuka.log.spi.LogRecordStore;
 import org.itsuka.log.support.DefaultLogOperatorProvider;
@@ -39,6 +40,13 @@ class LogRecordAspectTest {
         }
     }
 
+    static class BeforeFunctionFailingService {
+        @LogRecord(success = "{BOOM{#orderNo}}", bizNo = "{{#orderNo}}")
+        public String create(String orderNo) {
+            return "OK";
+        }
+    }
+
     static class FailingService {
         @LogRecord(
             success = "订单{{#orderNo}}创建成功",
@@ -54,12 +62,17 @@ class LogRecordAspectTest {
     private final List<OperationLog> saved = new ArrayList<>();
 
     private <T> T proxy(T target, LogRecordProperties props, LogRecordStore store) {
+        return proxy(target, props, store, List.of());
+    }
+
+    private <T> T proxy(T target, LogRecordProperties props, LogRecordStore store,
+            List<LogRecordFunction> functions) {
         LogRecordAspect aspect = new LogRecordAspect(
             props,
             new LogRecordOperationParser(),
             new LogRecordExpressionEvaluator(),
             new LogRecordValueParser(new LogRecordExpressionEvaluator(),
-                new org.itsuka.log.function.LogRecordFunctionFactory(List.of())),
+                new org.itsuka.log.function.LogRecordFunctionFactory(functions)),
             new DefaultLogOperatorProvider(props),
             new NoopLogRequestResolver(),
             new ToStringLogParameterSerializer(),
@@ -118,6 +131,30 @@ class LogRecordAspectTest {
     void blankBizNoSkipsRecord() {
         SampleService service = proxy(new SampleService(), new LogRecordProperties(), saved::add);
         service.blankBizNo();
+        assertThat(saved).isEmpty();
+    }
+
+    @Test
+    void beforeFunctionFailureDoesNotStopBusiness() {
+        LogRecordFunction boom = new LogRecordFunction() {
+            @Override
+            public String functionName() {
+                return "BOOM";
+            }
+
+            @Override
+            public boolean executeBefore() {
+                return true;
+            }
+
+            @Override
+            public String apply(Object value) {
+                throw new IllegalStateException("boom");
+            }
+        };
+        BeforeFunctionFailingService service = proxy(
+            new BeforeFunctionFailingService(), new LogRecordProperties(), saved::add, List.of(boom));
+        assertThat(service.create("NO1")).isEqualTo("OK");
         assertThat(saved).isEmpty();
     }
 }
