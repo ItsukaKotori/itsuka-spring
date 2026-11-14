@@ -3,6 +3,7 @@ package org.itsuka.flyway;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.itsuka.flyway.ItsukaFlywayProperties.Source;
@@ -89,5 +90,22 @@ class ItsukaFlywayPropertiesValidatorTest {
                        source("user", "classpath:flyway/user", "SAME_HISTORY"))))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("历史表");
+    }
+
+    @Test
+    void rejectsNullSourceElement() {
+        ItsukaFlywayProperties properties = new ItsukaFlywayProperties();
+        properties.setSources(Arrays.asList(source("order", "classpath:flyway/order", null), null));
+        assertThatThrownBy(() -> ItsukaFlywayPropertiesValidator.validate(properties))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("itsuka.flyway.sources[1]");
+    }
+
+    @Test
+    void treatsNullSourceListAsEmpty() {
+        ItsukaFlywayProperties properties = new ItsukaFlywayProperties();
+        properties.setSources(null);
+        assertThatCode(() -> ItsukaFlywayPropertiesValidator.validate(properties))
+            .doesNotThrowAnyException();
     }
 }

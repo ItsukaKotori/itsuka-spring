@@ -11,6 +11,8 @@ import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration;
 import org.springframework.boot.flyway.autoconfigure.FlywayConfigurationCustomizer;
@@ -104,6 +106,19 @@ class ItsukaFlywayAutoConfigurationTest {
     }
 
     @Test
+    void ordersInitializersBySourceIndex() {
+        runner().run(ctx -> {
+            ConfigurableListableBeanFactory beanFactory = ctx.getBeanFactory();
+            BeanDefinition orderInitializer = beanFactory.getBeanDefinition("flywayInitializer_order");
+            BeanDefinition userInitializer = beanFactory.getBeanDefinition("flywayInitializer_user");
+            assertThat(orderInitializer.getDependsOn()).doesNotContain("flywayInitializer_user");
+            assertThat(orderInitializer.getPropertyValues().get("order")).isEqualTo(0);
+            assertThat(userInitializer.getDependsOn()).contains("flywayInitializer_order");
+            assertThat(userInitializer.getPropertyValues().get("order")).isEqualTo(1);
+        });
+    }
+
+    @Test
     void appliesCustomizerToEverySource() {
         runner().withUserConfiguration(CustomizerConfiguration.class)
             .run(ctx -> {
@@ -189,6 +204,24 @@ class ItsukaFlywayAutoConfigurationTest {
     }
 
     @Test
+    void userSuppliedFlywayBeanBacksOffStarter() {
+        runner().withBean(Flyway.class, () -> Flyway.configure().dataSource(dataSource).load())
+            .run(ctx -> {
+                assertThat(ctx).hasNotFailed();
+                assertThat(ctx).hasSingleBean(Flyway.class);
+                assertThat(ctx).doesNotHaveBean("flyway_order");
+                assertThat(ctx).doesNotHaveBean("flyway_user");
+                JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+                assertThat(jdbc.queryForObject(
+                    "select count(*) from information_schema.tables "
+                        + "where lower(table_name) = 'flyway_order_test'", Integer.class)).isZero();
+                assertThat(jdbc.queryForObject(
+                    "select count(*) from information_schema.tables "
+                        + "where lower(table_name) = 'flyway_user_test'", Integer.class)).isZero();
+            });
+    }
+
+    @Test
     void missingLocationFailsByDefault() {
         runner().withPropertyValues(
                 "itsuka.flyway.sources[1].name=missing",
@@ -205,7 +238,11 @@ class ItsukaFlywayAutoConfigurationTest {
                 "itsuka.flyway.fail-on-missing-locations=false",
                 "itsuka.flyway.sources[1].name=missing",
                 "itsuka.flyway.sources[1].location=classpath:flyway/missing")
-            .run(ctx -> assertThat(ctx).hasNotFailed());
+            .run(ctx -> {
+                assertThat(ctx).hasNotFailed();
+                assertThat(new JdbcTemplate(dataSource).queryForObject(
+                    "select count(*) from flyway_order_test", Integer.class)).isEqualTo(1);
+            });
     }
 
     @Test
@@ -224,6 +261,26 @@ class ItsukaFlywayAutoConfigurationTest {
     }
 
     @Test
+    void priorSourceMigrationsRemainCommittedWhenLaterSourceFails() {
+        runner().withPropertyValues(
+                "itsuka.flyway.sources[0].name=order",
+                "itsuka.flyway.sources[0].location=classpath:flyway/order",
+                "itsuka.flyway.sources[1].name=fail",
+                "itsuka.flyway.sources[1].location=classpath:flyway/fail",
+                "itsuka.flyway.sources[2].name=user",
+                "itsuka.flyway.sources[2].location=classpath:flyway/user")
+            .run(ctx -> {
+                assertThat(ctx).hasFailed();
+                JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+                assertThat(jdbc.queryForObject(
+                    "select count(*) from flyway_order_test", Integer.class)).isEqualTo(1);
+                assertThat(jdbc.queryForObject(
+                    "select count(*) from information_schema.tables "
+                        + "where lower(table_name) = 'flyway_user_test'", Integer.class)).isZero();
+            });
+    }
+
+    @Test
     void duplicateSourceNamesFailBeforeMigration() {
         runner().withPropertyValues(
                 "itsuka.flyway.sources[0].name=order-center",
@@ -233,6 +290,9 @@ class ItsukaFlywayAutoConfigurationTest {
             .run(ctx -> {
                 assertThat(ctx).hasFailed();
                 assertThat(ctx.getStartupFailure()).hasStackTraceContaining("重复");
+                assertThat(new JdbcTemplate(dataSource).queryForObject(
+                    "select count(*) from information_schema.tables "
+                        + "where lower(table_name) = 'flyway_order_test'", Integer.class)).isZero();
             });
     }
 

@@ -21,7 +21,6 @@ import org.springframework.jdbc.support.MetaDataAccessException;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.util.function.SingletonSupplier;
 
 /**
  * 按单个 source 的配置创建并加载 {@link Flyway} 实例。
@@ -47,7 +46,7 @@ final class ItsukaFlywayFactory {
 
     private final List<Callback> callbacks;
 
-    private final SingletonSupplier<DataSource> dataSource;
+    private final ItsukaFlywayDataSourceResolver dataSourceResolver;
 
     ItsukaFlywayFactory(FlywayProperties properties, ItsukaFlywayProperties starterProperties,
             ResourceLoader resourceLoader, ItsukaFlywayDataSourceResolver dataSourceResolver,
@@ -59,7 +58,7 @@ final class ItsukaFlywayFactory {
         this.customizers = customizers;
         this.javaMigrations = javaMigrations;
         this.callbacks = callbacks;
-        this.dataSource = SingletonSupplier.of(dataSourceResolver::resolve);
+        this.dataSourceResolver = dataSourceResolver;
     }
 
     /**
@@ -69,9 +68,10 @@ final class ItsukaFlywayFactory {
      * @return 已加载配置的 Flyway 实例
      */
     Flyway create(ItsukaFlywayProperties.Source source) {
+        DataSource dataSource = this.dataSourceResolver.resolve(source.getName());
         FluentConfiguration configuration = new FluentConfiguration(this.resourceLoader.getClassLoader());
-        configuration.dataSource(dataSource());
-        configureProperties(configuration, this.properties);
+        configuration.dataSource(dataSource);
+        configureProperties(configuration, this.properties, dataSource);
         configureCallbacks(configuration);
         configureJavaMigrations(configuration);
         this.customizers.forEach((customizer) -> customizer.customize(configuration));
@@ -81,27 +81,24 @@ final class ItsukaFlywayFactory {
         return configuration.load();
     }
 
-    private DataSource dataSource() {
-        return this.dataSource.get();
-    }
-
     /**
      * 复制 Spring Boot 4.0.3 {@code FlywayAutoConfiguration} 的属性映射，但不映射
-     * {@code locations} 与 {@code table}。
+     * {@code locations} 与 {@code table}；映射改编自 Spring Boot，遵循 Apache License 2.0。
      *
-     * <p>属性映射改编自 Spring Boot 的 {@code FlywayAutoConfiguration}，遵循 Apache License 2.0。</p>
      * @param configuration the configuration
      * @param properties the properties
+     * @param dataSource 迁移数据源，用于解析 callback location 中的 {@code {vendor}}
      */
     @SuppressWarnings("removal")
-    private void configureProperties(FluentConfiguration configuration, FlywayProperties properties) {
+    private void configureProperties(FluentConfiguration configuration, FlywayProperties properties,
+            DataSource dataSource) {
         // NOTE: Using method references in the mapper methods can break
         // back-compatibility (see gh-38164)
         PropertyMapper map = PropertyMapper.get();
         map.from(properties.getCallbackLocations())
             .when((callbackLocations) -> !ObjectUtils.isEmpty(callbackLocations))
             .to((callbackLocations) -> configuration.callbackLocations(
-                    resolveVendorLocations(callbackLocations).toArray(new String[0])));
+                    resolveVendorLocations(callbackLocations, dataSource).toArray(new String[0])));
         map.from(properties.isFailOnMissingLocations())
             .to((failOnMissingLocations) -> configuration.failOnMissingLocations(failOnMissingLocations));
         map.from(properties.getEncoding()).to((encoding) -> configuration.encoding(encoding));
@@ -215,11 +212,11 @@ final class ItsukaFlywayFactory {
         }
     }
 
-    private List<String> resolveVendorLocations(List<String> locations) {
+    private List<String> resolveVendorLocations(List<String> locations, DataSource dataSource) {
         if (!usesVendorPlaceholder(locations)) {
             return locations;
         }
-        DatabaseDriver databaseDriver = getDatabaseDriver();
+        DatabaseDriver databaseDriver = getDatabaseDriver(dataSource);
         if (databaseDriver == DatabaseDriver.UNKNOWN) {
             return locations;
         }
@@ -227,9 +224,9 @@ final class ItsukaFlywayFactory {
         return locations.stream().map((location) -> location.replace(VENDOR_PLACEHOLDER, vendor)).toList();
     }
 
-    private DatabaseDriver getDatabaseDriver() {
+    private DatabaseDriver getDatabaseDriver(DataSource dataSource) {
         try {
-            String url = JdbcUtils.extractDatabaseMetaData(dataSource(), DatabaseMetaData::getURL);
+            String url = JdbcUtils.extractDatabaseMetaData(dataSource, DatabaseMetaData::getURL);
             return DatabaseDriver.fromJdbcUrl(url);
         }
         catch (MetaDataAccessException ex) {

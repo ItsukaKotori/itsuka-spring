@@ -18,7 +18,7 @@
 
 成功标准：
 
-1. 在 Spring Boot 4 + H2 的集成测试中，设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`（多个 source 共享同一个 schema，后续 source 需要 baseline 才能通过非空 schema 检查），配置两个 classpath 路径，两边都有 `V1__*.sql`，其中一边还有 `V2__*.sql`；启动后两张业务表都存在，两张独立历史表都能查到正确的迁移记录。
+1. 在 Spring Boot 4 + H2 的集成测试中，设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`（多个 source 共享同一个 schema，后续 source 需要 baseline 才能通过非空 schema 检查），配置两个 classpath 路径，两边都有 `V1__*.sql` 与 `V2__*.sql`；启动后两张业务表都存在，两张独立历史表都能查到正确的迁移记录。
 2. 默认配置下（不设置 `itsuka.flyway.native-enabled`），容器中不存在 Boot 原生的 `flyway` Bean，也不会创建默认的 `flyway_schema_history` 表。
 3. 设置 `itsuka.flyway.native-enabled=true` 且不配置 sources 时，恢复 Boot 原生行为：存在 `flyway` Bean，并按 `spring.flyway.locations` 迁移。
 4. `itsuka.flyway.native-enabled=true` 与 `itsuka.flyway.sources` 同时配置时，启动失败并给出明确原因。
@@ -119,7 +119,8 @@ itsuka:
 共享 schema 的 baseline 要求：
 
 - 多个 Flyway 实例共享同一个 schema：第一个 source 看到空 schema；后续 source 看到的是非空 schema，且其中没有自己的历史表。
-- 新的共享 schema 必须设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`，否则 Flyway 11 会在第二个 source 上抛出 `NON_EMPTY_SCHEMA_WITHOUT_SCHEMA_HISTORY_TABLE`。
+- 两个属性各自解决一个问题：`baseline-on-migrate=true` 避免第二个 source 抛出 `NON_EMPTY_SCHEMA_WITHOUT_SCHEMA_HISTORY_TABLE`；`baseline-version=0` 防止第二个 source 的 `V1` 被 baseline 跳过。
+- baseline 的代价：H2 与 MySQL 都会在第二个 source 的历史表里写入一条 `BASELINE` 行；H2 还会额外写入一条 `TABLE` 标记行。因此测试按 `type = 'SQL'` 统计迁移数。
 - 已存在的 schema 应把 `baseline-version` 设为当前已有版本；`0` 会让 Flyway 尝试重新执行所有迁移。
 - starter 不会自动 baseline；它只保持通用 `spring.flyway.*` 配置透明。
 
@@ -176,7 +177,7 @@ public class OrderMigrationInfo {
 3. `spring.flyway.url/user/password/driver-class-name`：有 URL 时构造独立的 `SimpleDriverDataSource`；只有 username/password 时基于主 DataSource 派生。
 4. 唯一或 `@Primary` 的 `DataSource` Bean。
 
-选择不到数据源时启动失败，错误信息包含当前 source 列表和常见原因（没有 DataSource、没有配置 `spring.flyway.url`）。
+选择不到数据源时启动失败，错误信息包含当前 source 名与全部支持的数据源来源（`DataSource`、`@FlywayDataSource`、`FlywayConnectionDetails`、`JdbcConnectionDetails`、`spring.flyway.url`）。
 
 ### 3.6 执行语义
 
@@ -223,7 +224,7 @@ public class OrderMigrationInfo {
 ### 4.4 环境后处理器
 
 - 实现 Boot 4 的 `org.springframework.boot.EnvironmentPostProcessor` 和 `Ordered`，`getOrder()` 返回 `Ordered.LOWEST_PRECEDENCE`，确保在 `ConfigDataEnvironmentPostProcessor` 之后执行。
-- 在 `META-INF/spring.factories` 中以 `org.springframework.boot.EnvironmentPostProcessor` 键注册；旧的 `org.springframework.boot.env.EnvironmentPostProcessor` 接口已在 4.2.0 标记为 deprecated for removal。
+- 在 `META-INF/spring.factories` 中以 `org.springframework.boot.EnvironmentPostProcessor` 键注册；旧的 `org.springframework.boot.env.EnvironmentPostProcessor` 接口自 4.0.0 起 deprecated，计划在 4.2.0 移除。
 - 使用 `Binder` 绑定 `itsuka.flyway`，支持 relaxed binding。
 - 伪代码：
 
@@ -369,7 +370,7 @@ org.itsuka.flyway
   - `enabled=false`、非原生模式 → 添加。
 - `ItsukaFlywayFactoryTest`
   - 使用 `FluentConfiguration` + H2，验证公共属性映射（占位符、baseline、encoding）和 source 的 location/table 覆盖顺序。
-  - 数据源选择顺序（`@FlywayDataSource`、`FlywayConnectionDetails`、主 DataSource、`spring.flyway.url`）。
+  - 数据源选择顺序（`@FlywayDataSource`、`FlywayConnectionDetails`/`JdbcConnectionDetails`、`spring.flyway.url`、主 DataSource）。
   - 少见的公共属性（`installed-by`、`out-of-order`、`clean-disabled`、`validate-on-migrate`、`tablespace` 等）能映射到 `Flyway.getConfiguration()`。
 
 ### 8.2 集成测试
@@ -388,7 +389,7 @@ org.itsuka.flyway
   - 派生表名冲突 → 启动失败。
   - `ItsukaFlywaySchemaManagementProvider` 对每个 source 使用的 DataSource 返回 `MANAGED`。
   - 用户显式设置 `spring.flyway.enabled=false` 时，source 仍然迁移，且 schema 仍被标记为 `MANAGED`。
-  - 说明：测试的共享 `ApplicationContextRunner` 设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`（原因见 3.2）；历史表迁移数按 `where type = 'SQL'` 统计——H2 会额外写入一条建表标记行，MySQL 的第二个 source 还会多一条 baseline 行。
+  - 说明：测试的共享 `ApplicationContextRunner` 设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`（原因见 3.2）；历史表迁移数按 `where type = 'SQL'` 统计——H2 与 MySQL 的第二个 source 都会多一条 baseline 行，H2 还会额外写入一条 `TABLE` 标记行。
 - `ItsukaFlywayEnvironmentPostProcessorIT`（`SpringApplication`）
   - 不配置 sources 时，`spring.flyway.enabled` 被设为 false，Boot 原生迁移不执行。
   - 配置 `native-enabled=true` 时，Boot 原生迁移执行。

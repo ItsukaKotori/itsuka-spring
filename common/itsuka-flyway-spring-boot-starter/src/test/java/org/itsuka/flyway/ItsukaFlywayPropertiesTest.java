@@ -30,4 +30,11 @@ class ItsukaFlywayPropertiesTest {
         source.setTable("custom_history");
         assertThat(source.resolvedTable()).isEqualTo("custom_history");
     }
+
+    @Test
+    void nullSourcesAreNormalizedToEmptyList() {
+        ItsukaFlywayProperties properties = new ItsukaFlywayProperties();
+        properties.setSources(null);
+        assertThat(properties.getSources()).isEmpty();
+    }
 }

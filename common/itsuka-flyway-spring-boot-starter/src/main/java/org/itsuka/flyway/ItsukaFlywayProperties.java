@@ -58,11 +58,11 @@ public class ItsukaFlywayProperties {
     }
 
     public List<Source> getSources() {
-        return sources;
+        return (sources != null) ? sources : List.of();
     }
 
     public void setSources(List<Source> sources) {
-        this.sources = sources;
+        this.sources = (sources != null) ? sources : new ArrayList<>();
     }
 
     /**

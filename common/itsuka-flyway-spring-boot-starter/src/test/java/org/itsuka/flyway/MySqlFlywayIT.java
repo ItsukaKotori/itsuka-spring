@@ -16,13 +16,14 @@ import org.testcontainers.mysql.MySQLContainer;
 @Testcontainers(disabledWithoutDocker = true)
 class MySqlFlywayIT {
 
+    // Testcontainers 2.0.3 的 MySQLContainer 不是泛型，原始类型是有意为之。
     @Container
-    static MySQLContainer mysql = new MySQLContainer("mysql:8.4");
+    private static final MySQLContainer MYSQL = new MySQLContainer("mysql:8.4");
 
     @Test
     void migratesMultipleSourcesWithDuplicateVersions() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource(
-            mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword());
+            MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
 
         new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(ItsukaFlywayAutoConfiguration.class))

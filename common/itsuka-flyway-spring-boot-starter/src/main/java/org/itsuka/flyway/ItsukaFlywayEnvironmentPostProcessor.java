@@ -12,8 +12,8 @@ import org.springframework.core.env.MapPropertySource;
 /**
  * 根据 {@code itsuka.flyway} 模式配置决定是否关闭 Spring Boot 原生 Flyway。
  *
- * <p>未配置 source 且未启用原生模式时关闭原生 Flyway，避免默认扫描
- * {@code classpath:db/migration} 与本 starter 的多路径迁移重复执行。</p>
+ * <p>未配置 source 且未启用原生模式时关闭原生 Flyway；{@code itsuka.flyway.enabled=false}
+ * 时同样关闭，避免默认扫描 {@code classpath:db/migration} 与本 starter 的多路径迁移重复执行。</p>
  *
  * @author Itsuka
  */

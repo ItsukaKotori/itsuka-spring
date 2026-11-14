@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.core.Ordered;
 import org.springframework.mock.env.MockEnvironment;
 
 class ItsukaFlywayEnvironmentPostProcessorTest {
@@ -32,6 +33,18 @@ class ItsukaFlywayEnvironmentPostProcessorTest {
         MockEnvironment environment = environment("itsuka.flyway.enabled", "false");
         postProcessor.postProcessEnvironment(environment, null);
         assertThat(environment.getProperty("spring.flyway.enabled")).isEqualTo("false");
+    }
+
+    @Test
+    void overridesExplicitlyEnabledNativeFlyway() {
+        MockEnvironment environment = environment("spring.flyway.enabled", "true");
+        postProcessor.postProcessEnvironment(environment, null);
+        assertThat(environment.getProperty("spring.flyway.enabled")).isEqualTo("false");
+    }
+
+    @Test
+    void returnsLowestPrecedenceOrder() {
+        assertThat(postProcessor.getOrder()).isEqualTo(Ordered.LOWEST_PRECEDENCE);
     }
 
     @Test

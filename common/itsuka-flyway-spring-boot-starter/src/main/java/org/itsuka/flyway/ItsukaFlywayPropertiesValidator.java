@@ -33,7 +33,7 @@ final class ItsukaFlywayPropertiesValidator {
      */
     static void validate(ItsukaFlywayProperties properties) {
         List<Source> sources = properties.getSources();
-        if (sources == null || sources.isEmpty()) {
+        if (sources.isEmpty()) {
             return;
         }
 
@@ -41,6 +41,9 @@ final class ItsukaFlywayPropertiesValidator {
         for (int i = 0; i < sources.size(); i++) {
             Source source = sources.get(i);
             String path = "itsuka.flyway.sources[" + i + "]";
+            if (source == null) {
+                throw new IllegalStateException(path + " 不能为空");
+            }
             String name = source.getName();
             if (name == null || name.isBlank()) {
                 throw new IllegalStateException(path + ".name 不能为空");

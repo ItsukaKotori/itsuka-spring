@@ -28,22 +28,23 @@ class ItsukaFlywayDataSourceResolverTest {
         DataSource flyway = dataSource("flyway");
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, provider(primary), provider(flyway), emptyProvider(), emptyProvider());
-        assertThat(resolver.resolve()).isSameAs(flyway);
+        assertThat(resolver.resolve("order")).isSameAs(flyway);
     }
 
     @Test
-    void flywayConnectionDetailsBuildsDataSourceFromUrl() {
+    void configuredUrlBuildsSimpleDriverDataSource() {
         properties.setUrl("jdbc:h2:mem:flyway-details");
         properties.setUser("sa");
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, emptyProvider(), emptyProvider(), emptyProvider(), emptyProvider());
-        DataSource resolved = resolver.resolve();
+        DataSource resolved = resolver.resolve("order");
         assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
         assertThat(((SimpleDriverDataSource) resolved).getUrl()).isEqualTo("jdbc:h2:mem:flyway-details");
     }
 
     @Test
-    void flywayConnectionDetailsBeanWinsOverPrimary() {
+    void flywayConnectionDetailsBeanWinsOverPrimaryAndConfiguredUrl() {
+        properties.setUrl("jdbc:h2:mem:properties-url");
         DataSource primary = dataSource("primary");
         FlywayConnectionDetails details = new FlywayConnectionDetails() {
             @Override public String getUsername() { return "sa"; }
@@ -52,23 +53,39 @@ class ItsukaFlywayDataSourceResolverTest {
         };
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, provider(primary), emptyProvider(), provider(details), emptyProvider());
-        DataSource resolved = resolver.resolve();
+        DataSource resolved = resolver.resolve("order");
         assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
         assertThat(((SimpleDriverDataSource) resolved).getUrl()).isEqualTo("jdbc:h2:mem:details-bean");
     }
 
     @Test
-    void jdbcConnectionDetailsIsFallback() {
+    void jdbcConnectionDetailsWinsOverPrimaryAndConfiguredUrl() {
+        properties.setUrl("jdbc:h2:mem:properties-url");
+        DataSource primary = dataSource("primary");
         JdbcConnectionDetails details = new JdbcConnectionDetails() {
             @Override public String getUsername() { return "sa"; }
             @Override public String getPassword() { return ""; }
             @Override public String getJdbcUrl() { return "jdbc:h2:mem:jdbc-details"; }
         };
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
-            properties, emptyProvider(), emptyProvider(), emptyProvider(), provider(details));
-        DataSource resolved = resolver.resolve();
+            properties, provider(primary), emptyProvider(), emptyProvider(), provider(details));
+        DataSource resolved = resolver.resolve("order");
         assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
         assertThat(((SimpleDriverDataSource) resolved).getUrl()).isEqualTo("jdbc:h2:mem:jdbc-details");
+    }
+
+    @Test
+    void derivesFromPrimaryDataSourceUsingConfiguredUser() {
+        properties.setUser("flyway-user");
+        properties.setPassword("flyway-password");
+        DataSource primary = dataSource("primary-derived");
+        ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
+            properties, provider(primary), emptyProvider(), emptyProvider(), emptyProvider());
+        DataSource resolved = resolver.resolve("order");
+        assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
+        assertThat(((SimpleDriverDataSource) resolved).getUrl())
+            .isEqualTo("jdbc:h2:mem:primary-derived;DB_CLOSE_DELAY=-1");
+        assertThat(((SimpleDriverDataSource) resolved).getUsername()).isEqualTo("flyway-user");
     }
 
     @Test
@@ -76,16 +93,21 @@ class ItsukaFlywayDataSourceResolverTest {
         DataSource primary = dataSource("primary");
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, provider(primary), emptyProvider(), emptyProvider(), emptyProvider());
-        assertThat(resolver.resolve()).isSameAs(primary);
+        assertThat(resolver.resolve("order")).isSameAs(primary);
     }
 
     @Test
     void missingDataSourceFailsWithHint() {
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, emptyProvider(), emptyProvider(), emptyProvider(), emptyProvider());
-        assertThatThrownBy(resolver::resolve)
+        assertThatThrownBy(() -> resolver.resolve("order"))
             .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("数据源");
+            .hasMessageContaining("order")
+            .hasMessageContaining("DataSource")
+            .hasMessageContaining("@FlywayDataSource")
+            .hasMessageContaining("FlywayConnectionDetails")
+            .hasMessageContaining("JdbcConnectionDetails")
+            .hasMessageContaining("spring.flyway.url");
     }
 
     private static JdbcDataSource dataSource(String name) {

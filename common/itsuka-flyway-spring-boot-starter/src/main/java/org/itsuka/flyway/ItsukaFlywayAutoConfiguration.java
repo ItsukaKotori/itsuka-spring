@@ -63,7 +63,6 @@ public class ItsukaFlywayAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(name = "itsukaFlywaySchemaManagementProvider")
     SchemaManagementProvider itsukaFlywaySchemaManagementProvider(ObjectProvider<Flyway> flyways) {
         return new ItsukaFlywaySchemaManagementProvider(flyways);
     }
