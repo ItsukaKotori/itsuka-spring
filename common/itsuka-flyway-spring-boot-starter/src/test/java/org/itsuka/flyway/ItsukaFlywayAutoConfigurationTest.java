@@ -188,6 +188,54 @@ class ItsukaFlywayAutoConfigurationTest {
             });
     }
 
+    @Test
+    void missingLocationFailsByDefault() {
+        runner().withPropertyValues(
+                "itsuka.flyway.sources[1].name=missing",
+                "itsuka.flyway.sources[1].location=classpath:flyway/missing")
+            .run(ctx -> {
+                assertThat(ctx).hasFailed();
+                assertThat(ctx.getStartupFailure()).hasStackTraceContaining("flyway/missing");
+            });
+    }
+
+    @Test
+    void missingLocationCanBeIgnored() {
+        runner().withPropertyValues(
+                "itsuka.flyway.fail-on-missing-locations=false",
+                "itsuka.flyway.sources[1].name=missing",
+                "itsuka.flyway.sources[1].location=classpath:flyway/missing")
+            .run(ctx -> assertThat(ctx).hasNotFailed());
+    }
+
+    @Test
+    void failureStopsLaterSources() {
+        runner().withPropertyValues(
+                "itsuka.flyway.sources[0].name=fail",
+                "itsuka.flyway.sources[0].location=classpath:flyway/fail",
+                "itsuka.flyway.sources[1].name=order",
+                "itsuka.flyway.sources[1].location=classpath:flyway/order")
+            .run(ctx -> {
+                assertThat(ctx).hasFailed();
+                assertThat(new JdbcTemplate(dataSource).queryForObject(
+                    "select count(*) from information_schema.tables "
+                        + "where lower(table_name) = 'flyway_order_test'", Integer.class)).isZero();
+            });
+    }
+
+    @Test
+    void duplicateSourceNamesFailBeforeMigration() {
+        runner().withPropertyValues(
+                "itsuka.flyway.sources[0].name=order-center",
+                "itsuka.flyway.sources[0].location=classpath:flyway/order",
+                "itsuka.flyway.sources[1].name=order_center",
+                "itsuka.flyway.sources[1].location=classpath:flyway/user")
+            .run(ctx -> {
+                assertThat(ctx).hasFailed();
+                assertThat(ctx.getStartupFailure()).hasStackTraceContaining("重复");
+            });
+    }
+
     @TestConfiguration
     static class RecordingStrategyConfiguration {
 
