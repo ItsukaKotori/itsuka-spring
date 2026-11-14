@@ -88,6 +88,8 @@ final class ItsukaFlywayFactory {
     /**
      * 复制 Spring Boot 4.0.3 {@code FlywayAutoConfiguration} 的属性映射，但不映射
      * {@code locations} 与 {@code table}。
+     *
+     * <p>属性映射改编自 Spring Boot 的 {@code FlywayAutoConfiguration}，遵循 Apache License 2.0。</p>
      * @param configuration the configuration
      * @param properties the properties
      */

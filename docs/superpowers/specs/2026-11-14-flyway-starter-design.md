@@ -18,7 +18,7 @@
 
 成功标准：
 
-1. 在 Spring Boot 4 + H2 的集成测试中，配置两个 classpath 路径，两边都有 `V1__*.sql`，其中一边还有 `V2__*.sql`；启动后两张业务表都存在，两张独立历史表都能查到正确的迁移记录。
+1. 在 Spring Boot 4 + H2 的集成测试中，设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`（多个 source 共享同一个 schema，后续 source 需要 baseline 才能通过非空 schema 检查），配置两个 classpath 路径，两边都有 `V1__*.sql`，其中一边还有 `V2__*.sql`；启动后两张业务表都存在，两张独立历史表都能查到正确的迁移记录。
 2. 默认配置下（不设置 `itsuka.flyway.native-enabled`），容器中不存在 Boot 原生的 `flyway` Bean，也不会创建默认的 `flyway_schema_history` 表。
 3. 设置 `itsuka.flyway.native-enabled=true` 且不配置 sources 时，恢复 Boot 原生行为：存在 `flyway` Bean，并按 `spring.flyway.locations` 迁移。
 4. `itsuka.flyway.native-enabled=true` 与 `itsuka.flyway.sources` 同时配置时，启动失败并给出明确原因。
@@ -68,7 +68,7 @@ dependencies {
 
 - `spring-boot-starter-flyway` 会带入 `spring-boot-flyway`、`spring-boot-starter-jdbc`、`flyway-core`。
 - 自动配置注册文件：`META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
-- 环境后处理器注册文件：`META-INF/spring.factories`
+- 环境后处理器注册文件：`META-INF/spring.factories`（键为 `org.springframework.boot.EnvironmentPostProcessor`）
 - 默认启用：`itsuka.flyway.enabled=true`，`matchIfMissing=true`。
 
 ### 3.2 配置
@@ -81,6 +81,7 @@ spring:
     password: demo
   flyway:
     baseline-on-migrate: true
+    baseline-version: 0
     placeholders:
       app_schema: demo
 
@@ -114,6 +115,13 @@ itsuka:
 - `table` 必须匹配 `^[A-Za-z_][A-Za-z0-9_]*$`，长度不超过 64，且在同一应用内唯一（忽略大小写）。
 - 未显式配置 `table` 时，默认值为 `flyway_schema_history_` 加上规范化后的 name；派生结果超过 64 个字符时启动失败，并提示显式配置 `table`。
 - `sources` 为空时允许启动，但不会执行任何迁移。
+
+共享 schema 的 baseline 要求：
+
+- 多个 Flyway 实例共享同一个 schema：第一个 source 看到空 schema；后续 source 看到的是非空 schema，且其中没有自己的历史表。
+- 新的共享 schema 必须设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`，否则 Flyway 11 会在第二个 source 上抛出 `NON_EMPTY_SCHEMA_WITHOUT_SCHEMA_HISTORY_TABLE`。
+- 已存在的 schema 应把 `baseline-version` 设为当前已有版本；`0` 会让 Flyway 尝试重新执行所有迁移。
+- starter 不会自动 baseline；它只保持通用 `spring.flyway.*` 配置透明。
 
 ### 3.3 模式
 
@@ -214,7 +222,8 @@ public class OrderMigrationInfo {
 
 ### 4.4 环境后处理器
 
-- 实现 `EnvironmentPostProcessor` 和 `Ordered`，`getOrder()` 返回 `Ordered.LOWEST_PRECEDENCE`，确保在 `ConfigDataEnvironmentPostProcessor` 之后执行。
+- 实现 Boot 4 的 `org.springframework.boot.EnvironmentPostProcessor` 和 `Ordered`，`getOrder()` 返回 `Ordered.LOWEST_PRECEDENCE`，确保在 `ConfigDataEnvironmentPostProcessor` 之后执行。
+- 在 `META-INF/spring.factories` 中以 `org.springframework.boot.EnvironmentPostProcessor` 键注册；旧的 `org.springframework.boot.env.EnvironmentPostProcessor` 接口已在 4.2.0 标记为 deprecated for removal。
 - 使用 `Binder` 绑定 `itsuka.flyway`，支持 relaxed binding。
 - 伪代码：
 
@@ -379,6 +388,7 @@ org.itsuka.flyway
   - 派生表名冲突 → 启动失败。
   - `ItsukaFlywaySchemaManagementProvider` 对每个 source 使用的 DataSource 返回 `MANAGED`。
   - 用户显式设置 `spring.flyway.enabled=false` 时，source 仍然迁移，且 schema 仍被标记为 `MANAGED`。
+  - 说明：测试的共享 `ApplicationContextRunner` 设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`（原因见 3.2）；历史表迁移数按 `where type = 'SQL'` 统计——H2 会额外写入一条建表标记行，MySQL 的第二个 source 还会多一条 baseline 行。
 - `ItsukaFlywayEnvironmentPostProcessorIT`（`SpringApplication`）
   - 不配置 sources 时，`spring.flyway.enabled` 被设为 false，Boot 原生迁移不执行。
   - 配置 `native-enabled=true` 时，Boot 原生迁移执行。

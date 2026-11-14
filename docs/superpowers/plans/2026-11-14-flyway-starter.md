@@ -435,6 +435,8 @@ Expected: 编译失败，找不到 `ItsukaFlywayEnvironmentPostProcessor`。
 
 逻辑：
 
+需要的 import：`org.springframework.boot.EnvironmentPostProcessor`（Boot 4 的新包；旧的 `org.springframework.boot.env.EnvironmentPostProcessor` 已 deprecated for removal）。
+
 ```java
 public class ItsukaFlywayEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -472,7 +474,7 @@ public class ItsukaFlywayEnvironmentPostProcessor implements EnvironmentPostProc
 `src/main/resources/META-INF/spring.factories`：
 
 ```properties
-org.springframework.boot.env.EnvironmentPostProcessor=\
+org.springframework.boot.EnvironmentPostProcessor=\
 org.itsuka.flyway.ItsukaFlywayEnvironmentPostProcessor
 ```
 
@@ -794,7 +796,11 @@ class ItsukaFlywayAutoConfigurationTest {
                 "itsuka.flyway.sources[0].name=order",
                 "itsuka.flyway.sources[0].location=classpath:flyway/order",
                 "itsuka.flyway.sources[1].name=user",
-                "itsuka.flyway.sources[1].location=classpath:flyway/user");
+                "itsuka.flyway.sources[1].location=classpath:flyway/user",
+                // 多个 Flyway 实例共享同一 schema 时，后续 source 需要 baseline 才能通过
+                // Flyway 的非空 schema 检查；baseline-version=0 保证每个 source 的 V1 仍会执行。
+                "spring.flyway.baseline-on-migrate=true",
+                "spring.flyway.baseline-version=0");
     }
 
     @Test
@@ -813,9 +819,9 @@ class ItsukaFlywayAutoConfigurationTest {
             assertThat(jdbc.queryForObject(
                 "select count(*) from flyway_user_test", Integer.class)).isEqualTo(1);
             assertThat(jdbc.queryForObject(
-                "select count(*) from flyway_schema_history_order", Integer.class)).isEqualTo(2);
+                "select count(*) from flyway_schema_history_order where type = 'SQL'", Integer.class)).isEqualTo(2);
             assertThat(jdbc.queryForObject(
-                "select count(*) from flyway_schema_history_user", Integer.class)).isEqualTo(2);
+                "select count(*) from flyway_schema_history_user where type = 'SQL'", Integer.class)).isEqualTo(2);
             assertThat(jdbc.queryForObject(
                 "select count(*) from information_schema.tables "
                     + "where lower(table_name) = 'flyway_schema_history'", Integer.class)).isZero();
@@ -1342,8 +1348,9 @@ Expected: PASS。
 @Testcontainers(disabledWithoutDocker = true)
 class MySqlFlywayIT {
 
+    // Testcontainers 2.0.3 的 MySQLContainer 解析类型不是泛型，直接使用原始类型。
     @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.4");
+    static MySQLContainer mysql = new MySQLContainer("mysql:8.4");
 
     @Test
     void migratesMultipleSourcesWithDuplicateVersions() {
@@ -1357,7 +1364,11 @@ class MySqlFlywayIT {
                 "itsuka.flyway.sources[0].name=order",
                 "itsuka.flyway.sources[0].location=classpath:flyway/order",
                 "itsuka.flyway.sources[1].name=user",
-                "itsuka.flyway.sources[1].location=classpath:flyway/user")
+                "itsuka.flyway.sources[1].location=classpath:flyway/user",
+                // 多个 Flyway 实例共享同一 schema 时，后续 source 需要 baseline 才能通过
+                // Flyway 的非空 schema 检查；baseline-version=0 保证每个 source 的 V1 仍会执行。
+                "spring.flyway.baseline-on-migrate=true",
+                "spring.flyway.baseline-version=0")
             .run(ctx -> {
                 assertThat(ctx).hasNotFailed();
                 JdbcTemplate jdbc = new JdbcTemplate(dataSource);
@@ -1366,9 +1377,9 @@ class MySqlFlywayIT {
                 assertThat(jdbc.queryForObject(
                     "select count(*) from flyway_user_test", Integer.class)).isEqualTo(1);
                 assertThat(jdbc.queryForObject(
-                    "select count(*) from flyway_schema_history_order", Integer.class)).isEqualTo(2);
+                    "select count(*) from flyway_schema_history_order where type = 'SQL'", Integer.class)).isEqualTo(2);
                 assertThat(jdbc.queryForObject(
-                    "select count(*) from flyway_schema_history_user", Integer.class)).isEqualTo(2);
+                    "select count(*) from flyway_schema_history_user where type = 'SQL'", Integer.class)).isEqualTo(2);
             });
     }
 }
@@ -1436,7 +1447,15 @@ src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoCo
 Run: `./gradlew :common:itsuka-flyway-spring-boot-starter:build`
 Expected: BUILD SUCCESSFUL，且生成的 POM 包含 `spring-boot-starter-flyway`（compile）与 `flyway-mysql`（runtime）。
 
-- [ ] **Step 5: 提交最终修正（如有）**
+- [ ] **Step 5: 核对文档、计划与归属声明**
+
+确认：
+
+- 设计文档 §1、§3.2、§4.4、§8.2 已记录共享 schema 的 baseline 要求、Boot 4 `EnvironmentPostProcessor` 新接口与注册键、测试的 baseline 属性与 `type = 'SQL'` 统计口径。
+- 实现计划 Task 2/4/5 的示例代码与当前实现和测试一致（新 EPP 键、baseline 属性、`where type = 'SQL'`、原始 `MySQLContainer`）。
+- `ItsukaFlywayFactory#configureProperties` 的注释声明属性映射改编自 Spring Boot `FlywayAutoConfiguration`，Apache License 2.0；映射内容未改动。
+
+- [ ] **Step 6: 提交最终修正（如有）**
 
 ```bash
 git add common/itsuka-flyway-spring-boot-starter settings.gradle.kts build.gradle.kts docs/superpowers
