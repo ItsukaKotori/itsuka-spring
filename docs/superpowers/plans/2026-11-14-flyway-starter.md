@@ -435,6 +435,8 @@ Expected: 编译失败，找不到 `ItsukaFlywayEnvironmentPostProcessor`。
 
 逻辑：
 
+需要的 import：`org.springframework.boot.EnvironmentPostProcessor`（Boot 4 的新包；旧的 `org.springframework.boot.env.EnvironmentPostProcessor` 已 deprecated for removal）。
+
 ```java
 public class ItsukaFlywayEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -472,7 +474,7 @@ public class ItsukaFlywayEnvironmentPostProcessor implements EnvironmentPostProc
 `src/main/resources/META-INF/spring.factories`：
 
 ```properties
-org.springframework.boot.env.EnvironmentPostProcessor=\
+org.springframework.boot.EnvironmentPostProcessor=\
 org.itsuka.flyway.ItsukaFlywayEnvironmentPostProcessor
 ```
 
@@ -503,7 +505,7 @@ git commit -m "feat(flyway): disable native flyway by default with native opt-in
 **Interfaces:**
 - Consumes: `ItsukaFlywayProperties`（Task 1）。
 - Produces:
-  - `@FunctionalInterface interface ItsukaFlywayDataSourceResolver { DataSource resolve(); }`（包级私有）。
+  - `@FunctionalInterface interface ItsukaFlywayDataSourceResolver { DataSource resolve(String sourceName); }`（包级私有）。
   - `static ItsukaFlywayDataSourceResolver ItsukaFlywayDataSourceResolver.of(FlywayProperties properties, ObjectProvider<DataSource> dataSource, ObjectProvider<DataSource> flywayDataSource, ObjectProvider<FlywayConnectionDetails> flywayConnectionDetails, ObjectProvider<JdbcConnectionDetails> jdbcConnectionDetails)`。
   - `ItsukaFlywayFactory(FlywayProperties, ItsukaFlywayProperties, ResourceLoader, ItsukaFlywayDataSourceResolver, List<FlywayConfigurationCustomizer>, List<JavaMigration>, List<Callback>)`。
   - `Flyway ItsukaFlywayFactory.create(ItsukaFlywayProperties.Source source)`。
@@ -523,22 +525,23 @@ class ItsukaFlywayDataSourceResolverTest {
         DataSource flyway = dataSource("flyway");
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, provider(primary), provider(flyway), emptyProvider(), emptyProvider());
-        assertThat(resolver.resolve()).isSameAs(flyway);
+        assertThat(resolver.resolve("order")).isSameAs(flyway);
     }
 
     @Test
-    void flywayConnectionDetailsBuildsDataSourceFromUrl() {
+    void configuredUrlBuildsSimpleDriverDataSource() {
         properties.setUrl("jdbc:h2:mem:flyway-details");
         properties.setUser("sa");
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, emptyProvider(), emptyProvider(), emptyProvider(), emptyProvider());
-        DataSource resolved = resolver.resolve();
+        DataSource resolved = resolver.resolve("order");
         assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
         assertThat(((SimpleDriverDataSource) resolved).getUrl()).isEqualTo("jdbc:h2:mem:flyway-details");
     }
 
     @Test
-    void flywayConnectionDetailsBeanWinsOverPrimary() {
+    void flywayConnectionDetailsBeanWinsOverPrimaryAndConfiguredUrl() {
+        properties.setUrl("jdbc:h2:mem:properties-url");
         DataSource primary = dataSource("primary");
         FlywayConnectionDetails details = new FlywayConnectionDetails() {
             @Override public String getUsername() { return "sa"; }
@@ -547,23 +550,53 @@ class ItsukaFlywayDataSourceResolverTest {
         };
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, provider(primary), emptyProvider(), provider(details), emptyProvider());
-        DataSource resolved = resolver.resolve();
+        DataSource resolved = resolver.resolve("order");
         assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
         assertThat(((SimpleDriverDataSource) resolved).getUrl()).isEqualTo("jdbc:h2:mem:details-bean");
     }
 
     @Test
-    void jdbcConnectionDetailsIsFallback() {
+    void primaryDataSourceWinsOverJdbcConnectionDetails() {
+        DataSource primary = dataSource("primary");
         JdbcConnectionDetails details = new JdbcConnectionDetails() {
             @Override public String getUsername() { return "sa"; }
             @Override public String getPassword() { return ""; }
             @Override public String getJdbcUrl() { return "jdbc:h2:mem:jdbc-details"; }
+            @Override public String getDriverClassName() { return "org.h2.Driver"; }
+        };
+        ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
+            properties, provider(primary), emptyProvider(), emptyProvider(), provider(details));
+        assertThat(resolver.resolve("order")).isSameAs(primary);
+    }
+
+    @Test
+    void jdbcConnectionDetailsIsUsedWhenNoPrimaryDataSourceExists() {
+        JdbcConnectionDetails details = new JdbcConnectionDetails() {
+            @Override public String getUsername() { return "sa"; }
+            @Override public String getPassword() { return ""; }
+            @Override public String getJdbcUrl() { return "jdbc:h2:mem:jdbc-details"; }
+            @Override public String getDriverClassName() { return "org.h2.Driver"; }
         };
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, emptyProvider(), emptyProvider(), emptyProvider(), provider(details));
-        DataSource resolved = resolver.resolve();
+        DataSource resolved = resolver.resolve("order");
         assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
         assertThat(((SimpleDriverDataSource) resolved).getUrl()).isEqualTo("jdbc:h2:mem:jdbc-details");
+        assertThat(((SimpleDriverDataSource) resolved).getUsername()).isEqualTo("sa");
+    }
+
+    @Test
+    void derivesFromPrimaryDataSourceUsingConfiguredUser() {
+        properties.setUser("flyway-user");
+        properties.setPassword("flyway-password");
+        DataSource primary = dataSource("primary-derived");
+        ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
+            properties, provider(primary), emptyProvider(), emptyProvider(), emptyProvider());
+        DataSource resolved = resolver.resolve("order");
+        assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
+        assertThat(((SimpleDriverDataSource) resolved).getUrl())
+            .isEqualTo("jdbc:h2:mem:primary-derived;DB_CLOSE_DELAY=-1");
+        assertThat(((SimpleDriverDataSource) resolved).getUsername()).isEqualTo("flyway-user");
     }
 
     @Test
@@ -571,16 +604,21 @@ class ItsukaFlywayDataSourceResolverTest {
         DataSource primary = dataSource("primary");
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, provider(primary), emptyProvider(), emptyProvider(), emptyProvider());
-        assertThat(resolver.resolve()).isSameAs(primary);
+        assertThat(resolver.resolve("order")).isSameAs(primary);
     }
 
     @Test
     void missingDataSourceFailsWithHint() {
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, emptyProvider(), emptyProvider(), emptyProvider(), emptyProvider());
-        assertThatThrownBy(resolver::resolve)
+        assertThatThrownBy(() -> resolver.resolve("order"))
             .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("数据源");
+            .hasMessageContaining("order")
+            .hasMessageContaining("DataSource")
+            .hasMessageContaining("@FlywayDataSource")
+            .hasMessageContaining("FlywayConnectionDetails")
+            .hasMessageContaining("JdbcConnectionDetails")
+            .hasMessageContaining("spring.flyway.url");
     }
 
     private static JdbcDataSource dataSource(String name) {
@@ -617,13 +655,13 @@ Expected: 编译失败，找不到 `ItsukaFlywayDataSourceResolver`。
 `of(...)` 返回的 lambda 按以下顺序解析：
 
 1. `flywayDataSource.getIfAvailable()`：非空直接返回。
-2. `flywayConnectionDetails.getIfAvailable()`；为空时用 `FlywayProperties` 构造一个匿名 `FlywayConnectionDetails`（url/user/password/driver-class-name）。
-3. 若 details 的 `getJdbcUrl()` 非空：用 `DataSourceBuilder.create().type(SimpleDriverDataSource.class)` 构造并返回。
-4. 若 details 的 `getUsername()` 非空且 `dataSource.getIfUnique()` 非空：从该 DataSource 派生 `SimpleDriverDataSource`，使用 details 的用户名/密码。
-5. `dataSource.getIfUnique()` 非空：直接返回。
-6. `jdbcConnectionDetails.getIfAvailable()` 非空：用其 url/username/password 构造 `SimpleDriverDataSource`。
-7. 抛 `IllegalStateException`，消息包含：
-   `Flyway 迁移数据源缺失：请提供一个 DataSource Bean、@FlywayDataSource Bean，或配置 spring.flyway.url。`
+2. `flywayConnectionDetails.getIfAvailable()`：`getJdbcUrl()` 非空时用 `DataSourceBuilder` 构造 `SimpleDriverDataSource` 并返回；`getUsername()` 非空且 `dataSource.getIfUnique()` 非空时从该 DataSource 派生，使用详情的用户名/密码。
+3. `spring.flyway.url` 非空：用 `FlywayProperties` 构造独立的 `SimpleDriverDataSource` 并返回。
+4. `spring.flyway.user` 非空且 `dataSource.getIfUnique()` 非空：从该 DataSource 派生，使用 `spring.flyway.user/password`。
+5. `dataSource.getIfUnique()` 非空：直接返回（唯一或 `@Primary` 的主 DataSource 优先于 `JdbcConnectionDetails`，避免绕过连接池）。
+6. `jdbcConnectionDetails.getIfAvailable()` 非空：适配为 `FlywayConnectionDetails`（含 url/username/password/driver-class-name），有 URL 时构造 `SimpleDriverDataSource`。
+7. 抛 `IllegalStateException`，消息包含当前 source 名以及全部支持的数据源来源：
+   `Flyway 迁移数据源缺失（source: <name>）：请提供一个 DataSource Bean、@FlywayDataSource Bean、FlywayConnectionDetails Bean、JdbcConnectionDetails Bean，或配置 spring.flyway.url。`
 
 - [ ] **Step 4: 运行确认通过**
 
@@ -667,7 +705,7 @@ class ItsukaFlywayFactoryTest {
 
         ItsukaFlywayFactory factory = new ItsukaFlywayFactory(
             flywayProperties, starterProperties, new DefaultResourceLoader(),
-            () -> dataSource, List.of(), List.of(), List.of());
+            (sourceName) -> dataSource, List.of(), List.of(), List.of());
 
         ItsukaFlywayProperties.Source source = new ItsukaFlywayProperties.Source();
         source.setName("order");
@@ -702,7 +740,7 @@ class ItsukaFlywayFactoryTest {
 
         ItsukaFlywayFactory factory = new ItsukaFlywayFactory(
             new FlywayProperties(), new ItsukaFlywayProperties(), new DefaultResourceLoader(),
-            () -> dataSource, List.of(customizer), List.of(), List.of());
+            (sourceName) -> dataSource, List.of(customizer), List.of(), List.of());
 
         ItsukaFlywayProperties.Source source = new ItsukaFlywayProperties.Source();
         source.setName("order");
@@ -729,7 +767,7 @@ Expected: 编译失败，找不到 `ItsukaFlywayFactory`。
 构造器保存参数。`create(source)` 按顺序：
 
 1. `FluentConfiguration configuration = new FluentConfiguration(resourceLoader.getClassLoader());`
-2. `configuration.dataSource(dataSource())`（懒解析并缓存）。
+2. `configuration.dataSource(dataSourceResolver.resolve(source.getName()))`（每次创建 source 时解析）。
 3. `configureCommon(configuration)`：完整复制 Boot 4.0.3 `FlywayAutoConfiguration.FlywayConfiguration#configureProperties` 的方法体，删除 `locations(...)` 和 `table(...)` 两处调用。`callbackLocations` 的 `{vendor}` 解析用私有方法实现：
    - 无 `{vendor}` 时原样返回；
    - 否则用 `JdbcUtils.extractDatabaseMetaData(dataSource, DatabaseMetaData::getURL)` 取 URL，`DatabaseDriver.fromJdbcUrl(url)` 得到 vendor，替换后返回；
@@ -794,7 +832,11 @@ class ItsukaFlywayAutoConfigurationTest {
                 "itsuka.flyway.sources[0].name=order",
                 "itsuka.flyway.sources[0].location=classpath:flyway/order",
                 "itsuka.flyway.sources[1].name=user",
-                "itsuka.flyway.sources[1].location=classpath:flyway/user");
+                "itsuka.flyway.sources[1].location=classpath:flyway/user",
+                // 多个 Flyway 实例共享同一 schema 时，后续 source 需要 baseline 才能通过
+                // Flyway 的非空 schema 检查；baseline-version=0 保证每个 source 的 V1 仍会执行。
+                "spring.flyway.baseline-on-migrate=true",
+                "spring.flyway.baseline-version=0");
     }
 
     @Test
@@ -813,9 +855,9 @@ class ItsukaFlywayAutoConfigurationTest {
             assertThat(jdbc.queryForObject(
                 "select count(*) from flyway_user_test", Integer.class)).isEqualTo(1);
             assertThat(jdbc.queryForObject(
-                "select count(*) from flyway_schema_history_order", Integer.class)).isEqualTo(2);
+                "select count(*) from flyway_schema_history_order where type = 'SQL'", Integer.class)).isEqualTo(2);
             assertThat(jdbc.queryForObject(
-                "select count(*) from flyway_schema_history_user", Integer.class)).isEqualTo(2);
+                "select count(*) from flyway_schema_history_user where type = 'SQL'", Integer.class)).isEqualTo(2);
             assertThat(jdbc.queryForObject(
                 "select count(*) from information_schema.tables "
                     + "where lower(table_name) = 'flyway_schema_history'", Integer.class)).isZero();
@@ -970,7 +1012,6 @@ public class ItsukaFlywayAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(name = "itsukaFlywaySchemaManagementProvider")
     SchemaManagementProvider itsukaFlywaySchemaManagementProvider(ObjectProvider<Flyway> flyways) {
         return new ItsukaFlywaySchemaManagementProvider(flyways);
     }
@@ -1342,8 +1383,9 @@ Expected: PASS。
 @Testcontainers(disabledWithoutDocker = true)
 class MySqlFlywayIT {
 
+    // Testcontainers 2.0.3 的 MySQLContainer 解析类型不是泛型，直接使用原始类型。
     @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.4");
+    static MySQLContainer mysql = new MySQLContainer("mysql:8.4");
 
     @Test
     void migratesMultipleSourcesWithDuplicateVersions() {
@@ -1357,7 +1399,11 @@ class MySqlFlywayIT {
                 "itsuka.flyway.sources[0].name=order",
                 "itsuka.flyway.sources[0].location=classpath:flyway/order",
                 "itsuka.flyway.sources[1].name=user",
-                "itsuka.flyway.sources[1].location=classpath:flyway/user")
+                "itsuka.flyway.sources[1].location=classpath:flyway/user",
+                // 多个 Flyway 实例共享同一 schema 时，后续 source 需要 baseline 才能通过
+                // Flyway 的非空 schema 检查；baseline-version=0 保证每个 source 的 V1 仍会执行。
+                "spring.flyway.baseline-on-migrate=true",
+                "spring.flyway.baseline-version=0")
             .run(ctx -> {
                 assertThat(ctx).hasNotFailed();
                 JdbcTemplate jdbc = new JdbcTemplate(dataSource);
@@ -1366,9 +1412,9 @@ class MySqlFlywayIT {
                 assertThat(jdbc.queryForObject(
                     "select count(*) from flyway_user_test", Integer.class)).isEqualTo(1);
                 assertThat(jdbc.queryForObject(
-                    "select count(*) from flyway_schema_history_order", Integer.class)).isEqualTo(2);
+                    "select count(*) from flyway_schema_history_order where type = 'SQL'", Integer.class)).isEqualTo(2);
                 assertThat(jdbc.queryForObject(
-                    "select count(*) from flyway_schema_history_user", Integer.class)).isEqualTo(2);
+                    "select count(*) from flyway_schema_history_user where type = 'SQL'", Integer.class)).isEqualTo(2);
             });
     }
 }
@@ -1436,7 +1482,15 @@ src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoCo
 Run: `./gradlew :common:itsuka-flyway-spring-boot-starter:build`
 Expected: BUILD SUCCESSFUL，且生成的 POM 包含 `spring-boot-starter-flyway`（compile）与 `flyway-mysql`（runtime）。
 
-- [ ] **Step 5: 提交最终修正（如有）**
+- [ ] **Step 5: 核对文档、计划与归属声明**
+
+确认：
+
+- 设计文档 §1、§3.1、§3.2、§4.4、§8.2 已记录共享 schema 的 baseline 要求、Boot 4 `EnvironmentPostProcessor` 新接口与注册键、测试的 baseline 属性与 `type = 'SQL'` 统计口径。
+- 实现计划 Task 2/4/5 的示例代码与当前实现和测试一致（新 EPP 键、baseline 属性、`where type = 'SQL'`、原始 `MySQLContainer`）。
+- `ItsukaFlywayFactory#configureProperties` 的注释声明属性映射改编自 Spring Boot `FlywayAutoConfiguration`，Apache License 2.0；映射内容未改动。
+
+- [ ] **Step 6: 提交最终修正（如有）**
 
 ```bash
 git add common/itsuka-flyway-spring-boot-starter settings.gradle.kts build.gradle.kts docs/superpowers

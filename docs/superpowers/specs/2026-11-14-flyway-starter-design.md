@@ -18,7 +18,7 @@
 
 成功标准：
 
-1. 在 Spring Boot 4 + H2 的集成测试中，配置两个 classpath 路径，两边都有 `V1__*.sql`，其中一边还有 `V2__*.sql`；启动后两张业务表都存在，两张独立历史表都能查到正确的迁移记录。
+1. 在 Spring Boot 4 + H2 的集成测试中，设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`（多个 source 共享同一个 schema，后续 source 需要 baseline 才能通过非空 schema 检查），配置两个 classpath 路径，两边都有 `V1__*.sql` 与 `V2__*.sql`；启动后两张业务表都存在，两张独立历史表都能查到正确的迁移记录。
 2. 默认配置下（不设置 `itsuka.flyway.native-enabled`），容器中不存在 Boot 原生的 `flyway` Bean，也不会创建默认的 `flyway_schema_history` 表。
 3. 设置 `itsuka.flyway.native-enabled=true` 且不配置 sources 时，恢复 Boot 原生行为：存在 `flyway` Bean，并按 `spring.flyway.locations` 迁移。
 4. `itsuka.flyway.native-enabled=true` 与 `itsuka.flyway.sources` 同时配置时，启动失败并给出明确原因。
@@ -68,7 +68,7 @@ dependencies {
 
 - `spring-boot-starter-flyway` 会带入 `spring-boot-flyway`、`spring-boot-starter-jdbc`、`flyway-core`。
 - 自动配置注册文件：`META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
-- 环境后处理器注册文件：`META-INF/spring.factories`
+- 环境后处理器注册文件：`META-INF/spring.factories`（键为 `org.springframework.boot.EnvironmentPostProcessor`）
 - 默认启用：`itsuka.flyway.enabled=true`，`matchIfMissing=true`。
 
 ### 3.2 配置
@@ -81,6 +81,7 @@ spring:
     password: demo
   flyway:
     baseline-on-migrate: true
+    baseline-version: 0
     placeholders:
       app_schema: demo
 
@@ -114,6 +115,14 @@ itsuka:
 - `table` 必须匹配 `^[A-Za-z_][A-Za-z0-9_]*$`，长度不超过 64，且在同一应用内唯一（忽略大小写）。
 - 未显式配置 `table` 时，默认值为 `flyway_schema_history_` 加上规范化后的 name；派生结果超过 64 个字符时启动失败，并提示显式配置 `table`。
 - `sources` 为空时允许启动，但不会执行任何迁移。
+
+共享 schema 的 baseline 要求：
+
+- 多个 Flyway 实例共享同一个 schema：第一个 source 看到空 schema；后续 source 看到的是非空 schema，且其中没有自己的历史表。
+- 两个属性各自解决一个问题：`baseline-on-migrate=true` 避免第二个 source 抛出 `NON_EMPTY_SCHEMA_WITHOUT_SCHEMA_HISTORY_TABLE`；`baseline-version=0` 防止第二个 source 的 `V1` 被 baseline 跳过。
+- baseline 的代价：H2 与 MySQL 都会在第二个 source 的历史表里写入一条 `BASELINE` 行；H2 还会额外写入一条 `TABLE` 标记行。因此测试按 `type = 'SQL'` 统计迁移数。
+- 已存在的 schema 应把 `baseline-version` 设为当前已有版本；`0` 会让 Flyway 尝试重新执行所有迁移。
+- starter 不会自动 baseline；它只保持通用 `spring.flyway.*` 配置透明。
 
 ### 3.3 模式
 
@@ -164,11 +173,14 @@ public class OrderMigrationInfo {
 所有 source 共用同一个迁移数据源，选择顺序与 Boot 原生行为保持一致：
 
 1. 标注了 `@FlywayDataSource` 的 `DataSource` Bean。
-2. `FlywayConnectionDetails` Bean；如果只有 `JdbcConnectionDetails` Bean，则适配其 url/username/password/driver。
+2. `FlywayConnectionDetails` Bean。
 3. `spring.flyway.url/user/password/driver-class-name`：有 URL 时构造独立的 `SimpleDriverDataSource`；只有 username/password 时基于主 DataSource 派生。
 4. 唯一或 `@Primary` 的 `DataSource` Bean。
+5. `JdbcConnectionDetails` Bean：仅在前面都拿不到数据源时兜底，适配其 url/username/password/driver。
 
-选择不到数据源时启动失败，错误信息包含当前 source 列表和常见原因（没有 DataSource、没有配置 `spring.flyway.url`）。
+优先使用主 DataSource，避免 Boot 从 `spring.datasource.*` 自动注册的 `JdbcConnectionDetails` 绕过连接池及其 schema 设置。
+
+选择不到数据源时启动失败，错误信息包含当前 source 名与全部支持的数据源来源（`DataSource`、`@FlywayDataSource`、`FlywayConnectionDetails`、`JdbcConnectionDetails`、`spring.flyway.url`）。
 
 ### 3.6 执行语义
 
@@ -214,7 +226,8 @@ public class OrderMigrationInfo {
 
 ### 4.4 环境后处理器
 
-- 实现 `EnvironmentPostProcessor` 和 `Ordered`，`getOrder()` 返回 `Ordered.LOWEST_PRECEDENCE`，确保在 `ConfigDataEnvironmentPostProcessor` 之后执行。
+- 实现 Boot 4 的 `org.springframework.boot.EnvironmentPostProcessor` 和 `Ordered`，`getOrder()` 返回 `Ordered.LOWEST_PRECEDENCE`，确保在 `ConfigDataEnvironmentPostProcessor` 之后执行。
+- 在 `META-INF/spring.factories` 中以 `org.springframework.boot.EnvironmentPostProcessor` 键注册；旧的 `org.springframework.boot.env.EnvironmentPostProcessor` 接口自 4.0.0 起 deprecated，计划在 4.2.0 移除。
 - 使用 `Binder` 绑定 `itsuka.flyway`，支持 relaxed binding。
 - 伪代码：
 
@@ -360,7 +373,7 @@ org.itsuka.flyway
   - `enabled=false`、非原生模式 → 添加。
 - `ItsukaFlywayFactoryTest`
   - 使用 `FluentConfiguration` + H2，验证公共属性映射（占位符、baseline、encoding）和 source 的 location/table 覆盖顺序。
-  - 数据源选择顺序（`@FlywayDataSource`、`FlywayConnectionDetails`、主 DataSource、`spring.flyway.url`）。
+  - 数据源选择顺序（`@FlywayDataSource`、`FlywayConnectionDetails`、`spring.flyway.url`、主 DataSource、`JdbcConnectionDetails` 兜底）。
   - 少见的公共属性（`installed-by`、`out-of-order`、`clean-disabled`、`validate-on-migrate`、`tablespace` 等）能映射到 `Flyway.getConfiguration()`。
 
 ### 8.2 集成测试
@@ -379,6 +392,7 @@ org.itsuka.flyway
   - 派生表名冲突 → 启动失败。
   - `ItsukaFlywaySchemaManagementProvider` 对每个 source 使用的 DataSource 返回 `MANAGED`。
   - 用户显式设置 `spring.flyway.enabled=false` 时，source 仍然迁移，且 schema 仍被标记为 `MANAGED`。
+  - 说明：测试的共享 `ApplicationContextRunner` 设置 `spring.flyway.baseline-on-migrate=true` 与 `spring.flyway.baseline-version=0`（原因见 3.2）；历史表迁移数按 `where type = 'SQL'` 统计——H2 与 MySQL 的第二个 source 都会多一条 baseline 行，H2 还会额外写入一条 `TABLE` 标记行。
 - `ItsukaFlywayEnvironmentPostProcessorIT`（`SpringApplication`）
   - 不配置 sources 时，`spring.flyway.enabled` 被设为 false，Boot 原生迁移不执行。
   - 配置 `native-enabled=true` 时，Boot 原生迁移执行。
@@ -425,7 +439,7 @@ org.itsuka.flyway
 10. 用户自定义 `Flyway` Bean 时，整个 starter 自动配置退让。
 11. 模块通过 `spring-boot-starter-flyway` 引入 Flyway 和 JDBC，并通过 `runtimeOnly` 带入 `flyway-mysql`；其他数据库模块由接入方添加。
 12. 多路径模式下不修改 `spring.flyway.enabled`（有 source 时靠 Flyway Bean 触发 Boot 退让）；只有“无 source 且非原生模式”时才强制设为 false。
-13. 数据源选择顺序与 Boot 原生保持一致，支持 `@FlywayDataSource`、`FlywayConnectionDetails` 和 `spring.flyway.url`。
+13. 数据源选择顺序：`@FlywayDataSource` → `FlywayConnectionDetails` → `spring.flyway.*` → 主 DataSource → `JdbcConnectionDetails` 兜底；主 DataSource 优先，避免绕过连接池。
 14. 不引入自定义的 `@ItsukaFlywaySource` 注解；配置即契约。
 15. starter 自己注册 `SchemaManagementProvider`，保证 `spring.flyway.enabled=false` 时 JPA 仍把 Flyway 管理的 DataSource 视为 `MANAGED`。
 16. 完整复制 Boot 4.0.3 的属性映射，避免少见属性静默失效；升级 Boot 时以 Boot 的 `configureProperties` 为基准回归。
