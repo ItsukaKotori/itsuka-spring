@@ -556,19 +556,33 @@ class ItsukaFlywayDataSourceResolverTest {
     }
 
     @Test
-    void jdbcConnectionDetailsWinsOverPrimaryAndConfiguredUrl() {
-        properties.setUrl("jdbc:h2:mem:properties-url");
+    void primaryDataSourceWinsOverJdbcConnectionDetails() {
         DataSource primary = dataSource("primary");
         JdbcConnectionDetails details = new JdbcConnectionDetails() {
             @Override public String getUsername() { return "sa"; }
             @Override public String getPassword() { return ""; }
             @Override public String getJdbcUrl() { return "jdbc:h2:mem:jdbc-details"; }
+            @Override public String getDriverClassName() { return "org.h2.Driver"; }
         };
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, provider(primary), emptyProvider(), emptyProvider(), provider(details));
+        assertThat(resolver.resolve("order")).isSameAs(primary);
+    }
+
+    @Test
+    void jdbcConnectionDetailsIsUsedWhenNoPrimaryDataSourceExists() {
+        JdbcConnectionDetails details = new JdbcConnectionDetails() {
+            @Override public String getUsername() { return "sa"; }
+            @Override public String getPassword() { return ""; }
+            @Override public String getJdbcUrl() { return "jdbc:h2:mem:jdbc-details"; }
+            @Override public String getDriverClassName() { return "org.h2.Driver"; }
+        };
+        ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
+            properties, emptyProvider(), emptyProvider(), emptyProvider(), provider(details));
         DataSource resolved = resolver.resolve("order");
         assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
         assertThat(((SimpleDriverDataSource) resolved).getUrl()).isEqualTo("jdbc:h2:mem:jdbc-details");
+        assertThat(((SimpleDriverDataSource) resolved).getUsername()).isEqualTo("sa");
     }
 
     @Test
@@ -641,13 +655,12 @@ Expected: 编译失败，找不到 `ItsukaFlywayDataSourceResolver`。
 `of(...)` 返回的 lambda 按以下顺序解析：
 
 1. `flywayDataSource.getIfAvailable()`：非空直接返回。
-2. `flywayConnectionDetails.getIfAvailable()`；为空时改用 `jdbcConnectionDetails.getIfAvailable()`，并适配为相同的 url/username/password/driver 字段。
-3. 连接详情的 `getJdbcUrl()` 非空：用 `DataSourceBuilder` 构造 `SimpleDriverDataSource` 并返回。
-4. 连接详情的 `getUsername()` 非空且 `dataSource.getIfUnique()` 非空：从该 DataSource 派生 `SimpleDriverDataSource`，使用详情的用户名/密码。
-5. `spring.flyway.url` 非空：用 `FlywayProperties` 构造独立的 `SimpleDriverDataSource` 并返回。
-6. `spring.flyway.user` 非空且 `dataSource.getIfUnique()` 非空：从该 DataSource 派生，使用 `spring.flyway.user/password`。
-7. `dataSource.getIfUnique()` 非空：直接返回。
-8. 抛 `IllegalStateException`，消息包含当前 source 名以及全部支持的数据源来源：
+2. `flywayConnectionDetails.getIfAvailable()`：`getJdbcUrl()` 非空时用 `DataSourceBuilder` 构造 `SimpleDriverDataSource` 并返回；`getUsername()` 非空且 `dataSource.getIfUnique()` 非空时从该 DataSource 派生，使用详情的用户名/密码。
+3. `spring.flyway.url` 非空：用 `FlywayProperties` 构造独立的 `SimpleDriverDataSource` 并返回。
+4. `spring.flyway.user` 非空且 `dataSource.getIfUnique()` 非空：从该 DataSource 派生，使用 `spring.flyway.user/password`。
+5. `dataSource.getIfUnique()` 非空：直接返回（唯一或 `@Primary` 的主 DataSource 优先于 `JdbcConnectionDetails`，避免绕过连接池）。
+6. `jdbcConnectionDetails.getIfAvailable()` 非空：适配为 `FlywayConnectionDetails`（含 url/username/password/driver-class-name），有 URL 时构造 `SimpleDriverDataSource`。
+7. 抛 `IllegalStateException`，消息包含当前 source 名以及全部支持的数据源来源：
    `Flyway 迁移数据源缺失（source: <name>）：请提供一个 DataSource Bean、@FlywayDataSource Bean、FlywayConnectionDetails Bean、JdbcConnectionDetails Bean，或配置 spring.flyway.url。`
 
 - [ ] **Step 4: 运行确认通过**

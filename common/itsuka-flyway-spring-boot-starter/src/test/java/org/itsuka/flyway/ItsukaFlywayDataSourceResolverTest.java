@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.h2.Driver;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -59,19 +60,34 @@ class ItsukaFlywayDataSourceResolverTest {
     }
 
     @Test
-    void jdbcConnectionDetailsWinsOverPrimaryAndConfiguredUrl() {
-        properties.setUrl("jdbc:h2:mem:properties-url");
+    void primaryDataSourceWinsOverJdbcConnectionDetails() {
         DataSource primary = dataSource("primary");
         JdbcConnectionDetails details = new JdbcConnectionDetails() {
             @Override public String getUsername() { return "sa"; }
             @Override public String getPassword() { return ""; }
             @Override public String getJdbcUrl() { return "jdbc:h2:mem:jdbc-details"; }
+            @Override public String getDriverClassName() { return "org.h2.Driver"; }
         };
         ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
             properties, provider(primary), emptyProvider(), emptyProvider(), provider(details));
+        assertThat(resolver.resolve("order")).isSameAs(primary);
+    }
+
+    @Test
+    void jdbcConnectionDetailsIsUsedWhenNoPrimaryDataSourceExists() {
+        JdbcConnectionDetails details = new JdbcConnectionDetails() {
+            @Override public String getUsername() { return "sa"; }
+            @Override public String getPassword() { return ""; }
+            @Override public String getJdbcUrl() { return "jdbc:h2:mem:jdbc-details"; }
+            @Override public String getDriverClassName() { return "org.h2.Driver"; }
+        };
+        ItsukaFlywayDataSourceResolver resolver = ItsukaFlywayDataSourceResolver.of(
+            properties, emptyProvider(), emptyProvider(), emptyProvider(), provider(details));
         DataSource resolved = resolver.resolve("order");
         assertThat(resolved).isInstanceOf(SimpleDriverDataSource.class);
         assertThat(((SimpleDriverDataSource) resolved).getUrl()).isEqualTo("jdbc:h2:mem:jdbc-details");
+        assertThat(((SimpleDriverDataSource) resolved).getUsername()).isEqualTo("sa");
+        assertThat(((SimpleDriverDataSource) resolved).getDriver()).isInstanceOf(Driver.class);
     }
 
     @Test

@@ -173,9 +173,12 @@ public class OrderMigrationInfo {
 所有 source 共用同一个迁移数据源，选择顺序与 Boot 原生行为保持一致：
 
 1. 标注了 `@FlywayDataSource` 的 `DataSource` Bean。
-2. `FlywayConnectionDetails` Bean；如果只有 `JdbcConnectionDetails` Bean，则适配其 url/username/password/driver。
+2. `FlywayConnectionDetails` Bean。
 3. `spring.flyway.url/user/password/driver-class-name`：有 URL 时构造独立的 `SimpleDriverDataSource`；只有 username/password 时基于主 DataSource 派生。
 4. 唯一或 `@Primary` 的 `DataSource` Bean。
+5. `JdbcConnectionDetails` Bean：仅在前面都拿不到数据源时兜底，适配其 url/username/password/driver。
+
+优先使用主 DataSource，避免 Boot 从 `spring.datasource.*` 自动注册的 `JdbcConnectionDetails` 绕过连接池及其 schema 设置。
 
 选择不到数据源时启动失败，错误信息包含当前 source 名与全部支持的数据源来源（`DataSource`、`@FlywayDataSource`、`FlywayConnectionDetails`、`JdbcConnectionDetails`、`spring.flyway.url`）。
 
@@ -370,7 +373,7 @@ org.itsuka.flyway
   - `enabled=false`、非原生模式 → 添加。
 - `ItsukaFlywayFactoryTest`
   - 使用 `FluentConfiguration` + H2，验证公共属性映射（占位符、baseline、encoding）和 source 的 location/table 覆盖顺序。
-  - 数据源选择顺序（`@FlywayDataSource`、`FlywayConnectionDetails`/`JdbcConnectionDetails`、`spring.flyway.url`、主 DataSource）。
+  - 数据源选择顺序（`@FlywayDataSource`、`FlywayConnectionDetails`、`spring.flyway.url`、主 DataSource、`JdbcConnectionDetails` 兜底）。
   - 少见的公共属性（`installed-by`、`out-of-order`、`clean-disabled`、`validate-on-migrate`、`tablespace` 等）能映射到 `Flyway.getConfiguration()`。
 
 ### 8.2 集成测试
@@ -436,7 +439,7 @@ org.itsuka.flyway
 10. 用户自定义 `Flyway` Bean 时，整个 starter 自动配置退让。
 11. 模块通过 `spring-boot-starter-flyway` 引入 Flyway 和 JDBC，并通过 `runtimeOnly` 带入 `flyway-mysql`；其他数据库模块由接入方添加。
 12. 多路径模式下不修改 `spring.flyway.enabled`（有 source 时靠 Flyway Bean 触发 Boot 退让）；只有“无 source 且非原生模式”时才强制设为 false。
-13. 数据源选择顺序与 Boot 原生保持一致，支持 `@FlywayDataSource`、`FlywayConnectionDetails` 和 `spring.flyway.url`。
+13. 数据源选择顺序：`@FlywayDataSource` → `FlywayConnectionDetails` → `spring.flyway.*` → 主 DataSource → `JdbcConnectionDetails` 兜底；主 DataSource 优先，避免绕过连接池。
 14. 不引入自定义的 `@ItsukaFlywaySource` 注解；配置即契约。
 15. starter 自己注册 `SchemaManagementProvider`，保证 `spring.flyway.enabled=false` 时 JPA 仍把 Flyway 管理的 DataSource 视为 `MANAGED`。
 16. 完整复制 Boot 4.0.3 的属性映射，避免少见属性静默失效；升级 Boot 时以 Boot 的 `configureProperties` 为基准回归。

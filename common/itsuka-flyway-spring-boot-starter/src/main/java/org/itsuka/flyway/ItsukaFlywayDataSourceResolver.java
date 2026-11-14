@@ -13,9 +13,9 @@ import org.springframework.util.StringUtils;
 /**
  * 解析 Flyway 迁移使用的数据源。
  *
- * <p>解析顺序：{@code @FlywayDataSource} → {@link FlywayConnectionDetails}（缺少时改用
- * {@link JdbcConnectionDetails}）→ {@code spring.flyway.url/user/password/driver-class-name}
- * → 唯一或 {@code @Primary} 的 {@link DataSource}。</p>
+ * <p>解析顺序：{@code @FlywayDataSource} → {@link FlywayConnectionDetails} →
+ * {@code spring.flyway.url/user/password/driver-class-name} → 唯一或 {@code @Primary} 的
+ * {@link DataSource} → {@link JdbcConnectionDetails} 兜底。</p>
  *
  * @author Itsuka
  */
@@ -52,9 +52,6 @@ interface ItsukaFlywayDataSourceResolver {
             }
 
             FlywayConnectionDetails details = flywayConnectionDetails.getIfAvailable();
-            if (details == null) {
-                details = adapt(jdbcConnectionDetails.getIfAvailable());
-            }
             DataSource uniqueDataSource = dataSource.getIfUnique();
             if (details != null) {
                 DataSource resolved = resolveConnectionDetails(details, uniqueDataSource);
@@ -73,6 +70,14 @@ interface ItsukaFlywayDataSourceResolver {
             }
             if (uniqueDataSource != null) {
                 return uniqueDataSource;
+            }
+
+            FlywayConnectionDetails jdbcDetails = adapt(jdbcConnectionDetails.getIfAvailable());
+            if (jdbcDetails != null) {
+                DataSource resolved = resolveConnectionDetails(jdbcDetails, null);
+                if (resolved != null) {
+                    return resolved;
+                }
             }
             throw new IllegalStateException("Flyway 迁移数据源缺失（source: " + sourceName
                 + "）：请提供一个 DataSource Bean、@FlywayDataSource Bean、FlywayConnectionDetails Bean、"
@@ -98,6 +103,11 @@ interface ItsukaFlywayDataSourceResolver {
             @Override
             public String getJdbcUrl() {
                 return jdbcConnectionDetails.getJdbcUrl();
+            }
+
+            @Override
+            public String getDriverClassName() {
+                return jdbcConnectionDetails.getDriverClassName();
             }
         };
     }
